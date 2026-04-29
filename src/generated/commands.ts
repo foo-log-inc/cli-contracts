@@ -148,7 +148,33 @@ export async function cliContractsDiff(
     if (options.head !== undefined) cmdArgs.push("--head", String(options.head));
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.breakingOnly) cmdArgs.push("--breaking-only");
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.text) cmdArgs.push("--text");
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsExtract(
+  executable: string,
+  args: import("./types.js").ExtractArgs,
+  options?: Partial<import("./types.js").ExtractOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["extract"];
+  if (args.commands) cmdArgs.push(...args.commands);
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.all) cmdArgs.push("--all");
+    if (options.includeMeta) cmdArgs.push("--include-meta");
   }
 
   try {

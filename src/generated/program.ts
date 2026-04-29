@@ -7,7 +7,8 @@ export interface CommandHandlers {
   generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   docs: (options: { file?: string; output?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; breakingOnly?: boolean; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
 export function createProgram(
@@ -22,6 +23,7 @@ export function createProgram(
 
   program.option("-c, --config <file>", "Path to cli-contracts.config.yaml.", "cli-contracts.config.yaml");
   program.option("-v, --verbose", "Enable verbose output.", false);
+  program.option("-F, --format <format>", "Output format for structured results.", "yaml");
   program.option("-q, --quiet", "Suppress non-error output.", false);
 
   program
@@ -87,9 +89,20 @@ export function createProgram(
     .option("--head <ref>", "Git ref for the head version (e.g. HEAD, feature-branch).")
     .option("-f, --file <file>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
     .option("--breaking-only", "Only report breaking changes.", false)
-    .option("--format <format>", "Output format.", "json")
+    .option("--text", "Output human-readable text summary instead of structured data.", false)
     .action(async (old, newArg, opts, cmd) => {
       await handlers.diff(old, newArg, opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("extract")
+    .description("Extract a subset of the contract for specific commands.")
+    .argument("[commands...]", "Command ID(s) to extract. Use dot notation for nested commands (e.g. users.import). If omitted, --all must be specified.")
+    .option("-f, --file <file>", "Contract file to extract from. Defaults to config input.files.")
+    .option("-a, --all", "Extract all commands.", false)
+    .option("--include-meta", "Include extraction metadata (source, timestamp, etc.).", true)
+    .action(async (commands, opts, cmd) => {
+      await handlers.extract(commands, opts, cmd.optsWithGlobals());
     });
 
   return program;

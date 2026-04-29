@@ -11,9 +11,11 @@ const FIXTURES = resolve(import.meta.dirname, "../fixtures");
 
 async function runCli(
   args: string[],
+  { format = "json" }: { format?: "json" | "yaml" } = {},
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const fullArgs = format ? ["--format", format, ...args] : args;
   try {
-    const result = await execFileAsync("node", [CLI, ...args], {
+    const result = await execFileAsync("node", [CLI, ...fullArgs], {
       timeout: 15000,
     });
     return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };

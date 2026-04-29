@@ -407,6 +407,103 @@ export const schemas = {
       }
     }
   },
+  ExtractResult: {
+    "type": "object",
+    "required": [
+      "cliContracts",
+      "info",
+      "commandSets"
+    ],
+    "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
+    "properties": {
+      "_meta": {
+        "type": "object",
+        "required": [
+          "source",
+          "type",
+          "extractedAt",
+          "commands"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Path to the source contract file."
+          },
+          "type": {
+            "type": "string",
+            "const": "cli-contracts/extract"
+          },
+          "extractedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of extraction."
+          },
+          "specVersion": {
+            "type": "string",
+            "description": "CLI Contracts spec version from the source."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of command IDs that were extracted."
+          }
+        }
+      },
+      "cliContracts": {
+        "type": "string",
+        "description": "Spec version from the source contract."
+      },
+      "info": {
+        "type": "object",
+        "description": "Info block from the source contract."
+      },
+      "commandSets": {
+        "type": "object",
+        "description": "Subset of command sets containing only the requested commands."
+      },
+      "components": {
+        "type": "object",
+        "description": "Only the schemas referenced by extracted commands."
+      }
+    }
+  },
+  ExtractMeta: {
+    "type": "object",
+    "required": [
+      "source",
+      "type",
+      "extractedAt",
+      "commands"
+    ],
+    "properties": {
+      "source": {
+        "type": "string",
+        "description": "Path to the source contract file."
+      },
+      "type": {
+        "type": "string",
+        "const": "cli-contracts/extract"
+      },
+      "extractedAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 timestamp of extraction."
+      },
+      "specVersion": {
+        "type": "string",
+        "description": "CLI Contracts spec version from the source."
+      },
+      "commands": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of command IDs that were extracted."
+      }
+    }
+  },
   DiffResult: {
     "type": "object",
     "required": [
@@ -496,3 +593,4 @@ export const generateExitCodes = [0, 1, 2, 3, 5] as const;
 export const docsExitCodes = [0, 1, 2, 3] as const;
 export const testExitCodes = [0, 1, 2, 3, 6] as const;
 export const diffExitCodes = [0, 1, 2, 7] as const;
+export const extractExitCodes = [0, 1, 2, 3, 8] as const;

@@ -89,7 +89,7 @@ export interface DiffOptions {
   head?: string;
   file?: string;
   breakingOnly?: boolean;
-  format?: "json" | "text";
+  text?: boolean;
 }
 
 export type DiffExitCode = 0 | 1 | 2 | 7;
@@ -99,6 +99,25 @@ export type DiffExitResult =
   | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 7; stdout: { hasBreakingChanges: boolean; breakingCount?: number; nonBreakingCount?: number; changes: { type: "added" | "removed" | "changed"; path: string; breaking: boolean; description: string }[] } };
+
+export interface ExtractArgs {
+  commands?: string[];
+}
+
+export interface ExtractOptions {
+  file?: string;
+  all?: boolean;
+  includeMeta?: boolean;
+}
+
+export type ExtractExitCode = 0 | 1 | 2 | 3 | 8;
+
+export type ExtractExitResult =
+  { exitCode: 0; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
+  | { exitCode: 8; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface Error {
   code: string;
@@ -158,6 +177,22 @@ export interface ContractViolation {
   message: string;
   expected?: unknown;
   actual?: unknown;
+}
+
+export interface ExtractResult {
+  _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] };
+  cliContracts: string;
+  info: Record<string, unknown>;
+  commandSets: Record<string, unknown>;
+  components?: Record<string, unknown>;
+}
+
+export interface ExtractMeta {
+  source: string;
+  type: string;
+  extractedAt: string;
+  specVersion?: string;
+  commands: string[];
 }
 
 export interface DiffResult {

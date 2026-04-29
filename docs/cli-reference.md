@@ -13,6 +13,7 @@ Contract definition for the cli-contracts command line tool itself. This is a se
   - [docs](#cli-contracts-docs)
   - [test](#cli-contracts-test)
   - [diff](#cli-contracts-diff)
+  - [extract](#cli-contracts-extract)
 
 ---
 
@@ -26,6 +27,7 @@ Contract-first specification and toolchain for CLI interfaces.
 |---|---|---|---|---|
 | `--config` | -c | No | `"cli-contracts.config.yaml"` | Path to cli-contracts.config.yaml. |
 | `--verbose` | -v | No | `false` | Enable verbose output. |
+| `--format` | -F | No | `"yaml"` | Output format for structured results. |
 | `--quiet` | -q | No | `false` | Suppress non-error output. |
 | `--version` | -V | No |  | Print version and exit. |
 | `--help` | -h | No |  | Show help and exit. |
@@ -61,7 +63,7 @@ cli-contracts init --name foo --multi-command-set
 
 **Exit 0:** Project initialized successfully.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -239,7 +241,7 @@ cli-contracts validate --strict
 
 **Exit 0:** All contracts are valid.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -426,7 +428,7 @@ cli-contracts validate --strict
 
 **Exit 3:** Validation failed. One or more errors found.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -584,7 +586,7 @@ cli-contracts generate custom-go
 
 **Exit 0:** Generation succeeded.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -722,7 +724,7 @@ cli-contracts generate custom-go
 
 **Exit 3:** Contract validation failed (generation aborted).
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -835,7 +837,7 @@ cli-contracts generate custom-go
 
 **Exit 5:** Generation partially failed.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -960,7 +962,7 @@ cli-contracts docs --output docs/cli.md
 
 **Exit 0:** Documentation generated successfully.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1098,7 +1100,7 @@ cli-contracts docs --output docs/cli.md
 
 **Exit 3:** Contract validation failed (generation aborted).
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1243,7 +1245,7 @@ cli-contracts test --case users.import.success
 
 **Exit 0:** All tests passed.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1439,7 +1441,7 @@ cli-contracts test --case users.import.success
 
 **Exit 3:** Contract validation failed (tests aborted).
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1552,7 +1554,7 @@ cli-contracts test --case users.import.success
 
 **Exit 6:** One or more tests failed.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1704,13 +1706,13 @@ cli-contracts diff --base main --head HEAD
 | `--head` |  | No |  | Git ref for the head version (e.g. HEAD, feature-branch). |
 | `--file` | -f | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--breaking-only` |  | No | `false` | Only report breaking changes. |
-| `--format` |  | No | `"json"` | Output format. |
+| `--text` |  | No | `false` | Output human-readable text summary instead of structured data. |
 
 #### Exit Codes
 
 **Exit 0:** No breaking changes detected (may include non-breaking changes).
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1859,7 +1861,7 @@ cli-contracts diff --base main --head HEAD
 
 **Exit 7:** Breaking changes detected.
 
-- **stdout:** format=`json`
+- **stdout:** format=`yaml`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1925,6 +1927,438 @@ cli-contracts diff --base main --head HEAD
             }
           }
         }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+---
+
+### extract
+
+Extract a subset of the contract for specific commands.
+
+Extracts one or more commands from a contract file, resolving all $ref references inline. Useful for feeding a focused contract subset to AI agents or external tooling.
+
+**Usage:**
+
+```
+cli-contracts extract init validate
+```
+```
+cli-contracts extract --file cli-contract.yaml init
+```
+```
+cli-contracts extract --all
+```
+
+#### Arguments
+
+| Name | Required | Description |
+|---|---|---|
+| `commands` *(variadic)* | No | Command ID(s) to extract. Use dot notation for nested commands (e.g. users.import). If omitted, --all must be specified. |
+
+#### Options
+
+| Option | Aliases | Required | Default | Description |
+|---|---|---|---|---|
+| `--file` | -f | No |  | Contract file to extract from. Defaults to config input.files. |
+| `--all` | -a | No | `false` | Extract all commands. |
+| `--include-meta` |  | No | `true` | Include extraction metadata (source, timestamp, etc.). |
+
+#### Exit Codes
+
+**Exit 0:** Extraction succeeded.
+
+- **stdout:** format=`yaml`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `_meta` | `object` | No |  |
+  | `_meta.source` | `string` | Yes | Path to the source contract file. |
+  | `_meta.type` | `string` | Yes |  |
+  | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
+  | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
+  | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
+  | `cliContracts` | `string` | Yes | Spec version from the source contract. |
+  | `info` | `object` | Yes | Info block from the source contract. |
+  | `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+  | `components` | `object` | No | Only the schemas referenced by extracted commands. |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "cliContracts",
+      "info",
+      "commandSets"
+    ],
+    "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
+    "properties": {
+      "_meta": {
+        "type": "object",
+        "required": [
+          "source",
+          "type",
+          "extractedAt",
+          "commands"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Path to the source contract file."
+          },
+          "type": {
+            "type": "string",
+            "const": "cli-contracts/extract"
+          },
+          "extractedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of extraction."
+          },
+          "specVersion": {
+            "type": "string",
+            "description": "CLI Contracts spec version from the source."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of command IDs that were extracted."
+          }
+        }
+      },
+      "cliContracts": {
+        "type": "string",
+        "description": "Spec version from the source contract."
+      },
+      "info": {
+        "type": "object",
+        "description": "Info block from the source contract."
+      },
+      "commandSets": {
+        "type": "object",
+        "description": "Subset of command sets containing only the requested commands."
+      },
+      "components": {
+        "type": "object",
+        "description": "Only the schemas referenced by extracted commands."
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid arguments (no commands specified and --all not set).
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation failed.
+
+- **stdout:** format=`yaml`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `valid` | `boolean` | Yes |  |
+  | `errorCount` | `integer (min: 0)` | Yes |  |
+  | `warningCount` | `integer (min: 0)` | Yes |  |
+  | `errors` | `object[]` | Yes |  |
+  | `errors[].path` | `string` | Yes | JSON pointer to the problematic location (e.g. /commandSets/foo/commands/init). |
+  | `errors[].message` | `string` | Yes |  |
+  | `errors[].rule` | `string` | Yes | Validation rule ID (e.g. duplicate-command-id, invalid-exit-code). |
+  | `errors[].severity` | `"error" \| "warning"` | No |  |
+  | `warnings` | `object[]` | Yes |  |
+  | `warnings[].path` | `string` | Yes | JSON pointer to the problematic location (e.g. /commandSets/foo/commands/init). |
+  | `warnings[].message` | `string` | Yes |  |
+  | `warnings[].rule` | `string` | Yes | Validation rule ID (e.g. duplicate-command-id, invalid-exit-code). |
+  | `warnings[].severity` | `"error" \| "warning"` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "valid",
+      "errorCount",
+      "warningCount",
+      "errors",
+      "warnings"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "errorCount": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "warningCount": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path",
+            "message",
+            "rule"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "JSON pointer to the problematic location (e.g. /commandSets/foo/commands/init)."
+            },
+            "message": {
+              "type": "string"
+            },
+            "rule": {
+              "type": "string",
+              "description": "Validation rule ID (e.g. duplicate-command-id, invalid-exit-code)."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning"
+              ]
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path",
+            "message",
+            "rule"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "JSON pointer to the problematic location (e.g. /commandSets/foo/commands/init)."
+            },
+            "message": {
+              "type": "string"
+            },
+            "rule": {
+              "type": "string",
+              "description": "Validation rule ID (e.g. duplicate-command-id, invalid-exit-code)."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 8:** One or more requested commands not found.
+
+- **stdout:** format=`yaml`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `_meta` | `object` | No |  |
+  | `_meta.source` | `string` | Yes | Path to the source contract file. |
+  | `_meta.type` | `string` | Yes |  |
+  | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
+  | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
+  | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
+  | `cliContracts` | `string` | Yes | Spec version from the source contract. |
+  | `info` | `object` | Yes | Info block from the source contract. |
+  | `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+  | `components` | `object` | No | Only the schemas referenced by extracted commands. |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "cliContracts",
+      "info",
+      "commandSets"
+    ],
+    "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
+    "properties": {
+      "_meta": {
+        "type": "object",
+        "required": [
+          "source",
+          "type",
+          "extractedAt",
+          "commands"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Path to the source contract file."
+          },
+          "type": {
+            "type": "string",
+            "const": "cli-contracts/extract"
+          },
+          "extractedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of extraction."
+          },
+          "specVersion": {
+            "type": "string",
+            "description": "CLI Contracts spec version from the source."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of command IDs that were extracted."
+          }
+        }
+      },
+      "cliContracts": {
+        "type": "string",
+        "description": "Spec version from the source contract."
+      },
+      "info": {
+        "type": "object",
+        "description": "Info block from the source contract."
+      },
+      "commandSets": {
+        "type": "object",
+        "description": "Subset of command sets containing only the requested commands."
+      },
+      "components": {
+        "type": "object",
+        "description": "Only the schemas referenced by extracted commands."
+      }
+    }
+  }
+  ```
+
+  </details>
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
       }
     }
   }
@@ -2529,6 +2963,150 @@ Type: `object`
     },
     "actual": {
       "description": "Actual value received."
+    }
+  }
+}
+```
+
+</details>
+
+### ExtractResult
+
+A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.
+
+Type: `object`
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `_meta` | `object` | No |  |
+| `_meta.source` | `string` | Yes | Path to the source contract file. |
+| `_meta.type` | `string` | Yes |  |
+| `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
+| `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
+| `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
+| `cliContracts` | `string` | Yes | Spec version from the source contract. |
+| `info` | `object` | Yes | Info block from the source contract. |
+| `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+| `components` | `object` | No | Only the schemas referenced by extracted commands. |
+
+<details>
+<summary>JSON Schema</summary>
+
+```json
+{
+  "type": "object",
+  "required": [
+    "cliContracts",
+    "info",
+    "commandSets"
+  ],
+  "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": [
+        "source",
+        "type",
+        "extractedAt",
+        "commands"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Path to the source contract file."
+        },
+        "type": {
+          "type": "string",
+          "const": "cli-contracts/extract"
+        },
+        "extractedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of extraction."
+        },
+        "specVersion": {
+          "type": "string",
+          "description": "CLI Contracts spec version from the source."
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of command IDs that were extracted."
+        }
+      }
+    },
+    "cliContracts": {
+      "type": "string",
+      "description": "Spec version from the source contract."
+    },
+    "info": {
+      "type": "object",
+      "description": "Info block from the source contract."
+    },
+    "commandSets": {
+      "type": "object",
+      "description": "Subset of command sets containing only the requested commands."
+    },
+    "components": {
+      "type": "object",
+      "description": "Only the schemas referenced by extracted commands."
+    }
+  }
+}
+```
+
+</details>
+
+### ExtractMeta
+
+Type: `object`
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `source` | `string` | Yes | Path to the source contract file. |
+| `type` | `string` | Yes |  |
+| `extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
+| `specVersion` | `string` | No | CLI Contracts spec version from the source. |
+| `commands` | `string[]` | Yes | List of command IDs that were extracted. |
+
+<details>
+<summary>JSON Schema</summary>
+
+```json
+{
+  "type": "object",
+  "required": [
+    "source",
+    "type",
+    "extractedAt",
+    "commands"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "Path to the source contract file."
+    },
+    "type": {
+      "type": "string",
+      "const": "cli-contracts/extract"
+    },
+    "extractedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of extraction."
+    },
+    "specVersion": {
+      "type": "string",
+      "description": "CLI Contracts spec version from the source."
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of command IDs that were extracted."
     }
   }
 }

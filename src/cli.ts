@@ -10,9 +10,15 @@ import { runGenerate } from "./commands/generate.js";
 import { runDocs } from "./commands/docs.js";
 import { runDiff } from "./commands/diff.js";
 import { runContractTests } from "./commands/test.js";
+import { runExtract } from "./commands/extract.js";
+import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
-function writeJson(data: unknown): void {
-  process.stdout.write(JSON.stringify(data, null, 2) + "\n");
+function getFormat(parentOpts: Record<string, unknown>): OutputFormat {
+  return resolveFormat(parentOpts.format);
+}
+
+function writeOut(data: unknown, format: OutputFormat): void {
+  process.stdout.write(formatOutput(data, format));
 }
 
 function writeError(code: string, message: string): void {
@@ -21,6 +27,7 @@ function writeError(code: string, message: string): void {
 
 const handlers: CommandHandlers = {
   async init(options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       const result = await runInit({
         name: options.name,
@@ -28,7 +35,7 @@ const handlers: CommandHandlers = {
         output: options.output,
         withConfig: options.withConfig,
       });
-      writeJson(result);
+      writeOut(result, fmt);
       process.exit(0);
     } catch (err) {
       if (err instanceof FileExistsError) {
@@ -41,6 +48,7 @@ const handlers: CommandHandlers = {
   },
 
   async validate(options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
@@ -53,7 +61,7 @@ const handlers: CommandHandlers = {
         strict: options.strict,
         resolveRefs: options.resolveRefs,
       });
-      writeJson(result);
+      writeOut(result, fmt);
       process.exit(result.valid ? 0 : 3);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
@@ -62,6 +70,7 @@ const handlers: CommandHandlers = {
   },
 
   async generate(generators, options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
@@ -79,11 +88,11 @@ const handlers: CommandHandlers = {
       });
 
       if ("validationFailed" in result) {
-        writeJson(result.result);
+        writeOut(result.result, fmt);
         process.exit(3);
       }
 
-      writeJson(result);
+      writeOut(result, fmt);
       const hasFailed = result.generators.some((g) => g.status === "failed");
       process.exit(hasFailed ? 5 : 0);
     } catch (err) {
@@ -93,6 +102,7 @@ const handlers: CommandHandlers = {
   },
 
   async docs(options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
@@ -104,11 +114,11 @@ const handlers: CommandHandlers = {
       const result = await runDocs(files, { output: options.output });
 
       if ("validationFailed" in result) {
-        writeJson(result.result);
+        writeOut(result.result, fmt);
         process.exit(3);
       }
 
-      writeJson(result);
+      writeOut(result, fmt);
       process.exit(0);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
@@ -117,6 +127,7 @@ const handlers: CommandHandlers = {
   },
 
   async test(options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
@@ -133,7 +144,7 @@ const handlers: CommandHandlers = {
         executionProfiles: config?.executionProfiles,
       });
 
-      writeJson(result);
+      writeOut(result, fmt);
       process.exit(result.failed > 0 ? 6 : 0);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
@@ -142,6 +153,7 @@ const handlers: CommandHandlers = {
   },
 
   async diff(old, newArg, options, parentOpts) {
+    const fmt = getFormat(parentOpts);
     try {
       if (!old || !newArg) {
         writeError("INVALID_ARGS", "Both old and new contract files are required");
@@ -151,8 +163,35 @@ const handlers: CommandHandlers = {
       const result = await runDiff(old, newArg, {
         breakingOnly: options.breakingOnly,
       });
-      writeJson(result);
+      writeOut(result, fmt);
       process.exit(result.hasBreakingChanges ? 7 : 0);
+    } catch (err) {
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async extract(commands, options, parentOpts) {
+    const fmt = getFormat(parentOpts);
+    try {
+      if (commands.length === 0 && !options.all) {
+        writeError("INVALID_ARGS", "Specify command IDs or use --all");
+        process.exit(2);
+        return;
+      }
+      const configResult = await loadConfig(
+        parentOpts.config as string | undefined,
+      );
+      const files = options.file
+        ? [options.file]
+        : getContractFiles(configResult?.config);
+
+      const allFlag = options.all;
+      const cmdIds = allFlag ? [] : commands;
+
+      const result = await runExtract(files, cmdIds, { format: fmt });
+      process.stdout.write(result.output);
+      process.exit(0);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
