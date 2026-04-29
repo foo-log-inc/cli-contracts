@@ -2,7 +2,7 @@ cliContracts: 0.1.0
 
 info:
   title: CLI Contracts CLI
-  version: 0.0.1
+  version: 0.2.1
   description: >-
     Contract definition for the cli-contracts command line tool itself.
     This is a self-referential contract: cli-contracts defines its own interface
