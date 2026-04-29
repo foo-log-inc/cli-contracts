@@ -1,0 +1,70 @@
+{
+  "name": "cli-contracts",
+  "version": "0.0.1",
+  "description": "Contract-first specification and toolchain for command line interfaces",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "cli-contracts": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "cli_contracts_specification.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ test/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "cli",
+    "contract-first",
+    "specification",
+    "code-generation",
+    "typescript",
+    "rust",
+    "openapi-like",
+    "ai-agent",
+    "command-line"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/foo-ogawa/cli-contracts.git"
+  },
+  "homepage": "https://github.com/foo-ogawa/cli-contracts#readme",
+  "bugs": {
+    "url": "https://github.com/foo-ogawa/cli-contracts/issues"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "js-yaml": "^4.1.0",
+    "yaml": "^2.8.2",
+    "handlebars": "^4.7.8",
+    "ajv": "^8.17.1",
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
