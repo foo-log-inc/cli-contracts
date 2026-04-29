@@ -1,7 +1,6 @@
 # CLI Contracts
 
 [![npm version](https://img.shields.io/npm/v/cli-contracts.svg)](https://www.npmjs.com/package/cli-contracts)
-[![npm downloads](https://img.shields.io/npm/dm/cli-contracts.svg)](https://www.npmjs.com/package/cli-contracts)
 [![license](https://img.shields.io/npm/l/cli-contracts.svg)](https://github.com/foo-ogawa/cli-contracts/blob/main/LICENSE)
 
 Contract-first specification and toolchain for command line interfaces.

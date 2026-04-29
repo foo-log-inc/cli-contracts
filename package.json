@@ -18,7 +18,6 @@
     "dist",
     "schemas",
     "docs/cli-reference.md",
-    "cli_contracts_specification.md",
     "README.md",
     "LICENSE"
   ],
