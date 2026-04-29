@@ -17,6 +17,7 @@
   "files": [
     "dist",
     "schemas",
+    "cli-contract.yaml",
     "docs/cli-reference.md",
     "README.md",
     "LICENSE"
