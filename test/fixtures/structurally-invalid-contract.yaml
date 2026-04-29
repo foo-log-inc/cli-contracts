@@ -1,0 +1,11 @@
+cliContracts: 0.1.0
+info:
+  title: ""
+  version: 1.0.0
+commandSets:
+  broken:
+    commands:
+      missing-summary:
+        exits:
+          '0':
+            description: OK.

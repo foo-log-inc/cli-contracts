@@ -1,0 +1,65 @@
+cliContracts: 0.1.0
+info:
+  title: Invalid CLI
+  version: 0.1.0
+commandSets:
+  bad:
+    commands:
+      dup.path:
+        summary: First command.
+        exits:
+          '0':
+            description: OK.
+      dup.path2:
+        path: [dup, path]
+        summary: Duplicate path.
+        exits:
+          '0':
+            description: OK.
+      no-semantic:
+        summary: Placeholder command.
+        exits:
+          '0':
+            description: OK.
+      bad-exit:
+        summary: Bad exit code.
+        exits:
+          '999':
+            description: Invalid exit code.
+          '0':
+            description: OK.
+      bad-opts:
+        summary: Duplicate options.
+        options:
+          - name: format
+            aliases: [f]
+            schema:
+              type: string
+          - name: format
+            aliases: [f]
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+      bad-args:
+        summary: Variadic not last.
+        arguments:
+          - name: files
+            variadic: true
+          - name: output
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+      bad-ref:
+        summary: Bad ref.
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/NonExistent'

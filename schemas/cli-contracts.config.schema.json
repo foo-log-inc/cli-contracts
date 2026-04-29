@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CLI Contracts Config",
+  "description": "Schema for cli-contracts.config.yaml — tooling configuration for validation, generation, and testing.",
+  "$ref": "#/definitions/CLI Contracts Config",
+  "definitions": {
+    "CLI Contracts Config": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "files"
+          ],
+          "additionalProperties": false
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string"
+            },
+            "strict": {
+              "type": "boolean"
+            },
+            "resolveExternalRefs": {
+              "type": "boolean"
+            },
+            "allowUnknownExtensions": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "executionProfiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "default": {
+                "type": "boolean"
+              },
+              "commandSets": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "command"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "commandSets"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "generators": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "output": {
+                "type": "string"
+              },
+              "templates": {
+                "type": "string"
+              },
+              "options": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "enabled",
+              "output",
+              "templates"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "contractTests": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "profile": {
+              "type": "string"
+            },
+            "casesDir": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "validateStdout": {
+              "type": "boolean"
+            },
+            "validateStderr": {
+              "type": "boolean"
+            },
+            "validateFiles": {
+              "type": "boolean"
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "diff": {
+          "type": "object",
+          "properties": {
+            "breakingChangePolicy": {
+              "type": "string"
+            },
+            "ignore": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

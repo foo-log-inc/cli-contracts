@@ -1,0 +1,25 @@
+version: 0.1.0
+
+input:
+  files:
+    - cli-contract.yaml
+
+generators:
+  markdown:
+    enabled: true
+    output: ./docs/cli-reference.md
+    templates: builtin:markdown
+    options:
+      includeExamples: true
+      includeSchemas: true
+      includeExtensions: true
+
+  typescript:
+    enabled: true
+    output: ./src/generated
+    templates: builtin:typescript
+    options:
+      emitTypes: true
+      emitClient: true
+      emitValidators: true
+      emitProgram: true

@@ -1,0 +1,226 @@
+cliContracts: 0.1.0
+
+info:
+  title: Test CLI
+  version: 1.0.0
+  description: Test CLI for unit tests.
+
+commandSets:
+  test-cli:
+    summary: Test CLI tool.
+    globalOptions:
+      - name: verbose
+        aliases: [v]
+        schema:
+          type: boolean
+          default: false
+
+    commands:
+      users.list:
+        summary: List all users.
+        options:
+          - name: format
+            aliases: [f]
+            description: Output format.
+            schema:
+              type: string
+              enum: [json, table, csv]
+              default: json
+          - name: limit
+            aliases: [l]
+            description: Maximum number of results.
+            schema:
+              type: integer
+              default: 100
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/UserList'
+          '2':
+            description: Invalid argument.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      users.import:
+        summary: Import users from CSV.
+        description: Reads a UTF-8 CSV file and imports users.
+        usage:
+          - test-cli users import <input> [--dry-run]
+        arguments:
+          - name: input
+            index: 0
+            required: true
+            description: Input CSV file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: text/csv
+              encoding: utf-8
+              csv:
+                headerRows: 1
+        options:
+          - name: dry-run
+            aliases: [n]
+            description: Validate only.
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: Import succeeded.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          '2':
+            description: Invalid input.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+          '10':
+            description: Partial failure.
+            stdout:
+              required: false
+              format: json
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+        x-agent:
+          riskLevel: high
+          requiresConfirmation: true
+          idempotent: false
+          sideEffects:
+            - database_write
+
+      logs.filter:
+        summary: Filter log events from stdin.
+        streams:
+          stdin:
+            required: true
+            format: ndjson
+            encoding: utf-8
+            framing:
+              type: line-delimited
+              delimiter: '\n'
+            itemSchema:
+              $ref: '#/components/schemas/LogEvent'
+          stdout:
+            format: ndjson
+            encoding: utf-8
+            framing:
+              type: line-delimited
+              delimiter: '\n'
+            itemSchema:
+              $ref: '#/components/schemas/LogEvent'
+            flush:
+              policy: perItem
+        signals:
+          SIGINT:
+            description: Gracefully stops filtering.
+          SIGTERM:
+            description: Immediately terminates.
+        exits:
+          '0':
+            description: Stream processed successfully.
+          '130':
+            description: Interrupted by SIGINT.
+
+  test-admin:
+    summary: Admin CLI.
+    commands:
+      tenants.create:
+        summary: Create a tenant.
+        arguments:
+          - name: name
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: Tenant created.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          '2':
+            description: Invalid argument.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    UserList:
+      type: object
+      required: [users, total]
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+        total:
+          type: integer
+          minimum: 0
+
+    ImportResult:
+      type: object
+      required: [status, importedCount]
+      properties:
+        status:
+          type: string
+          enum: [success, partial]
+        importedCount:
+          type: integer
+          minimum: 0
+
+    LogEvent:
+      type: object
+      required: [timestamp, level, message]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [debug, info, warn, error]
+        message:
+          type: string
+
+    Tenant:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

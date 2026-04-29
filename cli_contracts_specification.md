@@ -5,7 +5,7 @@ Positioning: OpenAPI-like contract specification for command line interfaces
 Primary artifact: `cli-contract.yaml`  
 Companion config: `cli-contracts.config.yaml`  
 Tool name: `cli-contracts`  
-Relationship to OpenCLI: independent native schema; OpenCLI is not used as internal schema
+Relationship to OpenCLI: independent native schema; OpenCLI export is optional tooling, not core specification
 
 ---
 
@@ -26,7 +26,7 @@ CLI Contracts is intended for:
 - TypeScript and Rust code generation
 - custom code generation through Handlebars templates
 - contract tests against real CLI implementations
-- AI agent tool definition and safety policy
+- AI agent tool definition and safety policy (via `x-agent` extension)
 - compatibility and breaking-change checks between versions
 
 CLI Contracts is not intended to define internal implementation logic.
@@ -55,22 +55,22 @@ The plural form matches related ecosystems such as `micro-contracts` and `agent-
 
 OpenCLI already exists as an early CLI description specification. CLI Contracts should not reuse the OpenCLI name.
 
-CLI Contracts is an independent specification. It is not based on the OpenCLI schema, and does not export to OpenCLI format. The key design differences are:
+CLI Contracts does not use OpenCLI as its internal schema. OpenCLI export is not part of the core specification, but may be provided by tooling as an optional compatibility generator. The key design differences are:
 
 ```text
 CLI Contracts                          OpenCLI
 ─────────────────────────────────────  ──────────────────────────────
 commands is a map (stable IDs)         commands is a nested tree
-path is an explicit array              path is implicit from nesting
-responses keyed by exit code           exitCodes is a flat list
+path derived from command ID            path is implicit from nesting
+exits keyed by exit code               exitCodes is a flat list
 stdout/stderr/files per exit code      no per-exit-code output contract
 streams are first-class                no stream model
 file contracts on args/options         no file contract model
-agent metadata (risk, side effects)    no agent model
+x-agent extension (risk, side effects) no agent model
 components with $ref (JSON Schema)     no shared component system
 ```
 
-CLI Contracts shares the goal of describing CLI interfaces in a machine-readable way, but takes an OpenAPI-inspired approach with richer response contracts, file I/O, stream modeling, and AI-agent awareness that OpenCLI does not cover.
+CLI Contracts shares the goal of describing CLI interfaces in a machine-readable way, but takes an OpenAPI-inspired approach with richer exit contracts, file I/O, stream modeling, and extensibility (including AI-agent metadata via `x-agent`) that OpenCLI does not cover.
 
 ---
 
@@ -85,14 +85,14 @@ CLI Contracts shares the goal of describing CLI interfaces in a machine-readable
 3. **Commands are a map**  
    `commandSets.<setId>.commands` is a map keyed by stable command IDs.
 
-4. **Command path is explicit**  
-   Each command defines its CLI path, such as `[users, import]`, separately from its stable ID.
+4. **Command path defaults to ID**  
+   The CLI subcommand path is derived by replacing `.` in the command ID with spaces. Combined with the executable name (from `executable` field, or the command set key when omitted), `users.import` in a command set with executable `foo` becomes `foo users import`. An explicit `path` can override this when the CLI syntax differs from the ID.
 
-5. **OpenAPI-like responses**  
-   CLI results are described by `responses.<exitCode>`.
+5. **Exit-code keyed output contracts**  
+   CLI results are described by `exits.<exitCode>`.
 
-6. **Exit codes are response keys**  
-   Exit code definitions are not only a list. They are first-class response contracts.
+6. **Exit codes are first-class**  
+   Exit code definitions are not only a list. They are first-class output contracts with stdout, stderr, and files.
 
 7. **Structured stdout and stderr**  
    `stdout` and `stderr` can be specified independently for each exit code.
@@ -101,7 +101,7 @@ CLI Contracts shares the goal of describing CLI interfaces in a machine-readable
    Input files, output files, and generated files can have media types, encodings, and schemas.
 
 9. **Streams are first-class**  
-   Pipe-based continuous I/O is modeled separately from one-shot output.
+   All standard I/O (stdin, stdout, stderr) during execution is modeled under `streams`. Output that is determined at exit is modeled under `exits`.
 
 10. **JSON Schema compatible**  
     Data schemas should be JSON Schema compatible where possible.
@@ -109,8 +109,8 @@ CLI Contracts shares the goal of describing CLI interfaces in a machine-readable
 11. **Template-based generation**  
     Generators are based on Handlebars templates and can be extended to multiple languages.
 
-12. **AI-agent-aware**  
-    Tool risk, side effects, idempotency, confirmation requirements, and dry-run options can be specified.
+12. **Extensible via `x-*` properties**  
+    Extension properties prefixed with `x-` are allowed on command sets, commands, and other objects. They carry domain-specific metadata without polluting the core schema.
 
 13. **Runtime execution is config, not contract**  
     Physical binary paths, Docker invocation, `npx` invocation, environment variables, and test execution settings belong in `cli-contracts.config.yaml` unless they are part of the user-facing interface.
@@ -125,15 +125,15 @@ CLI Contracts shares the goal of describing CLI interfaces in a machine-readable
 | command set | A logical CLI executable or independently managed command group |
 | executable | User-facing command name, such as `foo` or `foo-admin` |
 | command ID | Stable identifier in the contract, such as `users.import` |
-| command path | Actual CLI subcommand path, such as `[users, import]` |
+| command path | CLI subcommand sequence, derived from command ID by replacing `.` with spaces (e.g. `users.import` → `users import`) |
 | argument | Positional parameter |
 | option | Named flag or option, such as `--config` |
-| response | Result contract associated with an exit code |
+| exit | Output contract associated with an exit code |
 | stream | Continuous pipe-based input/output |
 | file parameter | Argument or option whose value points to a file |
 | generated file | File produced by command execution |
 | execution profile | Environment-specific way to execute the CLI during validation or tests |
-| generator | Tool that emits code, docs, tests, wrappers, or OpenCLI output |
+| generator | Tool that emits code, docs, tests, wrappers, or custom output |
 | template | Handlebars template used by a generator |
 
 ---
@@ -149,31 +149,29 @@ info:
   description: Contract definitions for Foo command line tools.
 
 commandSets:
-  main:
-    executable: foo
+  foo:
     summary: Main user-facing CLI.
     commands:
       users.import:
-        path: [users, import]
         summary: Import users from CSV.
         arguments: []
         options: []
-        responses: {}
+        exits: {}
 
-  admin:
-    executable: foo-admin
+  foo-admin:
     summary: Administrative CLI.
     commands:
       tenants.create:
-        path: [tenants, create]
         summary: Create tenant.
         arguments: []
         options: []
-        responses: {}
+        exits: {}
 
 components:
   schemas: {}
 ```
+
+The command set key is a stable identifier for the command set. It may match the executable name for simple cases. When `executable` is omitted, the key is used as the executable name.
 
 ### Required top-level fields
 
@@ -182,7 +180,7 @@ components:
 | `cliContracts` | yes | Specification version |
 | `info` | yes | Metadata about this contract document |
 | `commandSets` | yes | One or more CLI command sets |
-| `components` | no | Shared schemas, examples, responses, and reusable definitions |
+| `components` | no | Shared schemas, examples, exits, and reusable definitions |
 
 ---
 
@@ -216,34 +214,31 @@ info:
 
 ```yaml
 commandSets:
-  main:
-    executable: foo
+  foo:
     summary: Main CLI.
     commands:
       users.import:
-        path: [users, import]
         summary: Import users.
 
-  admin:
-    executable: foo-admin
+  foo-admin:
     summary: Admin CLI.
     commands:
       tenants.create:
-        path: [tenants, create]
         summary: Create tenant.
 ```
+
+The command set key is a stable identifier for the command set. It may match the executable name for simple cases. When `executable` is omitted, the key is used as the executable name.
 
 ### `commandSets.<setId>` fields
 
 | Field | Required | Description |
 |---|---:|---|
-| `executable` | yes | User-facing CLI executable name, such as `foo` |
+| `executable` | no | User-facing CLI executable name. Defaults to the command set key |
 | `summary` | no | Short description |
 | `description` | no | Long description |
 | `commands` | yes | Map of command definitions keyed by stable command ID |
 | `globalOptions` | no | Options accepted by all commands in this set |
 | `env` | no | Environment variables that are part of the public interface |
-| `agent` | no | Default agent policy for commands in this set |
 
 ### Contract vs runtime environment
 
@@ -251,11 +246,10 @@ The following belong in the contract because they are user-facing interface:
 
 ```yaml
 commandSets:
-  main:
-    executable: foo
+  foo:
     commands:
       users.import:
-        path: [users, import]
+        summary: Import users from CSV.
 ```
 
 The following should usually be placed in `cli-contracts.config.yaml` because they are runtime-specific:
@@ -264,16 +258,40 @@ The following should usually be placed in `cli-contracts.config.yaml` because th
 executionProfiles:
   local:
     commandSets:
-      main:
+      foo:
         command: foo
   npm:
     commandSets:
-      main:
+      foo:
         command: npx foo-cli
   docker:
     commandSets:
-      main:
+      foo:
         command: docker run --rm ghcr.io/example/foo
+```
+
+### Contract `env` vs config `env`
+
+`env` appears in both the contract and the config, but their purposes are different:
+
+- **Contract `commandSets.<setId>.env`**: Declares public environment variables that are part of the CLI's interface. These are environment variables that users are expected to set to control CLI behavior (e.g. `FOO_CONFIG`, `FOO_LOG_LEVEL`). They are documented, validated, and included in generated documentation.
+
+- **Config `contractTests.env`**: Injects environment variable values for test and execution profiles. These are runtime-specific values used during testing or development (e.g. `FOO_ENV=test`). They do not appear in generated documentation.
+
+```yaml
+# Contract: declares public interface
+commandSets:
+  foo:
+    env:
+      FOO_CONFIG:
+        description: Path to config file.
+        schema:
+          type: string
+
+# Config: injects runtime values for testing
+contractTests:
+  env:
+    FOO_CONFIG: ./test-config.yaml
 ```
 
 ---
@@ -285,39 +303,44 @@ executionProfiles:
 ```yaml
 commands:
   users.import:
-    path: [users, import]
     summary: Import users from CSV.
 
   users.export:
-    path: [users, export]
     summary: Export users.
 ```
 
 The map key is the stable command ID. It is used for references, diffing, code generation, docs anchors, and tests.
 
-The command `path` defines the actual subcommand path used on the command line.
+### Path derivation
+
+The CLI invocation is constructed from two parts:
+
+1. **Executable**: the `executable` field, or the command set key when `executable` is omitted (e.g. `foo`)
+2. **Subcommand**: the command ID with `.` replaced by spaces (e.g. `users.import` → `users import`)
+
+```text
+commandSet key: foo
+command ID:     users.import  →  foo users import
+command ID:     init          →  foo init
+```
+
+An explicit `path` can override the default when the CLI syntax differs from the ID:
 
 ```yaml
 commands:
-  users.import:
+  legacy.user-import:
     path: [users, import]
+    summary: Import users (ID differs from CLI path for backward compatibility).
 ```
 
-This represents:
-
-```bash
-foo users import
-```
-
-### Why map + path
+### Why map with derived path
 
 | Concern | Solution |
 |---|---|
 | Stable references | map key, e.g. `users.import` |
-| Actual CLI syntax | `path`, e.g. `[users, import]` |
+| CLI syntax | derived from key by default, or explicit `path` override |
 | Diff friendliness | map keys are stable |
 | Code generation | command IDs are stable symbol sources |
-| OpenCLI export | command tree can be generated from paths |
 | Multiple command sets | full identity is `<commandSetId>.<commandId>` |
 
 ---
@@ -327,34 +350,29 @@ foo users import
 ```yaml
 commands:
   users.import:
-    path: [users, import]
     summary: Import users from a CSV file.
     description: Reads a user CSV file and imports users into the system.
     usage:
       - foo users import <input> [--dry-run]
     arguments: []
     options: []
-    stdin:
-      accepted: false
     streams: {}
-    responses: {}
+    exits: {}
     examples: []
-    agent: {}
 ```
 
 | Field | Required | Description |
 |---|---:|---|
-| `path` | yes | CLI subcommand path excluding executable |
+| `path` | no | CLI subcommand path override. Defaults to command ID with `.` replaced by spaces |
 | `summary` | yes | Short description |
 | `description` | no | Long description |
 | `usage` | no | Human-readable usage examples |
 | `arguments` | no | Positional arguments |
 | `options` | no | Command-specific options |
-| `stdin` | no | One-shot stdin contract |
-| `streams` | no | Continuous stream contract |
-| `responses` | yes | Exit-code keyed response contracts |
+| `streams` | no | Stream contracts for stdin, stdout, and stderr during execution |
+| `signals` | no | OS signals the command handles |
+| `exits` | yes | Exit-code keyed output contracts |
 | `examples` | no | Examples |
-| `agent` | no | AI-agent execution metadata |
 | `deprecated` | no | Deprecation metadata |
 
 ---
@@ -374,6 +392,8 @@ arguments:
       exists: true
       mediaType: text/csv
       encoding: utf-8
+      csv:
+        headerRows: 1
       schema:
         $ref: ./schemas/users.csv.schema.json
 ```
@@ -452,8 +472,52 @@ file:
 | `mediaType` | no | Media type, such as `application/json`, `text/csv`, `application/yaml` |
 | `encoding` | no | Encoding for text files |
 | `schema` | no | Optional schema for the file content |
+| `csv` | no | CSV-specific format metadata (only when `mediaType` is `text/csv`) |
 
 `schema` is optional. If omitted, the contract specifies that the value is a file, but does not validate file content.
+
+### CSV metadata
+
+When a file has `mediaType: text/csv`, the `csv` field describes the physical format. The `schema` uses standard JSON Schema to describe rows as an array of objects (one object per data row, with column names as property keys).
+
+```yaml
+file:
+  mode: read
+  exists: true
+  mediaType: text/csv
+  encoding: utf-8
+  csv:
+    delimiter: ","
+    quoteChar: "\""
+    headerRows: 1
+    footerRows: 0
+  schema:
+    $ref: ./schemas/users.csv.schema.json
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `delimiter` | string | `","` | Field delimiter |
+| `quoteChar` | string | `"\""` | Quote character |
+| `headerRows` | integer | `1` | Number of header rows (`0` = no header) |
+| `footerRows` | integer | `0` | Number of footer rows to skip |
+
+The referenced JSON Schema should describe rows as an array of objects:
+
+```json
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["name", "email"],
+    "properties": {
+      "name": { "type": "string" },
+      "email": { "type": "string", "format": "email" },
+      "role": { "type": "string", "enum": ["admin", "user"] }
+    }
+  }
+}
+```
 
 ### Input file example
 
@@ -468,6 +532,8 @@ arguments:
       exists: true
       mediaType: text/csv
       encoding: utf-8
+      csv:
+        headerRows: 1
       schema:
         $ref: ./schemas/users.csv.schema.json
 ```
@@ -490,36 +556,12 @@ options:
 
 ---
 
-## 14. One-shot stdin
+## 14. Exits
 
-Use `stdin` for non-streaming input passed through standard input.
-
-```yaml
-stdin:
-  accepted: true
-  required: false
-  format: json
-  schema:
-    $ref: '#/components/schemas/InputPayload'
-```
-
-| Field | Required | Description |
-|---|---:|---|
-| `accepted` | yes | Whether stdin is accepted |
-| `required` | no | Whether stdin is required |
-| `format` | no | `json`, `yaml`, `text`, `binary`, etc. |
-| `schema` | no | Schema for the whole stdin payload |
-
-Use `streams.stdin` instead of `stdin` for line-delimited or long-running pipe input.
-
----
-
-## 15. Responses keyed by exit code
-
-`responses` is a map keyed by process exit code.
+`exits` is a map keyed by process exit code.
 
 ```yaml
-responses:
+exits:
   '0':
     description: Success.
     stdout:
@@ -537,7 +579,7 @@ responses:
   '10':
     description: Partial import failure.
     stdout:
-      optional: true
+      required: false
       format: json
       schema:
         $ref: '#/components/schemas/ImportUsersPartialResult'
@@ -547,7 +589,7 @@ responses:
         $ref: '#/components/schemas/Error'
 ```
 
-### Response object fields
+### Exit object fields
 
 | Field | Required | Description |
 |---|---:|---|
@@ -555,13 +597,12 @@ responses:
 | `stdout` | no | stdout contract for this exit code |
 | `stderr` | no | stderr contract for this exit code |
 | `files` | no | Generated file contracts for this exit code |
-| `headers` | no | Reserved for future metadata-like outputs |
 
 ### Output contract fields
 
 ```yaml
 stdout:
-  optional: false
+  required: true
   format: json
   schema:
     $ref: '#/components/schemas/Result'
@@ -573,27 +614,27 @@ stdout:
 
 | Field | Required | Description |
 |---|---:|---|
-| `optional` | no | Whether this output may be absent. Default is `false` when the output object is present |
+| `required` | no | Whether this output is required. Default is `true` when the output object is present |
 | `format` | yes | `json`, `yaml`, `text`, `table`, `binary`, `ndjson`, etc. |
 | `schema` | no | Schema for this output |
 | `examples` | no | Named examples |
 
-### Recommended response rules
+### Recommended exit rules
 
-- If `stdout` is defined and `optional` is not true, the implementation must emit matching stdout.
-- If `stderr` is defined and `optional` is not true, the implementation must emit matching stderr.
+- If `stdout` is defined and `required` is not `false`, the implementation must emit matching stdout.
+- If `stderr` is defined and `required` is not `false`, the implementation must emit matching stderr.
 - If `stdout` or `stderr` is not defined for an exit code, that output should not be relied on as part of the contract.
 - Undefined exit codes are outside the compatibility guarantee.
 - Exit code meanings must not change in a backward-compatible release.
 
 ---
 
-## 16. Generated files
+## 15. Generated files
 
-Commands can generate files as part of their response.
+Commands can generate files as part of their exit contract.
 
 ```yaml
-responses:
+exits:
   '0':
     description: Report generated.
     stdout:
@@ -624,16 +665,36 @@ responses:
 
 ---
 
-## 17. Streams and pipe-based continuous I/O
+## 16. Streams
 
-Use `streams` for continuous pipe input or output, such as:
+`streams` defines I/O contracts for stdin, stdout, and stderr **during execution**.
+
+- **`streams.stdin`**: input received through standard input (both one-shot and continuous)
+- **`streams.stdout`**: output emitted continuously during execution (e.g. progress, filtered events)
+- **`streams.stderr`**: diagnostic output emitted during execution
+
+`exits.*.stdout` and `exits.*.stderr` describe output **determined at exit** (e.g. final result JSON, error summary). A command may use both: `streams.stdout` for progress during execution and `exits.'0'.stdout` for the final result.
 
 ```bash
-tail -f app.log | foo logs filter --level error
-foo events watch | jq .
+cat data.json | foo import           # one-shot stdin
+tail -f app.log | foo logs filter    # continuous stdin
+foo events watch | jq .              # continuous stdout
 ```
 
-Streams are separate from one-shot `stdin` and `responses.*.stdout`.
+### One-shot stdin example
+
+```yaml
+streams:
+  stdin:
+    required: true
+    format: json
+    schema:
+      $ref: '#/components/schemas/InputPayload'
+```
+
+When `framing` is absent, stdin is consumed as a single payload. When `framing` is present, stdin is processed item by item.
+
+### Continuous stream example
 
 ```yaml
 streams:
@@ -659,69 +720,78 @@ streams:
       policy: perItem
 
   stderr:
-    optional: true
+    required: false
     format: ndjson
     itemSchema:
       $ref: '#/components/schemas/DiagnosticEvent'
 
-  termination:
-    onEndOfInput: exit
-    onSignal:
-      SIGINT:
-        behavior: graceful_shutdown
-        exitCode: 130
-      SIGTERM:
-        behavior: graceful_shutdown
-        exitCode: 143
-
-  errorHandling:
-    invalidItem:
-      behavior: skip
-      stderr:
-        format: ndjson
-        itemSchema:
-          $ref: '#/components/schemas/StreamItemError'
-    fatalError:
-      behavior: exit
-      exitCode: 10
 ```
 
 ### Stream object fields
 
 | Field | Required | Description |
 |---|---:|---|
-| `required` | no | Whether the stream is required |
-| `optional` | no | Whether the stream may be absent |
+| `required` | no | Whether the stream is required. Default is `true` for `stdin` when defined, `false` for `stdout`/`stderr` |
 | `format` | yes | `text-lines`, `ndjson`, `json-seq`, `csv`, `bytes`, etc. |
 | `encoding` | no | Encoding for text streams |
-| `framing` | no | Message boundary definition |
-| `itemSchema` | no | Schema for each item in the stream |
+| `framing` | no | Message boundary definition. When present, input/output is processed item by item |
+| `schema` | no | Schema for the entire payload (used when `framing` is absent) |
+| `itemSchema` | no | Schema for each item (used when `framing` is present) |
 | `flush` | no | Flush policy |
 
-For streams, the schema should usually be `itemSchema`, not `schema`, because each message is the contract unit.
+Use `schema` for one-shot input (no `framing`). Use `itemSchema` for framed streams where each message is the contract unit.
 
 ---
 
-## 18. Agent metadata
+## 17. Signals
 
-AI agents need more than syntax. They need risk and execution policy.
+`signals` declares which OS signals the command handles. It is a top-level command field alongside `streams` and `exits`.
+
+Defining which signals a CLI accepts is part of the interface contract. However, what happens when a signal is received (e.g., graceful shutdown, exit with a specific code) is an implementation detail and should be described in `description`.
 
 ```yaml
-agent:
-  intent:
-    - Import users from a CSV file.
-    - Validate user CSV content.
-  riskLevel: high
-  requiresConfirmation: true
-  idempotent: false
-  sideEffects:
-    - database_write
-  safeDryRunOption: dry-run
-  disallowAutonomousExecutionWhen:
-    - environment == 'prod'
-  recommendedBeforeUse:
-    - Validate the input file schema.
-    - Run with --dry-run before actual import.
+signals:
+  SIGINT:
+    description: Gracefully stops processing and flushes buffered output.
+  SIGTERM:
+    description: Immediately terminates the process.
+```
+
+| Field | Required | Description |
+|---|---:|---|
+| `description` | yes | Human-readable description of how the command handles this signal |
+
+---
+
+## 18. Extension properties
+
+Properties prefixed with `x-` are allowed on command sets, commands, and other objects. They carry domain-specific metadata without changing the core schema.
+
+Validation should preserve `x-*` properties and pass them through to generators and templates.
+
+### `x-agent`: AI agent metadata
+
+The `x-agent` extension is a recommended profile for describing AI agent execution policy. It is not part of the core specification, but is documented here as a standard extension.
+
+```yaml
+commands:
+  users.import:
+    summary: Import users from CSV.
+    x-agent:
+      intent:
+        - Import users from a CSV file.
+        - Validate user CSV content.
+      riskLevel: high
+      requiresConfirmation: true
+      idempotent: false
+      sideEffects:
+        - database_write
+      safeDryRunOption: dry-run
+      disallowAutonomousExecutionWhen:
+        - environment == 'prod'
+      recommendedBeforeUse:
+        - Validate the input file schema.
+        - Run with --dry-run before actual import.
 ```
 
 | Field | Description |
@@ -735,7 +805,7 @@ agent:
 | `disallowAutonomousExecutionWhen` | Conditions under which autonomous execution is disallowed |
 | `recommendedBeforeUse` | Checklist for agents before execution |
 
-Agent metadata may be defined at the command set level and overridden at the command level.
+`x-agent` may be defined at the command set level and overridden at the command level.
 
 ---
 
@@ -771,7 +841,7 @@ Recommended component groups:
 components:
   schemas: {}
   examples: {}
-  responses: {}
+  exits: {}
   streamItems: {}
   fileSchemas: {}
 ```
@@ -791,8 +861,7 @@ info:
   description: Contract definitions for Foo command line tools.
 
 commandSets:
-  main:
-    executable: foo
+  foo:
     summary: Main user-facing CLI.
     globalOptions:
       - name: verbose
@@ -803,7 +872,6 @@ commandSets:
 
     commands:
       users.import:
-        path: [users, import]
         summary: Import users from CSV.
         description: Reads a UTF-8 CSV file and imports users.
         usage:
@@ -821,6 +889,8 @@ commandSets:
               exists: true
               mediaType: text/csv
               encoding: utf-8
+              csv:
+                headerRows: 1
               schema:
                 $ref: ./schemas/users.csv.schema.json
 
@@ -832,10 +902,7 @@ commandSets:
               type: boolean
               default: false
 
-        stdin:
-          accepted: false
-
-        responses:
+        exits:
           '0':
             description: Import succeeded.
             stdout:
@@ -858,7 +925,7 @@ commandSets:
           '10':
             description: Partial import failure.
             stdout:
-              optional: true
+              required: false
               format: json
               schema:
                 $ref: '#/components/schemas/ImportUsersPartialResult'
@@ -867,7 +934,7 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
 
-        agent:
+        x-agent:
           riskLevel: high
           requiresConfirmation: true
           idempotent: false
@@ -879,7 +946,6 @@ commandSets:
             - Run with --dry-run before actual import.
 
       logs.filter:
-        path: [logs, filter]
         summary: Filter log events from stdin.
         usage:
           - tail -f app.log | foo logs filter --level error
@@ -914,22 +980,18 @@ commandSets:
               policy: perItem
 
           stderr:
-            optional: true
+            required: false
             format: ndjson
             itemSchema:
               $ref: '#/components/schemas/DiagnosticEvent'
 
-          termination:
-            onEndOfInput: exit
-            onSignal:
-              SIGINT:
-                behavior: graceful_shutdown
-                exitCode: 130
-              SIGTERM:
-                behavior: graceful_shutdown
-                exitCode: 143
+        signals:
+          SIGINT:
+            description: Gracefully stops filtering and flushes buffered output.
+          SIGTERM:
+            description: Immediately terminates the process.
 
-        responses:
+        exits:
           '0':
             description: Input stream was processed successfully.
           '2':
@@ -943,19 +1005,17 @@ commandSets:
           '143':
             description: Terminated by SIGTERM.
 
-  admin:
-    executable: foo-admin
+  foo-admin:
     summary: Administrative CLI.
     commands:
       tenants.create:
-        path: [tenants, create]
         summary: Create tenant.
         arguments:
           - name: name
             required: true
             schema:
               type: string
-        responses:
+        exits:
           '0':
             description: Tenant created.
             stdout:
@@ -1077,21 +1137,21 @@ executionProfiles:
   local:
     default: true
     commandSets:
-      main:
+      foo:
         command: foo
-      admin:
+      foo-admin:
         command: foo-admin
 
   npm:
     commandSets:
-      main:
+      foo:
         command: npx foo-cli
-      admin:
+      foo-admin:
         command: npx foo-admin-cli
 
   docker:
     commandSets:
-      main:
+      foo:
         command: docker run --rm ghcr.io/example/foo
 
 generators:
@@ -1122,7 +1182,7 @@ generators:
     options:
       includeExamples: true
       includeSchemas: true
-      includeAgentPolicy: true
+      includeExtensions: true
 
   custom-go:
     enabled: false
@@ -1165,7 +1225,7 @@ cli-contracts init --name foo --multi-command-set
 
 ### `validate`
 
-Validate contract syntax, schema references, command IDs, paths, responses, and config.
+Validate contract syntax, schema references, command IDs, paths, exits, and config.
 
 ```bash
 cli-contracts validate
@@ -1180,15 +1240,15 @@ Validation should check:
 - duplicate command paths within a command set
 - invalid option aliases
 - invalid or unreachable `$ref`
-- response keys are valid exit codes
+- exit keys are valid exit codes
 - stream formats and framing
 - file schema references
-- agent policy values
+- extension property structure (when known profiles like `x-agent` are used)
 - config generator validity
 
 ### `generate`
 
-Generate code, docs, OpenCLI output, tests, or custom targets.
+Generate code, docs, tests, or custom targets.
 
 ```bash
 cli-contracts generate
@@ -1251,16 +1311,16 @@ The normalized context should expose:
 specVersion: 0.1.0
 info: {}
 commandSets:
-  - id: main
+  - id: foo
     executable: foo
     commands:
       - id: users.import
-        fullId: main.users.import
+        fullId: foo.users.import
         path: [users, import]
         invocation: foo users import
         arguments: []
         options: []
-        responses: []
+        exits: []
 components: {}
 ```
 
@@ -1315,12 +1375,12 @@ generated/typescript/
 Recommended outputs:
 
 - argument and option types
-- response types keyed by exit code
+- exit types keyed by exit code
 - stdout/stderr schema validators
 - generated file validators
 - safe command builder
 - execution result parser
-- agent metadata export
+- extension metadata export
 
 Example generated shape:
 
@@ -1352,7 +1412,7 @@ generated/rust/
 Recommended outputs:
 
 - `serde` structs for schemas
-- response enums keyed by exit code
+- exit enums keyed by exit code
 - optional `clap` bindings
 - command builder types
 - stdout/stderr parser functions
@@ -1381,11 +1441,11 @@ The built-in Markdown generator should render:
 - options
 - file inputs and outputs
 - stream behavior
-- exit-code responses
+- exit contracts
 - stdout/stderr schemas
 - generated files
 - examples
-- agent policy
+- extension metadata (e.g. `x-agent`)
 - compatibility notes
 
 Example output structure:
@@ -1395,7 +1455,7 @@ Example output structure:
 
 ## Command Sets
 
-### main: foo
+### foo
 
 #### users.import
 
@@ -1405,9 +1465,7 @@ Usage: `foo users import <input> [--dry-run]`
 
 ##### Options
 
-##### Responses
-
-##### Agent policy
+##### Exits
 ```
 
 ---
@@ -1420,7 +1478,7 @@ Test case example:
 
 ```yaml
 id: users.import.success
-commandSet: main
+commandSet: foo
 command: users.import
 profile: local
 args:
@@ -1441,7 +1499,7 @@ The test runner should:
 2. Build command invocation from `executable`, `path`, arguments, and options.
 3. Execute the process.
 4. Validate exit code.
-5. Validate stdout and stderr based on `responses.<exitCode>`.
+5. Validate stdout and stderr based on `exits.<exitCode>`.
 6. Validate generated files when declared.
 7. Report contract violations.
 
@@ -1449,29 +1507,41 @@ The test runner should:
 
 ## 28. Compatibility and breaking changes
 
-### Breaking changes
+Breaking changes fall into two categories: changes that affect CLI users (people invoking the command) and changes that affect contract consumers (codegen, tests, `$ref` references, tooling).
 
-The following should be treated as breaking changes:
+### Breaking for CLI users
+
+These changes break the command line invocation or output that CLI users depend on:
 
 - removing a command set
 - changing `executable` for a public command set
 - removing a command
-- changing a command `path`
+- changing a command's effective path (derived or explicit)
 - changing argument order
 - adding a required argument
 - adding a required option
 - removing an option
 - changing option meaning
 - changing default value semantics
-- changing response exit code meaning
-- removing a response exit code
+- changing exit code meaning
+- removing an exit code
 - changing stdout/stderr format
 - changing stdout/stderr schema incompatibly
 - removing a required output field
 - changing file schema incompatibly
 - changing stream framing incompatibly
 - changing stream item schema incompatibly
-- increasing agent risk without versioning policy
+
+### Breaking for contract consumers
+
+These changes break codegen output, test references, or tooling that depends on stable contract identifiers:
+
+- changing a command ID (even if the effective path is preserved via explicit `path` override)
+- renaming a command set key
+- changing `$ref` targets in `components`
+- changing extension properties that consumers depend on (e.g. `x-agent.riskLevel`)
+
+A command ID change with an explicit `path` that preserves the CLI invocation is not breaking for CLI users, but is breaking for contract consumers (codegen, tests, and any tooling that references the command by ID).
 
 ### Usually non-breaking changes
 
@@ -1483,7 +1553,7 @@ The following are usually non-breaking:
 - adding examples
 - adding documentation
 - adding a new command set
-- adding a new response exit code, if callers are required to handle unknown non-zero codes generically
+- adding a new exit code, if callers are required to handle unknown non-zero codes generically
 
 Enum value additions should be treated carefully because many CLI consumers use exhaustive matching.
 
@@ -1491,21 +1561,21 @@ Enum value additions should be treated carefully because many CLI consumers use 
 
 ## 29. Differences from OpenCLI
 
-OpenCLI is an existing early-stage CLI description specification. CLI Contracts is an independent specification that does not reuse the OpenCLI schema and does not provide export to OpenCLI format.
+OpenCLI is an existing early-stage CLI description specification. CLI Contracts does not use OpenCLI as its internal schema. OpenCLI export is not part of the core specification, but may be provided by tooling as an optional compatibility generator.
 
 The following table summarizes the key design differences:
 
 | Aspect | CLI Contracts | OpenCLI |
 |---|---|---|
 | Command structure | `commands` is a **map** keyed by stable command ID | Commands are a **nested tree** |
-| Command identity | Stable `commandId` (e.g. `users.import`) + explicit `path` array | Identity derived from tree nesting |
+| Command identity | Stable `commandId` (e.g. `users.import`) with path derived from ID | Identity derived from tree nesting |
 | Multiple executables | `commandSets` allows multiple independent executables in one document | Single command root per document |
-| Exit code modeling | `responses.<exitCode>` with per-code `stdout`, `stderr`, `files` contracts | `exitCodes` as a flat descriptive list |
+| Exit code modeling | `exits.<exitCode>` with per-code `stdout`, `stderr`, `files` contracts | `exitCodes` as a flat descriptive list |
 | Structured output | `stdout` and `stderr` have `format`, `schema`, `examples` per exit code | No per-exit-code output contract |
 | File I/O | First-class `file` contracts on arguments, options, and generated files | No file contract model |
-| Stream modeling | `streams` with `framing`, `itemSchema`, `flush`, `termination`, `errorHandling` | No stream model |
-| Shared components | `components` with `schemas`, `examples`, `responses` using `$ref` (JSON Schema) | No shared component system |
-| AI agent policy | `agent` metadata: `riskLevel`, `sideEffects`, `idempotent`, `requiresConfirmation` | No agent model |
+| Stream modeling | `streams` with `framing`, `itemSchema`, `flush` | No stream model |
+| Signal handling | `signals` declares handled OS signals with description | No signal model |
+| Shared components | `components` with `schemas`, `examples`, `exits` using `$ref` (JSON Schema) | No shared component system |
 | Schema compatibility | JSON Schema compatible | N/A |
 | Code generation | Handlebars-based generators for TypeScript, Rust, Markdown, and custom targets | N/A |
 | Contract testing | Built-in test runner with execution profiles | N/A |
@@ -1518,12 +1588,10 @@ CLI Contracts:
 ```yaml
 cliContracts: 0.1.0
 commandSets:
-  main:
-    executable: foo
+  foo:
     commands:
       users.import:
-        path: [users, import]
-        responses:
+        exits:
           '0':
             description: Success.
             stdout:
@@ -1555,7 +1623,7 @@ command:
               description: Invalid input.
 ```
 
-Note that the OpenCLI representation cannot express per-exit-code stdout/stderr schemas, file contracts, stream behavior, or agent metadata. These are the areas where CLI Contracts provides significantly richer contract definitions.
+Note that the OpenCLI representation cannot express per-exit-code stdout/stderr schemas, file contracts, stream behavior, or extension metadata. These are the areas where CLI Contracts provides significantly richer contract definitions.
 
 ---
 
@@ -1570,7 +1638,7 @@ Recommended MVP implementation:
 5. `commands` map support
 6. arguments and options
 7. file contracts
-8. `responses.<exitCode>.stdout/stderr/files`
+8. `exits.<exitCode>.stdout/stderr/files`
 9. built-in Markdown generator
 10. built-in TypeScript generator
 11. built-in Rust generator
@@ -1586,7 +1654,7 @@ Defer advanced features if needed:
 - terminal UI contracts
 - shell completion generation
 - full semantic version policy engine
-- rich agent planning hints
+- rich `x-agent` planning hints
 
 ---
 
@@ -1631,11 +1699,10 @@ commandSets:
     executable: <user-facing executable name>
     commands:
       <commandId>:
-        path: [subcommand, path]
         arguments: []
         options: []
         streams: {}
-        responses:
+        exits:
           <exitCode>:
             stdout: {}
             stderr: {}
@@ -1645,8 +1712,8 @@ commandSets:
 The most important differences from OpenCLI are:
 
 - `commands` is a map keyed by stable command ID.
-- `path` explicitly represents the CLI subcommand path.
-- `responses` is the canonical exit-code contract with per-code stdout/stderr/files.
-- streams, file contracts, and agent metadata are first-class.
+- `path` is derived from the command ID by default, with explicit override when needed.
+- `exits` is the canonical exit-code contract with per-code stdout/stderr/files.
+- streams and file contracts are first-class; agent metadata is supported via `x-agent` extension.
 
-CLI Contracts is an independent specification. It does not use OpenCLI as its internal schema and does not provide export to OpenCLI format.
+CLI Contracts is an independent specification. It does not use OpenCLI as its internal schema. OpenCLI export is not part of the core specification, but may be provided by tooling as an optional compatibility generator.

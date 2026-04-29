@@ -1,0 +1,12 @@
+cliContracts: 0.1.0
+info:
+  title: Minimal CLI
+  version: 0.1.0
+commandSets:
+  minimal:
+    commands:
+      hello:
+        summary: Say hello.
+        exits:
+          '0':
+            description: Success.

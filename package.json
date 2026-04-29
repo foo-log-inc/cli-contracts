@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -16,6 +16,8 @@
   },
   "files": [
     "dist",
+    "schemas",
+    "docs/cli-reference.md",
     "cli_contracts_specification.md",
     "README.md",
     "LICENSE"
@@ -23,11 +25,15 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "generate": "node dist/cli.js generate",
+    "generate:check": "node dist/cli.js generate --dry-run",
+    "generate:schema": "npx tsx scripts/generate-json-schema.ts",
+    "prebuild": "npm run generate --silent 2>/dev/null || true",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/ test/",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run clean && npm run build && npm test"
+    "prepublishOnly": "npm run clean && npm run build && npm run generate:schema && npm test"
   },
   "keywords": [
     "cli",
@@ -56,13 +62,16 @@
     "yaml": "^2.8.2",
     "handlebars": "^4.7.8",
     "ajv": "^8.17.1",
-    "glob": "^10.3.10"
+    "glob": "^10.3.10",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
+    "tsx": "^4.19.4",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.0"
+    "vitest": "^1.2.0",
+    "zod-to-json-schema": "^3.24.5"
   },
   "engines": {
     "node": ">=20.0.0"

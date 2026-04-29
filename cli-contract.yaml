@@ -1,0 +1,739 @@
+cliContracts: 0.1.0
+
+info:
+  title: CLI Contracts CLI
+  version: 0.0.1
+  description: >-
+    Contract definition for the cli-contracts command line tool itself.
+    This is a self-referential contract: cli-contracts defines its own interface
+    using the CLI Contracts specification.
+  license:
+    name: MIT
+  contact:
+    name: foo-ogawa
+    url: https://github.com/foo-ogawa/cli-contracts
+
+commandSets:
+  cli-contracts:
+    summary: Contract-first specification and toolchain for CLI interfaces.
+
+    globalOptions:
+      - name: config
+        aliases: [c]
+        description: Path to cli-contracts.config.yaml.
+        valueName: file
+        schema:
+          type: string
+          default: cli-contracts.config.yaml
+        file:
+          mode: read
+          exists: false
+          mediaType: application/yaml
+          encoding: utf-8
+
+      - name: verbose
+        aliases: [v]
+        description: Enable verbose output.
+        schema:
+          type: boolean
+          default: false
+
+      - name: quiet
+        aliases: [q]
+        description: Suppress non-error output.
+        schema:
+          type: boolean
+          default: false
+
+      - name: version
+        aliases: [V]
+        description: Print version and exit.
+        schema:
+          type: boolean
+
+      - name: help
+        aliases: [h]
+        description: Show help and exit.
+        schema:
+          type: boolean
+
+    commands:
+      # ── init ────────────────────────────────────────────
+      init:
+        summary: Initialize a contract file or project layout.
+        description: >-
+          Generates a starter cli-contract.yaml (and optionally
+          cli-contracts.config.yaml) in the current directory.
+        usage:
+          - cli-contracts init
+          - cli-contracts init --name foo
+          - cli-contracts init --name foo --multi-command-set
+
+        options:
+          - name: name
+            aliases: [n]
+            description: Executable name for the initial command set.
+            valueName: name
+            schema:
+              type: string
+
+          - name: multi-command-set
+            aliases: [m]
+            description: Scaffold multiple command sets.
+            schema:
+              type: boolean
+              default: false
+
+          - name: output
+            aliases: [o]
+            description: Output directory.
+            valueName: dir
+            schema:
+              type: string
+              default: "."
+
+          - name: with-config
+            description: Also generate cli-contracts.config.yaml.
+            schema:
+              type: boolean
+              default: false
+
+        exits:
+          '0':
+            description: Project initialized successfully.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/InitResult'
+            files:
+              - path: '{stdout.contractFile}'
+                required: true
+                mediaType: application/yaml
+                encoding: utf-8
+              - path: '{stdout.configFile}'
+                required: false
+                mediaType: application/yaml
+                encoding: utf-8
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '4':
+            description: Target file already exists.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+      # ── validate ────────────────────────────────────────
+      validate:
+        summary: Validate contract files.
+        description: >-
+          Validates contract syntax, JSON Schema conformance, $ref resolution,
+          duplicate command IDs, option aliases, exit codes,
+          stream definitions, file schema references,
+          and config generator settings.
+        usage:
+          - cli-contracts validate
+          - cli-contracts validate --file cli-contract.yaml
+          - cli-contracts validate --strict
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file(s) to validate. Defaults to config input.files.
+            valueName: file
+            repeatable: true
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: strict
+            description: Treat warnings as errors.
+            schema:
+              type: boolean
+              default: false
+
+          - name: resolve-refs
+            description: Resolve and validate external $ref targets.
+            schema:
+              type: boolean
+              default: true
+
+        exits:
+          '0':
+            description: All contracts are valid.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ValidateResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Validation failed. One or more errors found.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ValidateResult'
+            stderr:
+              required: false
+              format: text
+
+
+      # ── generate ────────────────────────────────────────
+      generate:
+        summary: Run code generators.
+        description: >-
+          Runs one or more generators defined in cli-contracts.config.yaml.
+          If no generator name is given, all enabled generators are run.
+        usage:
+          - cli-contracts generate
+          - cli-contracts generate typescript
+          - cli-contracts generate rust
+          - cli-contracts generate markdown
+          - cli-contracts generate custom-go
+
+        arguments:
+          - name: generators
+            index: 0
+            required: false
+            description: Generator name(s) to run. If omitted, all enabled generators run.
+            variadic: true
+            schema:
+              type: string
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file(s) to use as input.
+            valueName: file
+            repeatable: true
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: output
+            aliases: [o]
+            description: Override output directory.
+            valueName: dir
+            schema:
+              type: string
+
+          - name: dry-run
+            aliases: [n]
+            description: Show what would be generated without writing files.
+            schema:
+              type: boolean
+              default: false
+
+          - name: clean
+            description: Remove output directory before generating.
+            schema:
+              type: boolean
+              default: false
+
+        exits:
+          '0':
+            description: Generation succeeded.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/GenerateResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments or unknown generator name.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation failed (generation aborted).
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ValidateResult'
+
+          '5':
+            description: Generation partially failed.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/GenerateResult'
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+      # ── docs ────────────────────────────────────────────
+      docs:
+        summary: Generate Markdown documentation.
+        description: >-
+          Shortcut for generating Markdown CLI reference documentation.
+          Equivalent to "cli-contracts generate markdown".
+        usage:
+          - cli-contracts docs
+          - cli-contracts docs --output docs/cli.md
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file(s) to use as input.
+            valueName: file
+            repeatable: true
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: output
+            aliases: [o]
+            description: Output file path.
+            valueName: file
+            schema:
+              type: string
+
+        exits:
+          '0':
+            description: Documentation generated successfully.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/GenerateResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation failed (generation aborted).
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ValidateResult'
+
+
+      # ── test ────────────────────────────────────────────
+      test:
+        summary: Run contract tests.
+        description: >-
+          Executes contract test cases against a real CLI implementation.
+          Uses execution profiles from cli-contracts.config.yaml to invoke commands.
+        usage:
+          - cli-contracts test
+          - cli-contracts test --profile local
+          - cli-contracts test --case users.import.success
+
+        options:
+          - name: profile
+            aliases: [p]
+            description: Execution profile to use.
+            valueName: name
+            schema:
+              type: string
+
+          - name: case
+            description: Run a specific test case by ID.
+            valueName: id
+            repeatable: true
+            schema:
+              type: string
+
+          - name: cases-dir
+            description: Directory containing test case YAML files.
+            valueName: dir
+            schema:
+              type: string
+
+          - name: timeout
+            aliases: [t]
+            description: Timeout per test case in milliseconds.
+            valueName: ms
+            schema:
+              type: integer
+              default: 30000
+
+          - name: bail
+            description: Stop on first failure.
+            schema:
+              type: boolean
+              default: false
+
+        exits:
+          '0':
+            description: All tests passed.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/TestResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments or missing profile.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation failed (tests aborted).
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ValidateResult'
+
+          '6':
+            description: One or more tests failed.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/TestResult'
+
+
+      # ── diff ────────────────────────────────────────────
+      diff:
+        summary: Compare contract versions and detect breaking changes.
+        description: >-
+          Compares two contract files (or git revisions) and reports
+          additions, removals, modifications, and breaking changes.
+        usage:
+          - cli-contracts diff old.yaml new.yaml
+          - cli-contracts diff --base main --head HEAD
+
+        arguments:
+          - name: old
+            index: 0
+            required: false
+            description: >-
+              Path to the old (base) contract file.
+              Can be omitted when using --base/--head.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: new
+            index: 1
+            required: false
+            description: >-
+              Path to the new (head) contract file.
+              Can be omitted when using --base/--head.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        options:
+          - name: base
+            description: Git ref for the base version (e.g. main, v1.0.0).
+            valueName: ref
+            schema:
+              type: string
+
+          - name: head
+            description: Git ref for the head version (e.g. HEAD, feature-branch).
+            valueName: ref
+            schema:
+              type: string
+
+          - name: file
+            aliases: [f]
+            description: Contract file path within the repository (used with --base/--head).
+            valueName: file
+            schema:
+              type: string
+              default: cli-contract.yaml
+
+          - name: breaking-only
+            description: Only report breaking changes.
+            schema:
+              type: boolean
+              default: false
+
+          - name: format
+            description: Output format.
+            valueName: format
+            schema:
+              type: string
+              enum: [json, text]
+              default: json
+
+        exits:
+          '0':
+            description: No breaking changes detected (may include non-breaking changes).
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/DiffResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '7':
+            description: Breaking changes detected.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/DiffResult'
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    InitResult:
+      type: object
+      required: [contractFile]
+      properties:
+        contractFile:
+          type: string
+          description: Path to the generated cli-contract.yaml.
+        configFile:
+          type: string
+          description: Path to the generated cli-contracts.config.yaml (if --with-config).
+
+    ValidateResult:
+      type: object
+      required: [valid, errorCount, warningCount, errors, warnings]
+      properties:
+        valid:
+          type: boolean
+        errorCount:
+          type: integer
+          minimum: 0
+        warningCount:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Diagnostic'
+
+    Diagnostic:
+      type: object
+      required: [path, message, rule]
+      properties:
+        path:
+          type: string
+          description: JSON pointer to the problematic location (e.g. /commandSets/foo/commands/init).
+        message:
+          type: string
+        rule:
+          type: string
+          description: Validation rule ID (e.g. duplicate-command-id, invalid-exit-code).
+        severity:
+          type: string
+          enum: [error, warning]
+
+    GenerateResult:
+      type: object
+      required: [generators]
+      properties:
+        generators:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratorOutput'
+
+    GeneratorOutput:
+      type: object
+      required: [name, status, files]
+      properties:
+        name:
+          type: string
+          description: Generator name (e.g. typescript, rust, markdown).
+        status:
+          type: string
+          enum: [success, skipped, failed]
+        files:
+          type: array
+          items:
+            type: string
+          description: List of generated file paths.
+        error:
+          type: string
+          description: Error message if status is failed.
+
+    TestResult:
+      type: object
+      required: [total, passed, failed, skipped, cases]
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        passed:
+          type: integer
+          minimum: 0
+        failed:
+          type: integer
+          minimum: 0
+        skipped:
+          type: integer
+          minimum: 0
+        durationMs:
+          type: integer
+          minimum: 0
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestCaseResult'
+
+    TestCaseResult:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          description: Test case ID.
+        status:
+          type: string
+          enum: [passed, failed, skipped]
+        durationMs:
+          type: integer
+          minimum: 0
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractViolation'
+
+    ContractViolation:
+      type: object
+      required: [type, message]
+      properties:
+        type:
+          type: string
+          enum:
+            - exit_code_mismatch
+            - stdout_schema_mismatch
+            - stderr_schema_mismatch
+            - stdout_format_mismatch
+            - stderr_format_mismatch
+            - file_missing
+            - file_schema_mismatch
+        message:
+          type: string
+        expected:
+          description: Expected value or schema excerpt.
+        actual:
+          description: Actual value received.
+
+    DiffResult:
+      type: object
+      required: [hasBreakingChanges, changes]
+      properties:
+        hasBreakingChanges:
+          type: boolean
+        breakingCount:
+          type: integer
+          minimum: 0
+        nonBreakingCount:
+          type: integer
+          minimum: 0
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiffChange'
+
+    DiffChange:
+      type: object
+      required: [type, path, breaking, description]
+      properties:
+        type:
+          type: string
+          enum: [added, removed, changed]
+        path:
+          type: string
+          description: JSON pointer to the changed location.
+        breaking:
+          type: boolean
+        description:
+          type: string
