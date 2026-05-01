@@ -475,6 +475,8 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
       return `${toCamelCase(o.name)}?: ${type}`;
     });
     params.push(`options: { ${optFields.join("; ")} }`);
+  } else {
+    params.push("options: Record<string, never>");
   }
 
   params.push("parentOpts: Record<string, unknown>");

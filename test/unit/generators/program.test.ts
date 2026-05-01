@@ -148,6 +148,114 @@ commandSets:
     expect(program).toContain("handlers.compare(old, newArg,");
   });
 
+  it("handler signature and action arity match for command with no options", () => {
+    const doc = parseContractString(`
+cliContracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+commandSets:
+  foo:
+    commands:
+      check:
+        summary: Run full verification pipeline for CI.
+        exits:
+          '0':
+            description: All checks passed.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    // Signature must include options param even with no options
+    expect(program).toContain(
+      "check: (options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+    // Action call must pass {} and parentOpts — matching the 2-arg signature
+    expect(program).toContain("await handlers.check({}, cmd.optsWithGlobals())");
+  });
+
+  it("handler signature and action arity match for command with args but no options", () => {
+    const doc = parseContractString(`
+cliContracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+commandSets:
+  foo:
+    commands:
+      deploy:
+        summary: Deploy to target.
+        arguments:
+          - name: target
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain(
+      "deploy: (target: string | undefined, options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+    expect(program).toContain(
+      "await handlers.deploy(target, {}, cmd.optsWithGlobals())",
+    );
+  });
+
+  it("handler signature includes typed options for command with options", () => {
+    const doc = parseContractString(`
+cliContracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+commandSets:
+  foo:
+    commands:
+      build:
+        summary: Build the project.
+        options:
+          - name: watch
+            schema:
+              type: boolean
+          - name: output-dir
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain(
+      "build: (options: { watch?: boolean; outputDir?: string }, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+    expect(program).toContain(
+      "await handlers.build(opts, cmd.optsWithGlobals())",
+    );
+  });
+
+  it("minimal contract (no args, no options) generates compilable program", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "minimal-contract.yaml"),
+    );
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    // Signature and call site must have same arity (2)
+    expect(program).toContain(
+      "hello: (options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+    expect(program).toContain("await handlers.hello({}, cmd.optsWithGlobals())");
+  });
+
   it("description comes from contract summary", () => {
     const doc = parseContractString(`
 cliContracts: 0.1.0
