@@ -3,13 +3,11 @@
 [![npm version](https://img.shields.io/npm/v/cli-contracts.svg)](https://www.npmjs.com/package/cli-contracts)
 [![license](https://img.shields.io/npm/l/cli-contracts.svg)](https://github.com/foo-ogawa/cli-contracts/blob/main/LICENSE)
 
-Contract-first specification and toolchain for command line interfaces.
+A contract-first toolchain for CLI interfaces.
 
-CLI tools are APIs too — but most of them are documented manually, tested loosely, and changed without compatibility checks.
+CLI Contracts is a contract-first toolchain for CLI interfaces. It does not implement your CLI. Instead, it defines the external contract of your CLI and uses that contract to generate types, documentation, wrappers, contract tests, and breaking-change reports.
 
-CLI Contracts brings an OpenAPI-like contract-first workflow to command line interfaces: define the contract once, then use it to generate types, documentation, wrappers, contract tests, and breaking-change reports.
-
-CLI Contracts makes CLI tools contract-first in the same sense that OpenAPI makes HTTP APIs contract-first — but focuses on the full lifecycle of CLI interfaces: validation, type generation, documentation, contract testing, breaking-change detection, and AI-agent-safe execution.
+CLI tools are APIs too — but most of them are documented manually, tested loosely, and changed without compatibility checks. CLI Contracts brings an OpenAPI-like contract-first workflow to command line interfaces: define the contract once, then validate, generate, test, and diff.
 
 For teams that expose CLIs to users, CI/CD pipelines, automation scripts, and AI agents, CLI Contracts provides a single source of truth for commands, inputs, outputs, exit codes, generated files, streams, tests, and breaking changes.
 
@@ -21,7 +19,7 @@ But unlike HTTP APIs, most CLIs do not have a contract-first workflow. Documenta
 
 CLI Contracts brings an OpenAPI-like workflow to command line tools: define the contract once, then use it to generate types, docs, wrappers, tests, and breaking-change reports.
 
-CLI Contracts can also make CLIs safer for AI agents by declaring side effects, risk levels, confirmation requirements, idempotency, and safe dry-run options through the `x-agent` extension.
+CLI Contracts can also provide AI-agent execution policies — side effects, risk levels, confirmation requirements, idempotency, and safe dry-run options — through the `x-agent` extension, so that agents can make informed safety decisions.
 
 ## What it does
 
@@ -32,7 +30,7 @@ Use the same contract to:
 - **Generate** TypeScript types, CLI wrappers, Markdown documentation, and custom output via Handlebars templates
 - **Test** real CLI implementations against the contract
 - **Diff** contract versions to detect breaking changes before release
-- **Describe AI agent policies** — risk level, side effects, idempotency, confirmation, and safe dry-run options via `x-agent`
+- **Declare AI-agent execution policies** — risk level, side effects, idempotency, confirmation, and safe dry-run options via `x-agent`
 
 Key contract features:
 
@@ -44,29 +42,31 @@ Key contract features:
 ## Install
 
 ```bash
-npm install cli-contracts
+npm install --save-dev cli-contracts
 ```
+
+CLI Contracts is a development-time toolchain. Install it as a devDependency and run commands via `npx` or npm scripts.
 
 ## Quick Start
 
 ```bash
 # Initialize a new contract
-cli-contracts init --name my-tool
+npx cli-contracts init --name my-tool
 
 # Validate
-cli-contracts validate
+npx cli-contracts validate
 
 # Generate docs + code (requires cli-contracts.config.yaml)
-cli-contracts generate
+npx cli-contracts generate
 
 # Generate Markdown docs only
-cli-contracts docs --output docs/cli-reference.md
+npx cli-contracts docs --output docs/cli-reference.md
 
 # Run contract tests against a real CLI
-cli-contracts test
+npx cli-contracts test
 
 # Detect breaking changes
-cli-contracts diff old.yaml new.yaml
+npx cli-contracts diff old.yaml new.yaml
 ```
 
 After running `generate`, you get:
@@ -457,6 +457,8 @@ For full details on every command, option, exit code, and output schema, see the
 
 ## Generators
 
+Generated code is intended to keep the CLI interface aligned with the contract. Business logic remains in your application code.
+
 ### TypeScript (`builtin:typescript`)
 
 Generates typed interfaces, command wrappers, and a Commander program definition from the contract.
@@ -523,7 +525,20 @@ entrypoints:
 
 ## Contract Tests
 
-Contract tests verify that a real CLI implementation conforms to the contract. Test cases are YAML files:
+Contract tests verify that a real CLI implementation conforms to the contract by executing the actual command and checking its outputs.
+
+Each test case:
+
+- Invokes the real command via an execution profile
+- Asserts the exit code
+- Validates stdout/stderr against JSON Schema when a schema is declared
+- Checks file outputs for existence, media type, and schema when file contracts are declared
+- Supports `absent: true` to assert that a stream produces no output
+- Respects configurable timeout and working directory per profile
+
+Non-JSON output formats (text, table, ndjson) are validated at the format level; deep schema validation applies to JSON and YAML outputs.
+
+Test cases are YAML files:
 
 ```yaml
 id: users.import.success
@@ -609,9 +624,13 @@ CLI Contracts started with a similar problem space, and OpenCLI was considered a
 
 OpenCLI primarily describes how a CLI is invoked. CLI Contracts describes how a CLI behaves as an interface.
 
-The goal is not to compete with OpenCLI as a standard, but to provide a practical toolchain for teams that need stronger guarantees around CLI compatibility, automation, and agent-safe execution.
+OpenCLI is closest to a description format. CLI Contracts is closer to a contract lifecycle toolchain.
+
+The goal is not to compete with OpenCLI as a standard, but to provide a practical toolchain for teams that need stronger guarantees around CLI compatibility, automation, and AI-agent execution policies.
 
 ## CLI Contracts vs OpenCLI
+
+OpenCLI is a description format. CLI Contracts is a contract lifecycle toolchain.
 
 OpenCLI focuses on describing CLI shape. CLI Contracts focuses on defining, generating, testing, and evolving CLI behavior.
 
@@ -672,7 +691,7 @@ Import/export support may be considered in the future if there is enough demand 
 
 CLI Contracts uses JSON Schema for data contracts embedded in arguments, options, exit outputs, streams, and file definitions.
 
-The supported JSON Schema dialect is determined by the validator implementation and will be documented before 1.0. The contract format itself is validated using Zod, and machine-readable JSON Schema files for the contract and config formats are published in the `schemas/` directory:
+Currently supports a practical subset of JSON Schema. Full dialect compatibility (targeting draft 2020-12) will be finalized before 1.0. The contract format itself is validated using Zod, and machine-readable JSON Schema files for the contract and config formats are published in the `schemas/` directory:
 
 - `schemas/cli-contract.schema.json` — schema for `cli-contract.yaml`
 - `schemas/cli-contracts.config.schema.json` — schema for `cli-contracts.config.yaml`
@@ -702,9 +721,14 @@ repo/
 
 ## Status
 
-CLI Contracts is currently pre-1.0. The contract format may evolve based on feedback, but the goal is to keep migration paths explicit and detectable through `cli-contracts diff`.
+CLI Contracts is currently pre-1.0. The current contract format version is `0.1.0`.
 
-The current contract format version is `0.1.0`.
+Until 1.0:
+
+- The contract format may change based on feedback.
+- Breaking format changes will be documented in release notes.
+- Migration guidance will be provided when possible.
+- The `diff` command is intended to help detect compatibility impact between contract versions, but does not guarantee automatic migration.
 
 ## License
 
