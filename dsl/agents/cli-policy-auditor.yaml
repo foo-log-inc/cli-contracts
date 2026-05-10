@@ -34,7 +34,7 @@ cli-policy-auditor:
     - id: R-POLICY-003
       description: >-
         Commands with sideEffects must declare idempotent.
-      severity: warning
+      severity: recommended
   escalation_criteria:
     - condition: Unable to determine risk level from contract alone
-      action: flag_for_human_review
+      action: stop_and_report

@@ -1,2 +1,3 @@
 dsl: ./cli-contracts-dsl.yaml
 generated_dir: ../src/generated/dsl
+templates_dir: ./templates

@@ -19,7 +19,7 @@
     }
   },
   "peerDependencies": {
-    "agent-contracts-runtime": ">=0.1.0"
+    "agent-contracts-runtime": ">=0.12.0"
   },
   "peerDependenciesMeta": {
     "agent-contracts-runtime": {
@@ -69,17 +69,19 @@
     "url": "https://github.com/foo-ogawa/cli-contracts/issues"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "commander": "^12.1.0",
+    "glob": "^10.3.10",
+    "handlebars": "^4.7.8",
     "js-yaml": "^4.1.0",
     "yaml": "^2.8.2",
-    "handlebars": "^4.7.8",
-    "ajv": "^8.17.1",
-    "glob": "^10.3.10",
     "zod": "^3.24.4"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
+    "agent-contracts": "^0.17.1",
+    "agent-contracts-runtime": "^0.12.0",
     "tsx": "^4.19.4",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0",

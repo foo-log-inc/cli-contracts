@@ -31,11 +31,11 @@ cli-contract-auditor:
     - id: R-DESIGN-002
       description: >-
         Exit code stdout schema should be defined for success exits.
-      severity: warning
+      severity: recommended
     - id: R-DESIGN-003
       description: >-
         Commands with file arguments should define file contracts.
-      severity: warning
+      severity: recommended
   escalation_criteria:
     - condition: Structural contract defects prevent meaningful audit
       action: stop_and_report
