@@ -214,6 +214,17 @@ cli-contracts init --name foo --multi-command-set
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: false
+  sideEffects: 
+    - filesystem
+```
+
 ---
 
 ### validate
@@ -544,7 +555,51 @@ cli-contracts validate --strict
 
   </details>
 
-- **stderr:** format=`text` *(optional)*
+- **stderr:** format=`json` *(optional)*
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+
+```
 
 ---
 
@@ -652,6 +707,9 @@ cli-contracts generate custom-go
   ```
 
   </details>
+
+- **Generated files:**
+  - `{stdout.generators[*].files[*]}` *(optional)*
 
 **Exit 1:** Unexpected error.
 
@@ -939,13 +997,25 @@ cli-contracts generate custom-go
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: medium
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - filesystem
+  safeDryRunOption: dry-run
+```
+
 ---
 
 ### docs
 
 Generate Markdown documentation.
 
-Shortcut for generating Markdown CLI reference documentation. Equivalent to "cli-contracts generate markdown".
+Generates Markdown CLI reference documentation from the contract. A simplified interface for the markdown generator; does not support --clean or generator selection. Use "cli-contracts generate markdown" for full control.
 
 **Usage:**
 
@@ -955,6 +1025,9 @@ cli-contracts docs
 ```
 cli-contracts docs --output docs/cli.md
 ```
+```
+cli-contracts docs --dry-run
+```
 
 #### Options
 
@@ -962,6 +1035,7 @@ cli-contracts docs --output docs/cli.md
 |---|---|---|---|---|
 | `--file` | -f | No |  | Contract file(s) to use as input. |
 | `--output` | -o | No |  | Output file path. |
+| `--dry-run` | -n | No | `false` | Show what would be generated without writing files. |
 
 #### Exit Codes
 
@@ -1028,6 +1102,9 @@ cli-contracts docs --output docs/cli.md
   ```
 
   </details>
+
+- **Generated files:**
+  - `{stdout.generators[*].files[*]}` (text/markdown) *(optional)*
 
 **Exit 1:** Unexpected error.
 
@@ -1215,6 +1292,18 @@ cli-contracts docs --output docs/cli.md
   ```
 
   </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - filesystem
+  safeDryRunOption: dry-run
+```
 
 ---
 
@@ -1679,13 +1768,24 @@ cli-contracts test --case users.import.success
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: medium
+  requiresConfirmation: false
+  idempotent: false
+  sideEffects: 
+    - process-execution
+```
+
 ---
 
 ### diff
 
 Compare contract versions and detect breaking changes.
 
-Compares two contract files (or git revisions) and reports additions, removals, modifications, and breaking changes.
+Compares two contract files (or git revisions) and reports additions, removals, modifications, and breaking changes. At least one input pair must be provided: either positional arguments (old new) or --base/--head options.
 
 **Usage:**
 
@@ -1939,6 +2039,17 @@ cli-contracts diff --base main --head HEAD
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+
+```
+
 ---
 
 ### propose-agent-policy
@@ -1969,7 +2080,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
-| `--format` |  | No | `"json"` | Output format for the result. |
+| `--report-format` |  | No | `"json"` | Output format for the audit report. |
 
 #### Exit Codes
 
@@ -2193,7 +2304,118 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
   </details>
 
-**Exit 1:** Completed with blocking findings.
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid input or configuration.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation/parse failed.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Completed with blocking findings.
 
 - **stdout:** format=`json`
 
@@ -2413,7 +2635,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
   </details>
 
-**Exit 2:** Invalid input or configuration.
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
 
 - **stderr:** format=`json`
 
@@ -2450,44 +2672,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
   </details>
 
-**Exit 3:** Runtime dependency missing (agent-contracts-runtime).
-
-- **stderr:** format=`json`
-
-  | Property | Type | Required | Description |
-  |---|---|---|---|
-  | `code` | `string` | Yes |  |
-  | `message` | `string` | Yes |  |
-  | `details` | `Record<string, any>` | No |  |
-
-  <details>
-  <summary>JSON Schema</summary>
-
-  ```json
-  {
-    "type": "object",
-    "required": [
-      "code",
-      "message"
-    ],
-    "properties": {
-      "code": {
-        "type": "string"
-      },
-      "message": {
-        "type": "string"
-      },
-      "details": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    }
-  }
-  ```
-
-  </details>
-
-**Exit 4:** LLM provider or adapter error.
+**Exit 12:** LLM provider or adapter error.
 
 - **stderr:** format=`json`
 
@@ -2567,7 +2752,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
-| `--format` |  | No | `"json"` | Output format for the result. |
+| `--report-format` |  | No | `"json"` | Output format for the audit report. |
 
 #### Exit Codes
 
@@ -2791,7 +2976,118 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
   </details>
 
-**Exit 1:** Completed with blocking findings.
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid input or configuration.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation/parse failed.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Completed with blocking findings.
 
 - **stdout:** format=`json`
 
@@ -3011,7 +3307,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
   </details>
 
-**Exit 2:** Invalid input or configuration.
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
 
 - **stderr:** format=`json`
 
@@ -3048,44 +3344,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
   </details>
 
-**Exit 3:** Runtime dependency missing (agent-contracts-runtime).
-
-- **stderr:** format=`json`
-
-  | Property | Type | Required | Description |
-  |---|---|---|---|
-  | `code` | `string` | Yes |  |
-  | `message` | `string` | Yes |  |
-  | `details` | `Record<string, any>` | No |  |
-
-  <details>
-  <summary>JSON Schema</summary>
-
-  ```json
-  {
-    "type": "object",
-    "required": [
-      "code",
-      "message"
-    ],
-    "properties": {
-      "code": {
-        "type": "string"
-      },
-      "message": {
-        "type": "string"
-      },
-      "details": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    }
-  }
-  ```
-
-  </details>
-
-**Exit 4:** LLM provider or adapter error.
+**Exit 12:** LLM provider or adapter error.
 
 - **stderr:** format=`json`
 
@@ -3566,6 +3825,17 @@ cli-contracts extract --all
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+
+```
+
 ---
 
 ### propose-tests
@@ -3596,7 +3866,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
-| `--format` |  | No | `"json"` | Output format for the result. |
+| `--report-format` |  | No | `"json"` | Output format for the audit report. |
 
 #### Exit Codes
 
@@ -3820,7 +4090,118 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
   </details>
 
-**Exit 1:** Completed with blocking findings.
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid input or configuration.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation/parse failed.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Completed with blocking findings.
 
 - **stdout:** format=`json`
 
@@ -4040,7 +4421,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
   </details>
 
-**Exit 2:** Invalid input or configuration.
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
 
 - **stderr:** format=`json`
 
@@ -4077,44 +4458,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
   </details>
 
-**Exit 3:** Runtime dependency missing (agent-contracts-runtime).
-
-- **stderr:** format=`json`
-
-  | Property | Type | Required | Description |
-  |---|---|---|---|
-  | `code` | `string` | Yes |  |
-  | `message` | `string` | Yes |  |
-  | `details` | `Record<string, any>` | No |  |
-
-  <details>
-  <summary>JSON Schema</summary>
-
-  ```json
-  {
-    "type": "object",
-    "required": [
-      "code",
-      "message"
-    ],
-    "properties": {
-      "code": {
-        "type": "string"
-      },
-      "message": {
-        "type": "string"
-      },
-      "details": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    }
-  }
-  ```
-
-  </details>
-
-**Exit 4:** LLM provider or adapter error.
+**Exit 12:** LLM provider or adapter error.
 
 - **stderr:** format=`json`
 
@@ -4169,7 +4513,7 @@ x-agent:
 
 Explain contract diff in human- and agent-readable form.
 
-Takes a diff result (from cli-contracts diff) and generates human-friendly explanations including breaking change impact, migration notes, semver suggestions, and release note drafts.
+Takes a diff result (from cli-contracts diff) and generates human-friendly explanations including breaking change impact, migration notes, semver suggestions, and release note drafts. At least one input pair must be provided: either positional arguments (old new) or --base/--head options.
 
 **Usage:**
 
@@ -4202,7 +4546,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
-| `--format` |  | No | `"json"` | Output format for the result. |
+| `--report-format` |  | No | `"json"` | Output format for the audit report. |
 
 #### Exit Codes
 
@@ -4426,7 +4770,118 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 
   </details>
 
-**Exit 1:** Completed with blocking findings.
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid input or configuration.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation/parse failed.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Completed with blocking findings.
 
 - **stdout:** format=`json`
 
@@ -4646,7 +5101,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 
   </details>
 
-**Exit 2:** Invalid input or configuration.
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
 
 - **stderr:** format=`json`
 
@@ -4683,44 +5138,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 
   </details>
 
-**Exit 3:** Runtime dependency missing (agent-contracts-runtime).
-
-- **stderr:** format=`json`
-
-  | Property | Type | Required | Description |
-  |---|---|---|---|
-  | `code` | `string` | Yes |  |
-  | `message` | `string` | Yes |  |
-  | `details` | `Record<string, any>` | No |  |
-
-  <details>
-  <summary>JSON Schema</summary>
-
-  ```json
-  {
-    "type": "object",
-    "required": [
-      "code",
-      "message"
-    ],
-    "properties": {
-      "code": {
-        "type": "string"
-      },
-      "message": {
-        "type": "string"
-      },
-      "details": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    }
-  }
-  ```
-
-  </details>
-
-**Exit 4:** LLM provider or adapter error.
+**Exit 12:** LLM provider or adapter error.
 
 - **stderr:** format=`json`
 
@@ -4803,7 +5221,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
-| `--format` |  | No | `"json"` | Output format for the result. |
+| `--report-format` |  | No | `"json"` | Output format for the suggestion report. |
 
 #### Exit Codes
 
@@ -5027,7 +5445,118 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
   </details>
 
-**Exit 1:** Suggestion generated with issues.
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid input or no source specified.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 3:** Contract validation/parse failed.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Suggestion generated with blocking issues.
 
 - **stdout:** format=`json`
 
@@ -5247,7 +5776,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
   </details>
 
-**Exit 2:** Invalid input or no source specified.
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
 
 - **stderr:** format=`json`
 
@@ -5284,44 +5813,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
   </details>
 
-**Exit 3:** Runtime dependency missing (agent-contracts-runtime).
-
-- **stderr:** format=`json`
-
-  | Property | Type | Required | Description |
-  |---|---|---|---|
-  | `code` | `string` | Yes |  |
-  | `message` | `string` | Yes |  |
-  | `details` | `Record<string, any>` | No |  |
-
-  <details>
-  <summary>JSON Schema</summary>
-
-  ```json
-  {
-    "type": "object",
-    "required": [
-      "code",
-      "message"
-    ],
-    "properties": {
-      "code": {
-        "type": "string"
-      },
-      "message": {
-        "type": "string"
-      },
-      "details": {
-        "type": "object",
-        "additionalProperties": true
-      }
-    }
-  }
-  ```
-
-  </details>
-
-**Exit 4:** LLM provider or adapter error.
+**Exit 12:** LLM provider or adapter error.
 
 - **stderr:** format=`json`
 

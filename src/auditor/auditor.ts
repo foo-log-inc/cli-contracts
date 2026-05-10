@@ -8,8 +8,8 @@
 
 import type { AuditConfig, AuditOptions, AuditRunResult } from "./types.js";
 
-const EXIT_RUNTIME_MISSING = 3;
-const EXIT_ADAPTER_ERROR = 4;
+const EXIT_RUNTIME_MISSING = 11;
+const EXIT_ADAPTER_ERROR = 12;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function createAdapter(runtimePkg: string, name: string, config: AuditConfig): Promise<any> {
@@ -27,7 +27,7 @@ async function createAdapter(runtimePkg: string, name: string, config: AuditConf
           "Get your key from: https://cursor.com/dashboard/integrations",
         );
       }
-      return mod.CursorSdkAdapter.create({ apiKey, model: config.model });
+      return mod.CursorSdkAdapter.create({ apiKey, model: config.model ?? "claude-opus-4-6" });
     }
     case "claude": {
       const mod = await import(`${runtimePkg}/adapters/claude-agent-sdk`);
@@ -48,7 +48,7 @@ async function createAdapter(runtimePkg: string, name: string, config: AuditConf
       const mod = await import(`${runtimePkg}/adapters/gemini-sdk`);
       return new mod.GeminiSdkAdapter({
         apiKey: process.env.GEMINI_API_KEY,
-        model: config.model ?? "gemini-2.5-flash",
+        model: config.model ?? "gemini-2.5-pro",
         temperature: config.temperature,
       });
     }
@@ -124,8 +124,8 @@ export async function runAudit(
   const result = await runTask(adapter, taskId, {
     user_request: userRequest,
   }, {
-    maxFollowUps: 2,
-    maxRetries: 0,
+    maxFollowUps: 3,
+    maxRetries: 1,
     agentRegistry,
     taskRegistry,
     handoffSchemas,

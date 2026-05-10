@@ -13,7 +13,7 @@ export interface SuggestOptions {
   model?: string;
   dryRun?: boolean;
   output?: string;
-  format?: string;
+  reportFormat?: string;
 }
 
 export async function runSuggest(
@@ -50,7 +50,7 @@ export async function runSuggest(
 
   const auditOptions: AuditOptions = {
     taskId: "suggest-contract",
-    format: (options.format as "json" | "text") ?? "json",
+    format: (options.reportFormat as "json" | "text") ?? "json",
     dryRun: options.dryRun ?? false,
     failOn: "error",
     outputFile: options.output,
@@ -77,9 +77,9 @@ export async function runSuggest(
   };
 
   if (options.output) {
-    const content = options.format === "yaml"
+    const content = options.reportFormat === "yaml"
       ? formatYamlOutput(output)
-      : options.format === "text"
+      : options.reportFormat === "text"
         ? formatTextOutput(output)
         : JSON.stringify(output, null, 2);
     await writeFile(resolve(options.output), content, "utf8");

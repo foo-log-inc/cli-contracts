@@ -5,15 +5,15 @@ export interface CommandHandlers {
   init: (options: { name?: string; multiCommandSet?: boolean; output?: string; withConfig?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   validate: (options: { file?: string; strict?: boolean; resolveRefs?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  docs: (options: { file?: string; output?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  docs: (options: { file?: string; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeAgentPolicy: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  audit: (options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeAgentPolicy: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  audit: (options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeTests: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; dryRun?: boolean; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeTests: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; dryRun?: boolean; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
 export function createProgram(
@@ -69,6 +69,7 @@ export function createProgram(
     .description("Generate Markdown documentation.")
     .option("-f, --file <file...>", "Contract file(s) to use as input.")
     .option("-o, --output <file>", "Output file path.")
+    .option("-n, --dry-run", "Show what would be generated without writing files.", false)
     .action(async (opts, cmd) => {
       await handlers.docs(opts, cmd.optsWithGlobals());
     });
@@ -108,7 +109,7 @@ export function createProgram(
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
-    .option("--format <fmt>", "Output format for the result.", "json")
+    .option("--report-format <fmt>", "Output format for the audit report.", "json")
     .action(async (opts, cmd) => {
       await handlers.proposeAgentPolicy(opts, cmd.optsWithGlobals());
     });
@@ -123,7 +124,7 @@ export function createProgram(
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
-    .option("--format <fmt>", "Output format for the result.", "json")
+    .option("--report-format <fmt>", "Output format for the audit report.", "json")
     .action(async (opts, cmd) => {
       await handlers.audit(opts, cmd.optsWithGlobals());
     });
@@ -148,7 +149,7 @@ export function createProgram(
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
-    .option("--format <fmt>", "Output format for the result.", "json")
+    .option("--report-format <fmt>", "Output format for the audit report.", "json")
     .action(async (opts, cmd) => {
       await handlers.proposeTests(opts, cmd.optsWithGlobals());
     });
@@ -166,7 +167,7 @@ export function createProgram(
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
-    .option("--format <fmt>", "Output format for the result.", "json")
+    .option("--report-format <fmt>", "Output format for the audit report.", "json")
     .action(async (old, newArg, opts, cmd) => {
       await handlers.explainDiff(old, newArg, opts, cmd.optsWithGlobals());
     });
@@ -181,7 +182,7 @@ export function createProgram(
     .option("--model <name>", "Model name to pass to the adapter.")
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
-    .option("--format <fmt>", "Output format for the result.", "json")
+    .option("--report-format <fmt>", "Output format for the suggestion report.", "json")
     .action(async (opts, cmd) => {
       await handlers.suggest(opts, cmd.optsWithGlobals());
     });

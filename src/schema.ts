@@ -38,7 +38,7 @@ export type JsonSchema = {
  * for downstream convenience.
  */
 export const JsonSchemaSchema: z.ZodType<JsonSchema> = z
-  .record(z.unknown()) as z.ZodType<JsonSchema>;
+  .record(z.string(), z.unknown()) as z.ZodType<JsonSchema>;
 
 // ─── Contract Document Schemas ──────────────────────────────────
 
@@ -90,7 +90,7 @@ export const OutputContractSchema = z.object({
   required: z.boolean().optional(),
   format: z.string().min(1, "Output format is required"),
   schema: JsonSchemaSchema.optional(),
-  examples: z.record(z.object({ value: z.unknown() })).optional(),
+  examples: z.record(z.string(), z.object({ value: z.unknown() })).optional(),
 });
 
 export const GeneratedFileSchema = z.object({
@@ -140,8 +140,8 @@ export const ExampleSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   command: z.string().optional(),
-  args: z.record(z.unknown()).optional(),
-  options: z.record(z.unknown()).optional(),
+  args: z.record(z.string(), z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
   expectedExitCode: z.number().int().optional(),
 });
 
@@ -190,7 +190,7 @@ export const CommandSchema = z
     arguments: z.array(ArgumentSchema).optional(),
     options: z.array(OptionSchema).optional(),
     streams: StreamsSchema.optional(),
-    signals: z.record(SignalSchema).optional(),
+    signals: z.record(z.string(), SignalSchema).optional(),
     exits: z.record(exitCodeKey, ExitSchema),
     examples: z.array(ExampleSchema).optional(),
     deprecated: DeprecationInfoSchema.optional(),
@@ -208,9 +208,9 @@ export const CommandSetSchema = z
     executable: z.string().optional(),
     summary: z.string().optional(),
     description: z.string().optional(),
-    commands: z.record(CommandSchema),
+    commands: z.record(z.string(), CommandSchema),
     globalOptions: z.array(OptionSchema).optional(),
-    env: z.record(EnvVarSchema).optional(),
+    env: z.record(z.string(), EnvVarSchema).optional(),
   })
   .passthrough(); // allow x-* extensions
 
@@ -228,18 +228,18 @@ export const InfoSchema = z.object({
 });
 
 export const ComponentsSchema = z.object({
-  schemas: z.record(JsonSchemaSchema).optional(),
-  examples: z.record(z.unknown()).optional(),
-  exits: z.record(ExitSchema).optional(),
-  streamItems: z.record(z.unknown()).optional(),
-  fileSchemas: z.record(z.unknown()).optional(),
+  schemas: z.record(z.string(), JsonSchemaSchema).optional(),
+  examples: z.record(z.string(), z.unknown()).optional(),
+  exits: z.record(z.string(), ExitSchema).optional(),
+  streamItems: z.record(z.string(), z.unknown()).optional(),
+  fileSchemas: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const CliContractsDocumentSchema = z.object({
   cliContracts: z.string().min(1, "Spec version (cliContracts) is required"),
   info: InfoSchema,
   commandSets: z
-    .record(CommandSetSchema)
+    .record(z.string(), CommandSetSchema)
     .refine((cs) => Object.keys(cs).length > 0, {
       message: "At least one command set is required",
     }),
@@ -265,14 +265,14 @@ export const ExecutionProfileCommandSetSchema = z.object({
 
 export const ExecutionProfileSchema = z.object({
   default: z.boolean().optional(),
-  commandSets: z.record(ExecutionProfileCommandSetSchema),
+  commandSets: z.record(z.string(), ExecutionProfileCommandSetSchema),
 });
 
 export const GeneratorConfigSchema = z.object({
   enabled: z.boolean(),
   output: z.string(),
   templates: z.string(),
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const ContractTestsConfigSchema = z.object({
@@ -283,7 +283,7 @@ export const ContractTestsConfigSchema = z.object({
   validateStdout: z.boolean().optional(),
   validateStderr: z.boolean().optional(),
   validateFiles: z.boolean().optional(),
-  env: z.record(z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
 });
 
 export const DiffConfigSchema = z.object({
@@ -295,8 +295,8 @@ export const CliContractsConfigSchema = z.object({
   version: z.string(),
   input: InputConfigSchema.optional(),
   validation: ValidationConfigSchema.optional(),
-  executionProfiles: z.record(ExecutionProfileSchema).optional(),
-  generators: z.record(GeneratorConfigSchema).optional(),
+  executionProfiles: z.record(z.string(), ExecutionProfileSchema).optional(),
+  generators: z.record(z.string(), GeneratorConfigSchema).optional(),
   contractTests: ContractTestsConfigSchema.optional(),
   diff: DiffConfigSchema.optional(),
 });

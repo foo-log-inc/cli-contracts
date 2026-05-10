@@ -27,7 +27,7 @@ export type ValidateExitResult =
   { exitCode: 0; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
   | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] }; stderr?: unknown };
+  | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] }; stderr?: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface GenerateArgs {
   generators?: string[];
@@ -52,6 +52,7 @@ export type GenerateExitResult =
 export interface DocsOptions {
   file?: string;
   output?: string;
+  dryRun?: boolean;
 }
 
 export type DocsExitCode = 0 | 1 | 2 | 3;
@@ -107,17 +108,19 @@ export interface ProposeAgentPolicyOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  format?: "json" | "text";
+  reportFormat?: "json" | "text";
 }
 
-export type ProposeAgentPolicyExitCode = 0 | 1 | 2 | 3 | 4;
+export type ProposeAgentPolicyExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
 
 export type ProposeAgentPolicyExitResult =
   { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
-  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface AuditOptions {
   file?: string;
@@ -127,17 +130,19 @@ export interface AuditOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  format?: "json" | "text";
+  reportFormat?: "json" | "text";
 }
 
-export type AuditExitCode = 0 | 1 | 2 | 3 | 4;
+export type AuditExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
 
 export type AuditExitResult =
   { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
-  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface ExtractArgs {
   commands?: string[];
@@ -165,17 +170,19 @@ export interface ProposeTestsOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  format?: "json" | "text";
+  reportFormat?: "json" | "text";
 }
 
-export type ProposeTestsExitCode = 0 | 1 | 2 | 3 | 4;
+export type ProposeTestsExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
 
 export type ProposeTestsExitResult =
   { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
-  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface ExplainDiffArgs {
   old?: string;
@@ -191,17 +198,19 @@ export interface ExplainDiffOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  format?: "json" | "text";
+  reportFormat?: "json" | "text";
 }
 
-export type ExplainDiffExitCode = 0 | 1 | 2 | 3 | 4;
+export type ExplainDiffExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
 
 export type ExplainDiffExitResult =
   { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
-  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface SuggestOptions {
   fromReadme?: string;
@@ -211,17 +220,19 @@ export interface SuggestOptions {
   model?: string;
   dryRun?: boolean;
   output?: string;
-  format?: "json" | "text" | "yaml";
+  reportFormat?: "json" | "text" | "yaml";
 }
 
-export type SuggestExitCode = 0 | 1 | 2 | 3 | 4;
+export type SuggestExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
 
 export type SuggestExitResult =
   { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
-  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface Error {
   code: string;

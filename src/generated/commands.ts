@@ -94,6 +94,7 @@ export async function cliContractsDocs(
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.dryRun) cmdArgs.push("--dry-run");
   }
 
   try {
@@ -176,7 +177,7 @@ export async function cliContractsProposeAgentPolicy(
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {
@@ -205,7 +206,7 @@ export async function cliContractsAudit(
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {
@@ -259,7 +260,7 @@ export async function cliContractsProposeTests(
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {
@@ -292,7 +293,7 @@ export async function cliContractsExplainDiff(
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {
@@ -321,7 +322,7 @@ export async function cliContractsSuggest(
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {

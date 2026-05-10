@@ -78,6 +78,12 @@ commandSets:
           - cli-contracts init --name foo
           - cli-contracts init --name foo --multi-command-set
 
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: false
+          sideEffects: [filesystem]
+
         options:
           - name: name
             aliases: [n]
@@ -159,6 +165,12 @@ commandSets:
           - cli-contracts validate --file cli-contract.yaml
           - cli-contracts validate --strict
 
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
+
         options:
           - name: file
             aliases: [f]
@@ -215,7 +227,9 @@ commandSets:
                 $ref: '#/components/schemas/ValidateResult'
             stderr:
               required: false
-              format: text
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
       # ── generate ────────────────────────────────────────
@@ -230,6 +244,13 @@ commandSets:
           - cli-contracts generate rust
           - cli-contracts generate markdown
           - cli-contracts generate custom-go
+
+        x-agent:
+          riskLevel: medium
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [filesystem]
+          safeDryRunOption: dry-run
 
         arguments:
           - name: generators
@@ -281,6 +302,10 @@ commandSets:
               format: yaml
               schema:
                 $ref: '#/components/schemas/GenerateResult'
+            files:
+              - path: '{stdout.generators[*].files[*]}'
+                required: false
+                description: Generated output files as listed in GenerateResult.
 
           '1':
             description: Unexpected error.
@@ -319,11 +344,21 @@ commandSets:
       docs:
         summary: Generate Markdown documentation.
         description: >-
-          Shortcut for generating Markdown CLI reference documentation.
-          Equivalent to "cli-contracts generate markdown".
+          Generates Markdown CLI reference documentation from the contract.
+          A simplified interface for the markdown generator; does not support
+          --clean or generator selection. Use "cli-contracts generate markdown"
+          for full control.
         usage:
           - cli-contracts docs
           - cli-contracts docs --output docs/cli.md
+          - cli-contracts docs --dry-run
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [filesystem]
+          safeDryRunOption: dry-run
 
         options:
           - name: file
@@ -345,6 +380,17 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: text/markdown
+              encoding: utf-8
+
+          - name: dry-run
+            aliases: [n]
+            description: Show what would be generated without writing files.
+            schema:
+              type: boolean
+              default: false
 
         exits:
           '0':
@@ -353,6 +399,12 @@ commandSets:
               format: yaml
               schema:
                 $ref: '#/components/schemas/GenerateResult'
+            files:
+              - path: '{stdout.generators[*].files[*]}'
+                required: false
+                mediaType: text/markdown
+                encoding: utf-8
+                description: Generated markdown documentation files.
 
           '1':
             description: Unexpected error.
@@ -386,6 +438,12 @@ commandSets:
           - cli-contracts test
           - cli-contracts test --profile local
           - cli-contracts test --case users.import.success
+
+        x-agent:
+          riskLevel: medium
+          requiresConfirmation: false
+          idempotent: false
+          sideEffects: [process-execution]
 
         options:
           - name: profile
@@ -465,9 +523,17 @@ commandSets:
         description: >-
           Compares two contract files (or git revisions) and reports
           additions, removals, modifications, and breaking changes.
+          At least one input pair must be provided: either positional
+          arguments (old new) or --base/--head options.
         usage:
           - cli-contracts diff old.yaml new.yaml
           - cli-contracts diff --base main --head HEAD
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
 
         arguments:
           - name: old
@@ -619,9 +685,13 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
 
-          - name: format
-            description: Output format for the result.
+          - name: report-format
+            description: Output format for the audit report.
             valueName: fmt
             schema:
               type: string
@@ -644,11 +714,11 @@ commandSets:
                 $ref: '#/components/schemas/AgentAuditResult'
 
           '1':
-            description: Completed with blocking findings.
-            stdout:
+            description: Unexpected error.
+            stderr:
               format: json
               schema:
-                $ref: '#/components/schemas/AgentAuditResult'
+                $ref: '#/components/schemas/Error'
 
           '2':
             description: Invalid input or configuration.
@@ -658,13 +728,27 @@ commandSets:
                 $ref: '#/components/schemas/Error'
 
           '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
             description: Runtime dependency missing (agent-contracts-runtime).
             stderr:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '4':
+          '12':
             description: LLM provider or adapter error.
             stderr:
               format: json
@@ -738,9 +822,13 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
 
-          - name: format
-            description: Output format for the result.
+          - name: report-format
+            description: Output format for the audit report.
             valueName: fmt
             schema:
               type: string
@@ -763,11 +851,11 @@ commandSets:
                 $ref: '#/components/schemas/AgentAuditResult'
 
           '1':
-            description: Completed with blocking findings.
-            stdout:
+            description: Unexpected error.
+            stderr:
               format: json
               schema:
-                $ref: '#/components/schemas/AgentAuditResult'
+                $ref: '#/components/schemas/Error'
 
           '2':
             description: Invalid input or configuration.
@@ -777,13 +865,27 @@ commandSets:
                 $ref: '#/components/schemas/Error'
 
           '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
             description: Runtime dependency missing (agent-contracts-runtime).
             stderr:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '4':
+          '12':
             description: LLM provider or adapter error.
             stderr:
               format: json
@@ -801,6 +903,12 @@ commandSets:
           - cli-contracts extract init validate
           - cli-contracts extract --file cli-contract.yaml init
           - cli-contracts extract --all
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
 
         arguments:
           - name: commands
@@ -939,9 +1047,13 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
 
-          - name: format
-            description: Output format for the result.
+          - name: report-format
+            description: Output format for the audit report.
             valueName: fmt
             schema:
               type: string
@@ -964,11 +1076,11 @@ commandSets:
                 $ref: '#/components/schemas/AgentAuditResult'
 
           '1':
-            description: Completed with blocking findings.
-            stdout:
+            description: Unexpected error.
+            stderr:
               format: json
               schema:
-                $ref: '#/components/schemas/AgentAuditResult'
+                $ref: '#/components/schemas/Error'
 
           '2':
             description: Invalid input or configuration.
@@ -978,13 +1090,27 @@ commandSets:
                 $ref: '#/components/schemas/Error'
 
           '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
             description: Runtime dependency missing (agent-contracts-runtime).
             stderr:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '4':
+          '12':
             description: LLM provider or adapter error.
             stderr:
               format: json
@@ -998,6 +1124,8 @@ commandSets:
           Takes a diff result (from cli-contracts diff) and generates
           human-friendly explanations including breaking change impact,
           migration notes, semver suggestions, and release note drafts.
+          At least one input pair must be provided: either positional
+          arguments (old new) or --base/--head options.
         usage:
           - cli-contracts explain-diff old.yaml new.yaml
           - cli-contracts explain-diff --base main --head HEAD --adapter gemini
@@ -1082,9 +1210,13 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
 
-          - name: format
-            description: Output format for the result.
+          - name: report-format
+            description: Output format for the audit report.
             valueName: fmt
             schema:
               type: string
@@ -1107,11 +1239,11 @@ commandSets:
                 $ref: '#/components/schemas/AgentAuditResult'
 
           '1':
-            description: Completed with blocking findings.
-            stdout:
+            description: Unexpected error.
+            stderr:
               format: json
               schema:
-                $ref: '#/components/schemas/AgentAuditResult'
+                $ref: '#/components/schemas/Error'
 
           '2':
             description: Invalid input or configuration.
@@ -1121,13 +1253,27 @@ commandSets:
                 $ref: '#/components/schemas/Error'
 
           '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
             description: Runtime dependency missing (agent-contracts-runtime).
             stderr:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '4':
+          '12':
             description: LLM provider or adapter error.
             stderr:
               format: json
@@ -1203,9 +1349,13 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
 
-          - name: format
-            description: Output format for the result.
+          - name: report-format
+            description: Output format for the suggestion report.
             valueName: fmt
             schema:
               type: string
@@ -1228,11 +1378,11 @@ commandSets:
                 $ref: '#/components/schemas/AgentAuditResult'
 
           '1':
-            description: Suggestion generated with issues.
-            stdout:
+            description: Unexpected error.
+            stderr:
               format: json
               schema:
-                $ref: '#/components/schemas/AgentAuditResult'
+                $ref: '#/components/schemas/Error'
 
           '2':
             description: Invalid input or no source specified.
@@ -1242,13 +1392,27 @@ commandSets:
                 $ref: '#/components/schemas/Error'
 
           '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Suggestion generated with blocking issues.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
             description: Runtime dependency missing (agent-contracts-runtime).
             stderr:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '4':
+          '12':
             description: LLM provider or adapter error.
             stderr:
               format: json

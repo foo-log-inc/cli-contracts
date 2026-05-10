@@ -188,7 +188,7 @@ const handlers: CommandHandlers = {
 
       const { result, exitCode } = await runProposeAgentPolicy(files, options);
 
-      if (options.format === "text") {
+      if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
@@ -198,11 +198,11 @@ const handlers: CommandHandlers = {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(3);
+        process.exit(11);
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(4);
+        process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
@@ -220,7 +220,7 @@ const handlers: CommandHandlers = {
 
       const { result, exitCode } = await runAuditCommand(files, options);
 
-      if (options.format === "text") {
+      if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
@@ -230,11 +230,11 @@ const handlers: CommandHandlers = {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(3);
+        process.exit(11);
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(4);
+        process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
@@ -252,7 +252,7 @@ const handlers: CommandHandlers = {
 
       const { result, exitCode } = await runProposeTests(files, options);
 
-      if (options.format === "text") {
+      if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
@@ -262,11 +262,11 @@ const handlers: CommandHandlers = {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(3);
+        process.exit(11);
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(4);
+        process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
@@ -277,7 +277,7 @@ const handlers: CommandHandlers = {
     try {
       const { result, exitCode } = await runExplainDiff(old, newArg, options);
 
-      if (options.format === "text") {
+      if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
@@ -287,11 +287,11 @@ const handlers: CommandHandlers = {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(3);
+        process.exit(11);
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(4);
+        process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
@@ -302,9 +302,9 @@ const handlers: CommandHandlers = {
     try {
       const { result, exitCode } = await runSuggest(options);
 
-      if (options.format === "text") {
+      if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
-      } else if (options.format === "yaml") {
+      } else if (options.reportFormat === "yaml") {
         const yaml = await import("yaml");
         process.stdout.write(yaml.stringify(result) + "\n");
       } else {
@@ -315,11 +315,11 @@ const handlers: CommandHandlers = {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(3);
+        process.exit(11);
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(4);
+        process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);

@@ -15,7 +15,7 @@ export interface ExplainDiffOptions {
   dryRun?: boolean;
   failOn?: string;
   output?: string;
-  format?: string;
+  reportFormat?: string;
 }
 
 export async function runExplainDiff(
@@ -48,7 +48,7 @@ export async function runExplainDiff(
 
   const auditOptions: AuditOptions = {
     taskId: "explain-contract-diff",
-    format: (options.format as "json" | "text") ?? "json",
+    format: (options.reportFormat as "json" | "text") ?? "json",
     dryRun: options.dryRun ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
@@ -75,7 +75,7 @@ export async function runExplainDiff(
   };
 
   if (options.output) {
-    const content = options.format === "text"
+    const content = options.reportFormat === "text"
       ? formatTextOutput(output)
       : JSON.stringify(output, null, 2);
     await writeFile(resolve(options.output), content, "utf8");
@@ -99,7 +99,7 @@ function determineExitCode(
     (f) => severityOrder.indexOf(f.severity) >= threshold,
   );
 
-  return hasBlocking ? 1 : 0;
+  return hasBlocking ? 10 : 0;
 }
 
 function formatTextOutput(result: Record<string, unknown>): string {
