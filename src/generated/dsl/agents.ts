@@ -302,11 +302,80 @@ export const cliTestProposer: AgentContract = {
 ],
 } as const;
 
+export const cliReferenceChecker: AgentContract = {
+  id: "cli-reference-checker",
+  role_name: "CLI Reference Conformance Checker",
+  purpose: "Check whether LLM-powered commands in a cli-contract.yaml conform to the cli-contracts reference specification. Verifies standard option sets, exit codes, AgentAuditResult schema conformance, x-agent metadata completeness, and AgentEvidence base property alignment.",
+  mode: "read-only",
+  dispatch_only: false,
+  can_read_artifacts: [
+  "cli-contract-source"
+],
+  can_write_artifacts: [],
+  can_execute_tools: [],
+  can_invoke_agents: [],
+  can_return_handoffs: [
+  "cli-audit-result"
+],
+  responsibilities: [
+  "Identify LLM-powered commands in the contract",
+  "Verify each LLM command has the standard option set (adapter, model, dry-run, fail-on, output, report-format)",
+  "Verify exit code coverage (0, 1, 10, 11, 12)",
+  "Check x-agent metadata completeness (safeDryRunOption, sideEffectNote, expectedDurationMs, retryableExitCodes)",
+  "Verify stdout schemas conform to or extend AgentAuditResult / AgentFinding / AgentRecommendedAction",
+  "Check AgentEvidence base properties (type, content, source) when evidence schemas are present",
+  "Evaluate semantic consistency of LLM command contracts"
+],
+  constraints: [
+  "Base conformance checks on the deterministic pre-analysis provided in context",
+  "Mark uncertain findings with lower confidence",
+  "Distinguish between missing (error) and suboptimal (warning) conformance"
+],
+  rules: [
+  {
+    "id": "R-REF-001",
+    "description": "Every LLM command must include the standard option set: --adapter, --model, --dry-run, --fail-on, --output, --report-format.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-REF-002",
+    "description": "Every LLM command must declare exit codes 0, 1, 10, 11, 12 with semantics matching the reference specification.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-REF-003",
+    "description": "Stdout schemas for LLM commands must conform to or extend the AgentAuditResult shape (summary, riskLevel, findings).",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-REF-004",
+    "description": "x-agent metadata must include safeDryRunOption for LLM commands.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-REF-005",
+    "description": "x-agent metadata should include sideEffectNote, expectedDurationMs, and retryableExitCodes for LLM commands.",
+    "severity": "recommended"
+  }
+],
+  escalation_criteria: [
+  {
+    "condition": "Contract cannot be parsed or is structurally invalid",
+    "action": "stop_and_report"
+  },
+  {
+    "condition": "No LLM-powered commands detected in the contract",
+    "action": "stop_and_report"
+  }
+],
+} as const;
+
 export const agentRegistry: Record<string, AgentContract> = {
   "cli-contract-auditor": cliContractAuditor,
   "cli-contract-suggester": cliContractSuggester,
   "cli-diff-explainer": cliDiffExplainer,
   "cli-policy-auditor": cliPolicyAuditor,
+  "cli-reference-checker": cliReferenceChecker,
   "cli-test-proposer": cliTestProposer,
 } as const;
 

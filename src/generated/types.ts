@@ -224,6 +224,31 @@ export type ExplainDiffExitResult =
   | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface CheckReferenceArgs {
+  contract?: string;
+}
+
+export interface CheckReferenceOptions {
+  file?: string;
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
+  output?: string;
+  reportFormat?: "json" | "text" | "yaml";
+}
+
+export type CheckReferenceExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
+
+export type CheckReferenceExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 10; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
 export interface SuggestOptions {
   fromReadme?: string;
   fromHelp?: string;

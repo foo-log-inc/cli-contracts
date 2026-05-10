@@ -929,4 +929,5 @@ export const auditExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const extractExitCodes = [0, 1, 2, 3, 8] as const;
 export const proposeTestsExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const explainDiffExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
+export const checkReferenceExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const suggestExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;

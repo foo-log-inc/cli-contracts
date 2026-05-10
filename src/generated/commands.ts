@@ -315,6 +315,36 @@ export async function cliContractsExplainDiff(
   }
 }
 
+export async function cliContractsCheckReference(
+  executable: string,
+  args: import("./types.js").CheckReferenceArgs,
+  options?: Partial<import("./types.js").CheckReferenceOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["check-reference"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
 export async function cliContractsSuggest(
   executable: string,
   options?: Partial<import("./types.js").SuggestOptions>,

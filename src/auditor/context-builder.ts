@@ -162,6 +162,198 @@ export function buildDiffExplainContext(
   return sections.join("\n\n");
 }
 
+// ─── Reference Conformance Check ────────────────────────────────
+
+const REFERENCE_OPTIONS = [
+  "adapter", "model", "dry-run", "fail-on", "output", "report-format",
+] as const;
+
+const REFERENCE_EXIT_CODES = ["0", "1", "10", "11", "12"] as const;
+
+const REFERENCE_XAGENT_REQUIRED = ["safeDryRunOption"] as const;
+const REFERENCE_XAGENT_RECOMMENDED = [
+  "sideEffectNote", "expectedDurationMs", "retryableExitCodes",
+] as const;
+
+interface CommandPreAnalysis {
+  commandId: string;
+  commandSetId: string;
+  presentOptions: string[];
+  missingOptions: string[];
+  presentExitCodes: string[];
+  missingExitCodes: string[];
+  xAgentPresent: boolean;
+  xAgentMissingRequired: string[];
+  xAgentMissingRecommended: string[];
+  stdoutSchemaRef: string | null;
+  hasAgentAuditResultShape: boolean;
+}
+
+function isLlmCommand(cmd: Record<string, unknown>): boolean {
+  const xAgent = cmd["x-agent"] as Record<string, unknown> | undefined;
+  if (xAgent?.safeDryRunOption) return true;
+
+  const options = cmd.options as Array<{ name: string }> | undefined;
+  if (options?.some((o) => o.name === "adapter")) return true;
+
+  if (xAgent?.sideEffects) {
+    const effects = xAgent.sideEffects as string[];
+    if (effects.includes("network")) return true;
+  }
+
+  return false;
+}
+
+function analyzeCommand(
+  cmdId: string, setId: string, cmd: Record<string, unknown>,
+): CommandPreAnalysis {
+  const options = (cmd.options ?? []) as Array<{ name: string }>;
+  const optionNames = options.map((o) => o.name);
+  const presentOptions = REFERENCE_OPTIONS.filter((o) => optionNames.includes(o));
+  const missingOptions = REFERENCE_OPTIONS.filter((o) => !optionNames.includes(o));
+
+  const exits = cmd.exits as Record<string, unknown> | undefined;
+  const exitKeys = exits ? Object.keys(exits) : [];
+  const presentExitCodes = REFERENCE_EXIT_CODES.filter((c) => exitKeys.includes(c));
+  const missingExitCodes = REFERENCE_EXIT_CODES.filter((c) => !exitKeys.includes(c));
+
+  const xAgent = cmd["x-agent"] as Record<string, unknown> | undefined;
+  const xAgentPresent = !!xAgent;
+  const xAgentMissingRequired = xAgentPresent
+    ? REFERENCE_XAGENT_REQUIRED.filter((k) => !(k in xAgent!))
+    : [...REFERENCE_XAGENT_REQUIRED];
+  const xAgentMissingRecommended = xAgentPresent
+    ? REFERENCE_XAGENT_RECOMMENDED.filter((k) => !(k in xAgent!))
+    : [...REFERENCE_XAGENT_RECOMMENDED];
+
+  let stdoutSchemaRef: string | null = null;
+  let hasAgentAuditResultShape = false;
+  if (exits) {
+    const exit0 = exits["0"] as Record<string, unknown> | undefined;
+    if (exit0) {
+      const stdout = exit0.stdout as Record<string, unknown> | undefined;
+      if (stdout?.schema) {
+        const schema = stdout.schema as Record<string, unknown>;
+        if (schema.$ref) {
+          stdoutSchemaRef = schema.$ref as string;
+          hasAgentAuditResultShape = (stdoutSchemaRef as string).includes("AgentAuditResult");
+        } else if (schema.properties) {
+          const props = schema.properties as Record<string, unknown>;
+          hasAgentAuditResultShape = "summary" in props && "findings" in props;
+        }
+      }
+    }
+  }
+
+  return {
+    commandId: cmdId, commandSetId: setId,
+    presentOptions, missingOptions,
+    presentExitCodes, missingExitCodes,
+    xAgentPresent, xAgentMissingRequired, xAgentMissingRecommended,
+    stdoutSchemaRef, hasAgentAuditResultShape,
+  };
+}
+
+export function buildReferenceCheckContext(
+  doc: CliContractsDocument,
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Reference Conformance Check");
+  sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
+
+  sections.push(
+    "## Reference Specification\n" +
+    "LLM-powered commands in a cli-contract.yaml MUST conform to the following:\n\n" +
+    "### Standard Options\n" +
+    "Every LLM command must include: --adapter, --model, --dry-run, --fail-on, --output (-o), --report-format\n\n" +
+    "### Exit Codes\n" +
+    "- 0: Success\n" +
+    "- 1: Unexpected error\n" +
+    "- 10: Findings above --fail-on threshold\n" +
+    "- 11: Runtime dependency missing (agent-contracts-runtime)\n" +
+    "- 12: LLM provider or adapter error\n\n" +
+    "### x-agent Metadata (required for LLM commands)\n" +
+    "- safeDryRunOption (mandatory)\n" +
+    "- sideEffects should include 'network'\n" +
+    "- sideEffectNote (recommended)\n" +
+    "- expectedDurationMs (recommended)\n" +
+    "- retryableExitCodes (recommended)\n\n" +
+    "### Output Schema\n" +
+    "- stdout for exit 0 and 10 should reference or extend AgentAuditResult\n" +
+    "- AgentAuditResult requires: summary, riskLevel, findings\n" +
+    "- AgentFinding requires: severity, category, message\n" +
+    "- AgentEvidence base properties: kind (required), target, location, excerpt\n" +
+    "- AgentRecommendedAction requires: kind, title",
+  );
+
+  const analyses: CommandPreAnalysis[] = [];
+
+  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+    for (const [cmdId, cmd] of Object.entries(cs.commands)) {
+      const cmdRecord = cmd as unknown as Record<string, unknown>;
+      if (!isLlmCommand(cmdRecord)) continue;
+      analyses.push(analyzeCommand(cmdId, setId, cmdRecord));
+    }
+  }
+
+  if (analyses.length === 0) {
+    sections.push("## Pre-Analysis\nNo LLM-powered commands detected in this contract.");
+    return sections.join("\n\n");
+  }
+
+  sections.push(`## LLM Commands Detected: ${analyses.length}`);
+
+  sections.push("## Deterministic Pre-Analysis");
+  for (const a of analyses) {
+    const lines: string[] = [`### Command: ${a.commandSetId}/${a.commandId}`];
+
+    lines.push(`**Options** (${a.presentOptions.length}/${REFERENCE_OPTIONS.length})`);
+    if (a.missingOptions.length > 0) {
+      lines.push(`- MISSING: ${a.missingOptions.map((o) => `--${o}`).join(", ")}`);
+    } else {
+      lines.push("- All standard options present");
+    }
+
+    lines.push(`**Exit Codes** (${a.presentExitCodes.length}/${REFERENCE_EXIT_CODES.length})`);
+    if (a.missingExitCodes.length > 0) {
+      lines.push(`- MISSING: ${a.missingExitCodes.join(", ")}`);
+    } else {
+      lines.push("- All standard exit codes present");
+    }
+
+    lines.push(`**x-agent** ${a.xAgentPresent ? "present" : "MISSING"}`);
+    if (a.xAgentMissingRequired.length > 0) {
+      lines.push(`- MISSING required: ${a.xAgentMissingRequired.join(", ")}`);
+    }
+    if (a.xAgentMissingRecommended.length > 0) {
+      lines.push(`- MISSING recommended: ${a.xAgentMissingRecommended.join(", ")}`);
+    }
+
+    lines.push(`**Output Schema**: ${a.stdoutSchemaRef ?? "(none)"}`);
+    lines.push(`- AgentAuditResult conformance: ${a.hasAgentAuditResultShape ? "YES" : "NO / UNKNOWN"}`);
+
+    sections.push(lines.join("\n"));
+  }
+
+  sections.push(
+    "## Full Contract (for semantic evaluation)\n```yaml\n" +
+    yaml.stringify(doc) + "```",
+  );
+
+  sections.push(
+    "## Task\n" +
+    "Using the deterministic pre-analysis above and the full contract, produce " +
+    "an AgentAuditResult with:\n" +
+    "1. Findings for each conformance gap (missing options, exit codes, x-agent fields, schema issues)\n" +
+    "2. Semantic evaluation of overall conformance quality\n" +
+    "3. Recommended actions to achieve full conformance\n" +
+    "4. Overall risk level assessment",
+  );
+
+  return sections.join("\n\n");
+}
+
 export function buildSuggestContext(
   sources: { readme?: string; help?: string; source?: string },
 ): string {

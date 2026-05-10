@@ -16,6 +16,7 @@ import { runAuditCommand } from "./commands/audit.js";
 import { runProposeTests } from "./commands/propose-tests.js";
 import { runExplainDiff } from "./commands/explain-diff.js";
 import { runSuggest } from "./commands/suggest.js";
+import { runCheckReference } from "./commands/check-reference.js";
 import { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR } from "./auditor/auditor.js";
 import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
@@ -282,6 +283,40 @@ const handlers: CommandHandlers = {
   async explainDiff(old, newArg, options, _parentOpts) {
     try {
       const { result, exitCode } = await runExplainDiff(old, newArg, options);
+
+      if (options.reportFormat === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(11);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(12);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async checkReference(contract, options, _parentOpts) {
+    try {
+      const configResult = await loadConfig(
+        _parentOpts.config as string | undefined,
+      );
+      const files = contract
+        ? [contract]
+        : options.file
+          ? [options.file]
+          : getContractFiles(configResult?.config);
+
+      const { result, exitCode } = await runCheckReference(files, options);
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");

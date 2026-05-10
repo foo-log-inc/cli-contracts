@@ -120,6 +120,40 @@ explain-contract-diff:
     - condition: Diff result is empty or contracts cannot be compared
       action: stop_and_report
 
+check-reference-conformance:
+  description: Check LLM command conformance against the cli-contracts reference specification
+  target_agent: cli-reference-checker
+  allowed_from_agents:
+    - cli-reference-checker
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Identify LLM-powered commands in the target contract
+    - Verify standard option set, exit codes, x-agent metadata, and schema conformance
+    - Report conformance gaps as structured findings
+  completion_criteria:
+    - All LLM commands identified and evaluated
+    - Standard options checked against reference set
+    - Exit code coverage verified
+    - x-agent metadata evaluated for completeness
+    - Output schema conformance assessed against AgentAuditResult
+    - AgentEvidence base properties checked when applicable
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the target CLI contract
+      required: true
+    - id: deterministic-pre-analysis
+      action: Perform structural checks on options, exit codes, schemas, and x-agent metadata
+    - id: semantic-evaluation
+      action: Use LLM to evaluate overall conformance quality and identify subtle issues
+    - id: produce-findings
+      action: Produce findings with severity, category, and recommended actions
+  escalation_criteria:
+    - condition: Contract cannot be parsed or is structurally invalid
+      action: stop_and_report
+    - condition: No LLM-powered commands detected
+      action: stop_and_report
+
 suggest-contract:
   description: Generate cli-contract.yaml draft from CLI sources
   target_agent: cli-contract-suggester
