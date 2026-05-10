@@ -25,6 +25,7 @@ import type {
   Diagnostic,
   ValidateResult,
 } from "./types.js";
+import { XAgentSchema } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 
 export function validateContract(doc: CliContractsDocument): ValidateResult {
@@ -43,6 +44,66 @@ export function validateContract(doc: CliContractsDocument): ValidateResult {
     errors,
     warnings,
   };
+}
+
+export function validateXAgent(
+  xAgent: unknown,
+  basePath: string,
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const path = `${basePath}/x-agent`;
+
+  if (typeof xAgent !== "object" || xAgent === null) {
+    diagnostics.push({
+      path,
+      message: "x-agent must be an object",
+      rule: "xagent-invalid-type",
+      severity: "error",
+    });
+    return diagnostics;
+  }
+
+  const parsed = XAgentSchema.safeParse(xAgent);
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      diagnostics.push({
+        path: `${path}/${issue.path.join("/")}`,
+        message: issue.message,
+        rule: "xagent-schema-error",
+        severity: "error",
+      });
+    }
+    return diagnostics;
+  }
+
+  const data = parsed.data;
+
+  if (
+    (data.riskLevel === "high" || data.riskLevel === "critical") &&
+    data.requiresConfirmation !== true
+  ) {
+    diagnostics.push({
+      path,
+      message: `riskLevel is "${data.riskLevel}" but requiresConfirmation is not true`,
+      rule: "xagent-high-risk-no-confirmation",
+      severity: "warning",
+    });
+  }
+
+  if (
+    data.sideEffects &&
+    data.sideEffects.length > 0 &&
+    data.idempotent === undefined
+  ) {
+    diagnostics.push({
+      path,
+      message: "Command has sideEffects but idempotent is not declared",
+      rule: "xagent-side-effects-no-idempotent",
+      severity: "warning",
+    });
+  }
+
+  return diagnostics;
 }
 
 function validateCommandSets(
@@ -115,6 +176,11 @@ function validateCommand(
 
   if (cmd.streams) {
     validateStreams(cmd, basePath, diagnostics);
+  }
+
+  const xAgent = (cmd as Record<string, unknown>)["x-agent"];
+  if (xAgent !== undefined) {
+    diagnostics.push(...validateXAgent(xAgent, basePath));
   }
 }
 

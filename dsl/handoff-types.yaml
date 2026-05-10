@@ -1,0 +1,22 @@
+cli-audit-request:
+  version: 1
+  description: Request to execute a CLI contract audit task
+  schema:
+    type: object
+    properties:
+      task_id:
+        type: string
+        description: Identifier of the audit task to execute
+      context:
+        type: string
+        description: Built context string from the CLI contract
+    required:
+      - task_id
+
+cli-audit-result:
+  version: 1
+  description: >-
+    Result of a CLI contract audit task.
+    Schema references cli-contract.yaml AgentAuditResult as SSoT.
+  schema:
+    $ref: '../cli-contract.yaml#/components/schemas/AgentAuditResult'

@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -12,6 +12,18 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent.js",
+      "types": "./dist/agent.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "agent-contracts-runtime": ">=0.12.1"
+  },
+  "peerDependenciesMeta": {
+    "agent-contracts-runtime": {
+      "optional": true
     }
   },
   "files": [
@@ -57,17 +69,20 @@
     "url": "https://github.com/foo-ogawa/cli-contracts/issues"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.138",
+    "ajv": "^8.17.1",
     "commander": "^12.1.0",
+    "glob": "^10.3.10",
+    "handlebars": "^4.7.8",
     "js-yaml": "^4.1.0",
     "yaml": "^2.8.2",
-    "handlebars": "^4.7.8",
-    "ajv": "^8.17.1",
-    "glob": "^10.3.10",
-    "zod": "^3.24.4"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
+    "agent-contracts": "^0.17.1",
+    "agent-contracts-runtime": "^0.12.1",
     "tsx": "^4.19.4",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0",

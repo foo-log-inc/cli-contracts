@@ -94,6 +94,7 @@ export async function cliContractsDocs(
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.dryRun) cmdArgs.push("--dry-run");
   }
 
   try {
@@ -146,9 +147,70 @@ export async function cliContractsDiff(
   if (options) {
     if (options.base !== undefined) cmdArgs.push("--base", String(options.base));
     if (options.head !== undefined) cmdArgs.push("--head", String(options.head));
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.contractPath !== undefined) cmdArgs.push("--contract-path", String(options.contractPath));
     if (options.breakingOnly) cmdArgs.push("--breaking-only");
     if (options.text) cmdArgs.push("--text");
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsProposeAgentPolicy(
+  executable: string,
+  args: import("./types.js").ProposeAgentPolicyArgs,
+  options?: Partial<import("./types.js").ProposeAgentPolicyOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["propose-agent-policy"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsAudit(
+  executable: string,
+  args: import("./types.js").AuditArgs,
+  options?: Partial<import("./types.js").AuditOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["audit"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.checks !== undefined) cmdArgs.push("--checks", String(options.checks));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {
@@ -175,6 +237,99 @@ export async function cliContractsExtract(
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.all) cmdArgs.push("--all");
     if (options.includeMeta) cmdArgs.push("--include-meta");
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsProposeTests(
+  executable: string,
+  args: import("./types.js").ProposeTestsArgs,
+  options?: Partial<import("./types.js").ProposeTestsOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["propose-tests"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsExplainDiff(
+  executable: string,
+  args: import("./types.js").ExplainDiffArgs,
+  options?: Partial<import("./types.js").ExplainDiffOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["explain-diff"];
+  if (args.old !== undefined) cmdArgs.push(String(args.old));
+  if (args.new !== undefined) cmdArgs.push(String(args.new));
+  if (options) {
+    if (options.base !== undefined) cmdArgs.push("--base", String(options.base));
+    if (options.head !== undefined) cmdArgs.push("--head", String(options.head));
+    if (options.contractPath !== undefined) cmdArgs.push("--contract-path", String(options.contractPath));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsSuggest(
+  executable: string,
+  options?: Partial<import("./types.js").SuggestOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["suggest"];
+  if (options) {
+    if (options.fromReadme !== undefined) cmdArgs.push("--from-readme", String(options.fromReadme));
+    if (options.fromHelp !== undefined) cmdArgs.push("--from-help", String(options.fromHelp));
+    if (options.fromSource !== undefined) cmdArgs.push("--from-source", String(options.fromSource));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }
 
   try {

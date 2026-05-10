@@ -1,0 +1,38 @@
+import type { AgentId } from "./agents.js";
+import type { HandoffTypeId } from "./handoffs.js";
+
+export interface TaskContract {
+  readonly id: string;
+  readonly description: string;
+  readonly target_agent: AgentId;
+  readonly allowed_from_agents: readonly AgentId[];
+  readonly workflow: string;
+  readonly invocation_handoff: HandoffTypeId;
+  readonly result_handoff: HandoffTypeId;
+  readonly input_artifacts: readonly string[];
+  readonly responsibilities: readonly string[];
+  readonly completion_criteria: readonly string[];
+  readonly optional: boolean;
+}
+
+{{#each taskEntries}}
+export const {{varName}}: TaskContract = {
+  id: "{{id}}",
+  description: {{{json description}}},
+  target_agent: "{{target_agent}}",
+  allowed_from_agents: {{{json allowed_from_agents}}},
+  workflow: "{{workflow}}",
+  invocation_handoff: "{{invocation_handoff}}",
+  result_handoff: "{{result_handoff}}",
+  input_artifacts: {{{json input_artifacts}}},
+  responsibilities: {{{json responsibilities}}},
+  completion_criteria: {{{json completion_criteria}}},
+  optional: {{optional}},
+};
+
+{{/each}}
+export const taskRegistry: Record<string, TaskContract> = {
+{{#each taskEntries}}
+  "{{id}}": {{varName}},
+{{/each}}
+};

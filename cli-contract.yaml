@@ -16,6 +16,27 @@ info:
 commandSets:
   cli-contracts:
     summary: Contract-first specification and toolchain for CLI interfaces.
+    x-stdin: >-
+      No command reads from stdin. All inputs are provided via file options
+      or positional arguments. Pipeline composition is not supported.
+
+    env:
+      CURSOR_API_KEY:
+        description: API key for the Cursor adapter (required when --adapter=cursor).
+        required: false
+        requiredWhen: '{options.adapter} == "cursor"'
+      GEMINI_API_KEY:
+        description: API key for the Gemini adapter (required when --adapter=gemini).
+        required: false
+        requiredWhen: '{options.adapter} == "gemini"'
+      OPENAI_API_KEY:
+        description: API key for the OpenAI adapter (required when --adapter=openai).
+        required: false
+        requiredWhen: '{options.adapter} == "openai"'
+      ANTHROPIC_API_KEY:
+        description: API key for the Claude adapter (required when --adapter=claude).
+        required: false
+        requiredWhen: '{options.adapter} == "claude"'
 
     globalOptions:
       - name: config
@@ -40,16 +61,27 @@ commandSets:
 
       - name: format
         aliases: [F]
-        description: Output format for structured results.
+        description: >-
+          Output format for structured results (core commands only).
+          Overrides the per-exit declared format at runtime; exit format
+          declarations represent the default when this option is not
+          explicitly set. Does NOT apply to LLM-powered commands which
+          use --report-format instead. Precedence: core commands use
+          --format; LLM commands use --report-format; --format is ignored
+          by LLM commands.
         valueName: format
         schema:
           type: string
           enum: [yaml, json]
           default: yaml
+        x-stability: immutable-default
 
       - name: quiet
         aliases: [q]
-        description: Suppress non-error output.
+        description: >-
+          Suppress informational/verbose output only. Does NOT suppress
+          the primary structured stdout (schema guarantees remain valid).
+          Only affects supplementary human-readable messages.
         schema:
           type: boolean
           default: false
@@ -77,6 +109,12 @@ commandSets:
           - cli-contracts init
           - cli-contracts init --name foo
           - cli-contracts init --name foo --multi-command-set
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: false
+          sideEffects: [filesystem]
 
         options:
           - name: name
@@ -159,6 +197,12 @@ commandSets:
           - cli-contracts validate --file cli-contract.yaml
           - cli-contracts validate --strict
 
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
+
         options:
           - name: file
             aliases: [f]
@@ -207,15 +251,17 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '3':
-            description: Validation failed. One or more errors found.
+          '9':
+            description: Validation completed but found errors in the contract.
             stdout:
               format: yaml
               schema:
                 $ref: '#/components/schemas/ValidateResult'
             stderr:
               required: false
-              format: text
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
       # ── generate ────────────────────────────────────────
@@ -230,6 +276,18 @@ commandSets:
           - cli-contracts generate rust
           - cli-contracts generate markdown
           - cli-contracts generate custom-go
+
+        x-agent:
+          riskLevel: medium
+          requiresConfirmation: false
+          requiresConfirmationWhen: [clean]
+          idempotent: true
+          idempotentNote: >-
+            Idempotent for final state; --clean creates a transient
+            destructive intermediate state (removes output directory).
+          sideEffects: [filesystem]
+          safeDryRunOption: dry-run
+          dangerousOptions: [clean]
 
         arguments:
           - name: generators
@@ -281,6 +339,10 @@ commandSets:
               format: yaml
               schema:
                 $ref: '#/components/schemas/GenerateResult'
+            files:
+              - path: '{stdout.generators[*].files[*]}'
+                required: false
+                description: Generated output files as listed in GenerateResult.
 
           '1':
             description: Unexpected error.
@@ -319,11 +381,22 @@ commandSets:
       docs:
         summary: Generate Markdown documentation.
         description: >-
-          Shortcut for generating Markdown CLI reference documentation.
-          Equivalent to "cli-contracts generate markdown".
+          Generates Markdown CLI reference documentation from the contract.
+          A simplified interface for the markdown generator; does not support
+          --clean or generator selection. Use "cli-contracts generate markdown"
+          for full control.
         usage:
           - cli-contracts docs
           - cli-contracts docs --output docs/cli.md
+          - cli-contracts docs --dry-run
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [filesystem]
+          safeDryRunOption: dry-run
+          preferAlternative: generate markdown
 
         options:
           - name: file
@@ -345,6 +418,17 @@ commandSets:
             valueName: file
             schema:
               type: string
+            file:
+              mode: write
+              mediaType: text/markdown
+              encoding: utf-8
+
+          - name: dry-run
+            aliases: [n]
+            description: Show what would be generated without writing files.
+            schema:
+              type: boolean
+              default: false
 
         exits:
           '0':
@@ -353,6 +437,12 @@ commandSets:
               format: yaml
               schema:
                 $ref: '#/components/schemas/GenerateResult'
+            files:
+              - path: '{stdout.generators[*].files[*]}'
+                required: false
+                mediaType: text/markdown
+                encoding: utf-8
+                description: Generated markdown documentation files.
 
           '1':
             description: Unexpected error.
@@ -386,6 +476,17 @@ commandSets:
           - cli-contracts test
           - cli-contracts test --profile local
           - cli-contracts test --case users.import.success
+
+        x-agent:
+          riskLevel: medium
+          requiresConfirmation: true
+          idempotent: false
+          sideEffects: [process-execution]
+          sideEffectNote: >-
+            Actual side effects depend on the target CLI and test cases
+            being executed. The process-execution declaration is a lower
+            bound; transitive effects may include filesystem, network, or
+            other operations performed by the target CLI.
 
         options:
           - name: profile
@@ -452,7 +553,9 @@ commandSets:
                 $ref: '#/components/schemas/ValidateResult'
 
           '6':
-            description: One or more tests failed.
+            description: >-
+              One or more tests failed. Uses a single failure exit code
+              (no partial-success distinction) by design.
             stdout:
               format: yaml
               schema:
@@ -465,9 +568,17 @@ commandSets:
         description: >-
           Compares two contract files (or git revisions) and reports
           additions, removals, modifications, and breaking changes.
+          At least one input pair must be provided: either positional
+          arguments (old new) or --base/--head options.
         usage:
           - cli-contracts diff old.yaml new.yaml
-          - cli-contracts diff --base main --head HEAD
+          - cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
 
         arguments:
           - name: old
@@ -511,10 +622,10 @@ commandSets:
             schema:
               type: string
 
-          - name: file
-            aliases: [f]
+          - name: contract-path
+            aliases: [p]
             description: Contract file path within the repository (used with --base/--head).
-            valueName: file
+            valueName: path
             schema:
               type: string
               default: cli-contract.yaml
@@ -526,18 +637,24 @@ commandSets:
               default: false
 
           - name: text
-            description: Output human-readable text summary instead of structured data.
+            description: >-
+              Output human-readable text summary instead of structured data.
+              When active, stdout is plain text and does not conform to the
+              DiffResult schema. Agents should avoid this option for parsing.
             schema:
               type: boolean
               default: false
+            x-agent:
+              disablesStructuredOutput: true
 
         exits:
           '0':
             description: No breaking changes detected (may include non-breaking changes).
             stdout:
-              format: yaml
+              format: '{options.text ? "text" : globalOptions.format}'
               schema:
                 $ref: '#/components/schemas/DiffResult'
+              schemaNote: Schema applies only when --text is not set.
 
           '1':
             description: Unexpected error.
@@ -556,9 +673,324 @@ commandSets:
           '7':
             description: Breaking changes detected.
             stdout:
-              format: yaml
+              format: '{options.text ? "text" : globalOptions.format}'
               schema:
                 $ref: '#/components/schemas/DiffResult'
+              schemaNote: Schema applies only when --text is not set.
+
+      # ── propose-agent-policy ─────────────────────────────
+      propose-agent-policy:
+        summary: Detect missing or inconsistent x-agent policies via LLM.
+        description: >-
+          Analyzes CLI contract commands and proposes x-agent execution
+          policies (riskLevel, requiresConfirmation, sideEffects, etc.)
+          for commands that lack them. Uses agent-contracts-runtime as
+          an optional peer dependency for LLM integration. Overlaps with
+          "audit --checks agent-policy"; prefer audit for comprehensive
+          review, this command for focused policy generation.
+        usage:
+          - cli-contracts propose-agent-policy cli-contract.yaml
+          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --dry-run
+          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: >-
+              Contract file to analyze. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to analyze (alternative to positional argument).
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the audit report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── audit ──────────────────────────────────────────
+      audit:
+        summary: Semantic audit of CLI contract design quality.
+        description: >-
+          Performs a comprehensive audit of CLI contract design quality
+          including responsibility boundaries, exit code consistency,
+          output schema coverage, and AI-agent safety metadata.
+          Uses agent-contracts-runtime as an optional peer dependency.
+        usage:
+          - cli-contracts audit cli-contract.yaml
+          - cli-contracts audit --file cli-contract.yaml --checks agent-policy
+          - cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: >-
+              Contract file to audit. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to audit (alternative to positional argument).
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: checks
+            description: Audit dimension(s) to run.
+            valueName: check
+            repeatable: true
+            schema:
+              type: string
+              enum: [agent-policy, responsibility, exit-code, output-schema, breaking-risk]
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the audit report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
 
       # ── extract ─────────────────────────────────────────
       extract:
@@ -571,6 +1003,12 @@ commandSets:
           - cli-contracts extract init validate
           - cli-contracts extract --file cli-contract.yaml init
           - cli-contracts extract --all
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
 
         arguments:
           - name: commands
@@ -645,6 +1083,482 @@ commandSets:
               format: yaml
               schema:
                 $ref: '#/components/schemas/ExtractResult'
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── propose-tests ────────────────────────────────────
+      propose-tests:
+        summary: Propose contract test cases via LLM analysis.
+        description: >-
+          Analyzes CLI contract definitions and proposes test cases
+          covering normal, error, edge, and safety scenarios.
+          Generates test case YAML drafts or an AgentAuditResult
+          with coverage-oriented findings.
+        usage:
+          - cli-contracts propose-tests cli-contract.yaml
+          - cli-contracts propose-tests --file cli-contract.yaml --adapter gemini
+          - cli-contracts propose-tests --file cli-contract.yaml --dry-run
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: >-
+              Contract file to analyze. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to analyze (alternative to positional argument).
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the audit report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── explain-diff ─────────────────────────────────────
+      explain-diff:
+        summary: Explain contract diff in human- and agent-readable form.
+        description: >-
+          Takes a diff result (from cli-contracts diff) and generates
+          human-friendly explanations including breaking change impact,
+          migration notes, semver suggestions, and release note drafts.
+          At least one input pair must be provided: either positional
+          arguments (old new) or --base/--head options.
+        usage:
+          - cli-contracts explain-diff old.yaml new.yaml
+          - cli-contracts explain-diff --base main --head HEAD --adapter gemini
+          - cli-contracts explain-diff old.yaml new.yaml --dry-run
+
+        arguments:
+          - name: old
+            index: 0
+            required: false
+            description: Path to the old (base) contract file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: new
+            index: 1
+            required: false
+            description: Path to the new (head) contract file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        options:
+          - name: base
+            description: Git ref for the base version.
+            valueName: ref
+            schema:
+              type: string
+
+          - name: head
+            description: Git ref for the head version.
+            valueName: ref
+            schema:
+              type: string
+
+          - name: contract-path
+            aliases: [p]
+            description: Contract file path within the repository (used with --base/--head).
+            valueName: path
+            schema:
+              type: string
+              default: cli-contract.yaml
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the audit report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Completed with blocking findings.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── suggest ──────────────────────────────────────────
+      suggest:
+        summary: Generate a contract draft from existing CLI sources.
+        description: >-
+          Generates a cli-contract.yaml draft from existing CLI sources
+          such as README, --help output, or source code. Results require
+          human review before adoption. At least one --from-* option must
+          be provided.
+        usage:
+          - cli-contracts suggest --from-readme README.md
+          - cli-contracts suggest --from-help help.txt
+          - cli-contracts suggest --from-source src/cli.ts
+          - cli-contracts suggest --from-readme README.md --adapter gemini
+
+        constraints:
+          requiredOneOf: [from-readme, from-help, from-source]
+
+        options:
+          - name: from-readme
+            description: Path to a README file to extract CLI information from.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              encoding: utf-8
+
+          - name: from-help
+            description: Path to a file containing --help output.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              encoding: utf-8
+
+          - name: from-source
+            description: Path to CLI source code file.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              encoding: utf-8
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the suggestion report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: Suggestion generated successfully.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or no source specified.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Suggestion generated with blocking issues.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
             stderr:
               format: json
               schema:
@@ -879,3 +1793,121 @@ components:
           type: boolean
         description:
           type: string
+
+    # ── AI Agent Interoperability Reference Schemas ──────
+
+    AgentEvidence:
+      type: object
+      description: >-
+        Evidence supporting an agent finding.
+        Reference schema for AI agent interoperability.
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [file, command, schema, diff, stdout, stderr, text]
+        target:
+          type: string
+          description: Target identifier (file path, command ID, schema name).
+        location:
+          type: string
+          description: Location within the target (line number, JSON pointer).
+        excerpt:
+          type: string
+          description: Relevant excerpt from the target.
+
+    AgentFinding:
+      type: object
+      description: >-
+        A single finding from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [severity, category, message]
+      properties:
+        id:
+          type: string
+          description: Unique finding identifier.
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+        category:
+          type: string
+          description: Finding category (e.g. missing-policy, inconsistent-risk).
+        target:
+          type: string
+          description: Target of the finding (command ID, schema path).
+        location:
+          type: string
+          description: Location within the target.
+        message:
+          type: string
+        recommendation:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score (0-1) for LLM-generated findings.
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentEvidence'
+        details:
+          type: object
+          additionalProperties: true
+
+    AgentRecommendedAction:
+      type: object
+      description: >-
+        A recommended action from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [kind, title]
+      properties:
+        kind:
+          type: string
+          enum: [run_command, edit_file, review, confirm, block, ignore]
+        title:
+          type: string
+        command:
+          type: string
+          description: CLI command to run (for run_command kind).
+        target:
+          type: string
+          description: Target file or resource.
+        rationale:
+          type: string
+
+    AgentAuditResult:
+      type: object
+      description: >-
+        Top-level result from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [summary, riskLevel, findings]
+      properties:
+        summary:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentFinding'
+        recommendedActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentRecommendedAction'
+        metadata:
+          type: object
+          properties:
+            tool:
+              type: string
+            command:
+              type: string
+            version:
+              type: string
+            generatedAt:
+              type: string
+            adapter:
+              type: string
+            model:
+              type: string

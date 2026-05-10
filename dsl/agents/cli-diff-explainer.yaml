@@ -1,0 +1,41 @@
+cli-diff-explainer:
+  role_name: CLI Contract Diff Explainer
+  purpose: >-
+    Explain contract diff results in human-friendly and AI-agent-friendly
+    terms. Provides breaking change impact analysis, migration notes,
+    semver suggestions, and release note drafts.
+  mode: read-only
+  can_read_artifacts:
+    - cli-contract-source
+  can_write_artifacts: []
+  can_invoke_agents: []
+  can_execute_tools: []
+  can_return_handoffs:
+    - cli-audit-result
+  responsibilities:
+    - Explain breaking changes and their impact
+    - Identify affected commands and consumers
+    - Suggest semver version bump
+    - Draft release notes
+    - Highlight changes relevant to AI agent consumers
+  constraints:
+    - Explanations must reference concrete change paths
+    - Semver suggestions must follow semver 2.0.0 specification
+    - Do not speculate about implementation details not in the contract
+    - Migration notes must be actionable
+  rules:
+    - id: R-DIFF-001
+      description: >-
+        Every breaking change must have an explanation and migration note.
+      severity: mandatory
+    - id: R-DIFF-002
+      description: >-
+        Semver suggestion must align with breaking vs non-breaking changes.
+      severity: mandatory
+    - id: R-DIFF-003
+      description: >-
+        Changes affecting x-agent policies must be highlighted separately.
+      severity: recommended
+  escalation_criteria:
+    - condition: Diff result is empty or contracts cannot be compared
+      action: stop_and_report

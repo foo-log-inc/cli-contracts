@@ -1,0 +1,156 @@
+audit-agent-policy:
+  description: Audit and propose x-agent execution policies for CLI commands
+  target_agent: cli-policy-auditor
+  allowed_from_agents:
+    - cli-policy-auditor
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Analyze all commands for x-agent policy presence
+    - Evaluate risk level based on command semantics
+    - Propose missing or improved policies
+  completion_criteria:
+    - All commands evaluated
+    - Missing policies identified with recommendations
+    - Risk assessments provided with confidence scores
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: analyze-commands
+      action: Analyze each command for policy gaps
+    - id: produce-findings
+      action: Produce findings and recommended actions
+  escalation_criteria:
+    - condition: Contract cannot be parsed or is structurally invalid
+      action: stop_and_report
+
+audit-contract-design:
+  description: Audit CLI contract design quality
+  target_agent: cli-contract-auditor
+  allowed_from_agents:
+    - cli-contract-auditor
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Check command responsibility boundaries
+    - Review exit code coverage and consistency
+    - Assess output schema completeness
+    - Evaluate automation readiness
+  completion_criteria:
+    - All requested dimensions audited
+    - Findings classified by severity
+    - Actionable recommendations provided
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: run-checks
+      action: Execute requested audit dimensions
+    - id: produce-findings
+      action: Produce audit report with findings
+  escalation_criteria:
+    - condition: Structural contract defects prevent meaningful audit
+      action: stop_and_report
+
+propose-test-cases:
+  description: Propose contract test cases for CLI commands
+  target_agent: cli-test-proposer
+  allowed_from_agents:
+    - cli-test-proposer
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Analyze contract surface area for test coverage
+    - Propose success, error, and edge case tests
+    - Identify missing test scenarios
+  completion_criteria:
+    - All commands analyzed for test coverage
+    - Test case proposals include concrete scenarios
+    - Coverage gaps identified with recommendations
+    - Each command evaluated for success scenarios (exit 0)
+    - Each command evaluated for required argument missing
+    - Each command evaluated for invalid option values
+    - Each command evaluated for file not found / file exists violations
+    - Each command evaluated for invalid file media type
+    - Each command evaluated for stdout/stderr schema mismatch
+    - Each command evaluated for dry-run mode behavior
+    - Each command evaluated for destructive command confirmation
+    - Each command evaluated for stream malformed input
+    - Each command evaluated for timeout / signal handling
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: analyze-coverage
+      action: Analyze each command for test coverage gaps
+    - id: produce-proposals
+      action: Produce test case proposals as findings
+  escalation_criteria:
+    - condition: Contract structure prevents meaningful test analysis
+      action: stop_and_report
+
+explain-contract-diff:
+  description: Explain contract diff in human- and agent-readable terms
+  target_agent: cli-diff-explainer
+  allowed_from_agents:
+    - cli-diff-explainer
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Explain each breaking change with impact
+    - Draft migration notes and release notes
+    - Suggest semver version bump
+    - Highlight AI-agent-relevant changes
+  completion_criteria:
+    - All changes explained
+    - Breaking changes have migration notes
+    - Semver suggestion provided (patch/minor/major)
+    - Release notes drafted
+    - AI agent consumer impacts highlighted (x-agent policy changes)
+  execution_steps:
+    - id: compute-diff
+      action: Load diff result from context
+      required: true
+    - id: classify-changes
+      action: Classify each change by impact
+    - id: produce-explanation
+      action: Produce human-readable explanation with recommendations
+  escalation_criteria:
+    - condition: Diff result is empty or contracts cannot be compared
+      action: stop_and_report
+
+suggest-contract:
+  description: Generate cli-contract.yaml draft from CLI sources
+  target_agent: cli-contract-suggester
+  allowed_from_agents:
+    - cli-contract-suggester
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Extract command structure from source material
+    - Infer argument and option types
+    - Propose exit codes and schemas
+    - Assign confidence to each suggestion
+  completion_criteria:
+    - All recognizable commands extracted
+    - Contract draft is valid YAML
+    - Confidence scores assigned (0-1) to each inferred element
+    - Each command has name and description extracted
+    - Arguments inferred with types and required/optional status
+    - Options inferred with types, defaults, and enums where visible
+    - Exit codes proposed (at minimum 0 for success, 1 for error)
+    - stdout/stderr schemas suggested where inferable
+    - x-agent policies proposed where behavior is evident
+    - Findings include contract YAML draft as evidence excerpts
+  execution_steps:
+    - id: load-source
+      action: Load and parse the source material
+      required: true
+    - id: extract-commands
+      action: Extract command definitions from source
+    - id: produce-contract
+      action: Produce contract draft with confidence-annotated findings
+  escalation_criteria:
+    - condition: Source material does not contain recognizable CLI patterns
+      action: stop_and_report

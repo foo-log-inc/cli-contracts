@@ -1,0 +1,10 @@
+version: 1
+system:
+  id: cli-contracts-agent
+  name: CLI Contracts Agent System
+  default_workflow_order:
+    - cli-audit
+
+agents: { $ref: "./agents/" }
+tasks: { $ref: "./tasks.yaml" }
+handoff_types: { $ref: "./handoff-types.yaml" }
