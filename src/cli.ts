@@ -177,14 +177,16 @@ const handlers: CommandHandlers = {
     }
   },
 
-  async proposeAgentPolicy(options, parentOpts) {
+  async proposeAgentPolicy(contract, options, parentOpts) {
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const files = options.file
-        ? [options.file]
-        : getContractFiles(configResult?.config);
+      const files = contract
+        ? [contract]
+        : options.file
+          ? [options.file]
+          : getContractFiles(configResult?.config);
 
       const { result, exitCode } = await runProposeAgentPolicy(files, options);
 
@@ -209,14 +211,16 @@ const handlers: CommandHandlers = {
     }
   },
 
-  async audit(options, parentOpts) {
+  async audit(contract, options, parentOpts) {
     try {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const files = options.file
-        ? [options.file]
-        : getContractFiles(configResult?.config);
+      const files = contract
+        ? [contract]
+        : options.file
+          ? [options.file]
+          : getContractFiles(configResult?.config);
 
       const { result, exitCode } = await runAuditCommand(files, options);
 
@@ -241,14 +245,16 @@ const handlers: CommandHandlers = {
     }
   },
 
-  async proposeTests(options, _parentOpts) {
+  async proposeTests(contract, options, _parentOpts) {
     try {
       const configResult = await loadConfig(
         _parentOpts.config as string | undefined,
       );
-      const files = options.file
-        ? [options.file]
-        : getContractFiles(configResult?.config);
+      const files = contract
+        ? [contract]
+        : options.file
+          ? [options.file]
+          : getContractFiles(configResult?.config);
 
       const { result, exitCode } = await runProposeTests(files, options);
 

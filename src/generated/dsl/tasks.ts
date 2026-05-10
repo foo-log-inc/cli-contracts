@@ -89,7 +89,17 @@ export const proposeTestCases: TaskContract = {
   completion_criteria: [
   "All commands analyzed for test coverage",
   "Test case proposals include concrete scenarios",
-  "Coverage gaps identified with recommendations"
+  "Coverage gaps identified with recommendations",
+  "Each command evaluated for success scenarios (exit 0)",
+  "Each command evaluated for required argument missing",
+  "Each command evaluated for invalid option values",
+  "Each command evaluated for file not found / file exists violations",
+  "Each command evaluated for invalid file media type",
+  "Each command evaluated for stdout/stderr schema mismatch",
+  "Each command evaluated for dry-run mode behavior",
+  "Each command evaluated for destructive command confirmation",
+  "Each command evaluated for stream malformed input",
+  "Each command evaluated for timeout / signal handling"
 ],
   optional: false,
 };
@@ -114,7 +124,9 @@ export const explainContractDiff: TaskContract = {
   completion_criteria: [
   "All changes explained",
   "Breaking changes have migration notes",
-  "Semver suggestion provided"
+  "Semver suggestion provided (patch/minor/major)",
+  "Release notes drafted",
+  "AI agent consumer impacts highlighted (x-agent policy changes)"
 ],
   optional: false,
 };
@@ -139,7 +151,14 @@ export const suggestContract: TaskContract = {
   completion_criteria: [
   "All recognizable commands extracted",
   "Contract draft is valid YAML",
-  "Confidence scores assigned to inferred elements"
+  "Confidence scores assigned (0-1) to each inferred element",
+  "Each command has name and description extracted",
+  "Arguments inferred with types and required/optional status",
+  "Options inferred with types, defaults, and enums where visible",
+  "Exit codes proposed (at minimum 0 for success, 1 for error)",
+  "stdout/stderr schemas suggested where inferable",
+  "x-agent policies proposed where behavior is evident",
+  "Findings include contract YAML draft as evidence excerpts"
 ],
   optional: false,
 };

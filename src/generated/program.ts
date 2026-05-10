@@ -7,12 +7,12 @@ export interface CommandHandlers {
   generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   docs: (options: { file?: string; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeAgentPolicy: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  audit: (options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeAgentPolicy: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  audit: (contract: string | undefined, options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeTests: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; dryRun?: boolean; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
@@ -28,7 +28,7 @@ export function createProgram(
 
   program.option("-c, --config <file>", "Path to cli-contracts.config.yaml.", "cli-contracts.config.yaml");
   program.option("-v, --verbose", "Enable verbose output.", false);
-  program.option("-F, --format <format>", "Output format for structured results.", "yaml");
+  program.option("-F, --format <format>", "Output format for structured results. Overrides the per-exit declared format at runtime; exit format declarations represent the default when this option is not explicitly set.", "yaml");
   program.option("-q, --quiet", "Suppress non-error output.", false);
 
   program
@@ -93,7 +93,7 @@ export function createProgram(
     .argument("[new]", "Path to the new (head) contract file. Can be omitted when using --base/--head.")
     .option("--base <ref>", "Git ref for the base version (e.g. main, v1.0.0).")
     .option("--head <ref>", "Git ref for the head version (e.g. HEAD, feature-branch).")
-    .option("-f, --file <file>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
+    .option("-p, --contract-path <path>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
     .option("--breaking-only", "Only report breaking changes.", false)
     .option("--text", "Output human-readable text summary instead of structured data.", false)
     .action(async (old, newArg, opts, cmd) => {
@@ -103,6 +103,7 @@ export function createProgram(
   program
     .command("propose-agent-policy")
     .description("Detect missing or inconsistent x-agent policies via LLM.")
+    .argument("[contract]", "Contract file to analyze. Alternative to --file.")
     .option("-f, --file <file>", "Contract file to analyze.")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
@@ -110,13 +111,14 @@ export function createProgram(
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
-    .action(async (opts, cmd) => {
-      await handlers.proposeAgentPolicy(opts, cmd.optsWithGlobals());
+    .action(async (contract, opts, cmd) => {
+      await handlers.proposeAgentPolicy(contract, opts, cmd.optsWithGlobals());
     });
 
   program
     .command("audit")
     .description("Semantic audit of CLI contract design quality.")
+    .argument("[contract]", "Contract file to audit. Alternative to --file.")
     .option("-f, --file <file>", "Contract file to audit.")
     .option("--checks <check...>", "Audit dimension(s) to run.")
     .option("--adapter <name>", "LLM adapter to use.")
@@ -125,8 +127,8 @@ export function createProgram(
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
-    .action(async (opts, cmd) => {
-      await handlers.audit(opts, cmd.optsWithGlobals());
+    .action(async (contract, opts, cmd) => {
+      await handlers.audit(contract, opts, cmd.optsWithGlobals());
     });
 
   program
@@ -143,6 +145,7 @@ export function createProgram(
   program
     .command("propose-tests")
     .description("Propose contract test cases via LLM analysis.")
+    .argument("[contract]", "Contract file to analyze. Alternative to --file.")
     .option("-f, --file <file>", "Contract file to analyze.")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
@@ -150,8 +153,8 @@ export function createProgram(
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
-    .action(async (opts, cmd) => {
-      await handlers.proposeTests(opts, cmd.optsWithGlobals());
+    .action(async (contract, opts, cmd) => {
+      await handlers.proposeTests(contract, opts, cmd.optsWithGlobals());
     });
 
   program
@@ -161,7 +164,7 @@ export function createProgram(
     .argument("[new]", "Path to the new (head) contract file.")
     .option("--base <ref>", "Git ref for the base version.")
     .option("--head <ref>", "Git ref for the head version.")
-    .option("-f, --file <file>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
+    .option("-p, --contract-path <path>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
     .option("--dry-run", "Output the prompt context without making an LLM call.", false)

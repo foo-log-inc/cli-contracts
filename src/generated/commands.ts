@@ -147,7 +147,7 @@ export async function cliContractsDiff(
   if (options) {
     if (options.base !== undefined) cmdArgs.push("--base", String(options.base));
     if (options.head !== undefined) cmdArgs.push("--head", String(options.head));
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.contractPath !== undefined) cmdArgs.push("--contract-path", String(options.contractPath));
     if (options.breakingOnly) cmdArgs.push("--breaking-only");
     if (options.text) cmdArgs.push("--text");
   }
@@ -167,9 +167,11 @@ export async function cliContractsDiff(
 
 export async function cliContractsProposeAgentPolicy(
   executable: string,
+  args: import("./types.js").ProposeAgentPolicyArgs,
   options?: Partial<import("./types.js").ProposeAgentPolicyOptions>,
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["propose-agent-policy"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
@@ -195,9 +197,11 @@ export async function cliContractsProposeAgentPolicy(
 
 export async function cliContractsAudit(
   executable: string,
+  args: import("./types.js").AuditArgs,
   options?: Partial<import("./types.js").AuditOptions>,
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["audit"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.checks !== undefined) cmdArgs.push("--checks", String(options.checks));
@@ -250,9 +254,11 @@ export async function cliContractsExtract(
 
 export async function cliContractsProposeTests(
   executable: string,
+  args: import("./types.js").ProposeTestsArgs,
   options?: Partial<import("./types.js").ProposeTestsOptions>,
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["propose-tests"];
+  if (args.contract !== undefined) cmdArgs.push(String(args.contract));
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
@@ -287,7 +293,7 @@ export async function cliContractsExplainDiff(
   if (options) {
     if (options.base !== undefined) cmdArgs.push("--base", String(options.base));
     if (options.head !== undefined) cmdArgs.push("--head", String(options.head));
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.contractPath !== undefined) cmdArgs.push("--contract-path", String(options.contractPath));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
     if (options.dryRun) cmdArgs.push("--dry-run");

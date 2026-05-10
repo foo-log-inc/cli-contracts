@@ -83,16 +83,15 @@ describe("buildDesignAuditContext", () => {
 });
 
 describe("buildTestProposalContext", () => {
-  it("builds context with test dimensions", async () => {
+  it("builds context with test proposal header", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "valid-contract.yaml"),
     );
     const context = buildTestProposalContext(doc);
 
     expect(context).toContain("Test Case Proposal Request");
-    expect(context).toContain("Success scenarios");
-    expect(context).toContain("Required argument missing");
-    expect(context).toContain("Invalid option values");
+    expect(context).toContain("Info");
+    expect(context).toContain("Command Set:");
   });
 
   it("includes detailed argument and option info", async () => {
@@ -130,16 +129,16 @@ describe("buildDiffExplainContext", () => {
     expect(context).toContain("Diff Summary");
   });
 
-  it("includes instructions for explanation", async () => {
+  it("includes diff changes", async () => {
     const diffResult = await runDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
     );
     const context = buildDiffExplainContext(diffResult);
 
-    expect(context).toContain("migration notes");
-    expect(context).toContain("semver version bump");
-    expect(context).toContain("release notes");
+    expect(context).toContain("Diff Explanation Request");
+    expect(context).toContain("Diff Summary");
+    expect(context).toContain("Has breaking changes");
   });
 });
 
@@ -172,14 +171,14 @@ describe("buildSuggestContext", () => {
     expect(context).toContain("Initialize project");
   });
 
-  it("includes instructions about confidence and types", () => {
+  it("includes source data without hardcoded instructions", () => {
     const context = buildSuggestContext({
       readme: "# Test",
     });
 
-    expect(context).toContain("confidence score");
-    expect(context).toContain("x-agent policies");
-    expect(context).toContain("exit codes");
+    expect(context).toContain("Suggestion Request");
+    expect(context).toContain("Source: README");
+    expect(context).toContain("# Test");
   });
 
   it("handles multiple sources", () => {

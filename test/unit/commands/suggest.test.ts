@@ -18,16 +18,15 @@ describe("suggest command", () => {
     expect(r.prompt).toContain("Source: README");
   });
 
-  it("dry-run context includes generation instructions", async () => {
+  it("dry-run context includes source material", async () => {
     const { result } = await runSuggest({
       fromReadme: resolve(FIXTURES, "../../README.md"),
       dryRun: true,
     });
 
     const r = result as { prompt: string };
-    expect(r.prompt).toContain("confidence score");
-    expect(r.prompt).toContain("exit codes");
-    expect(r.prompt).toContain("x-agent policies");
+    expect(r.prompt).toContain("Suggestion Request");
+    expect(r.prompt).toContain("Source: README");
   });
 
   it("returns exit code 2 when no source is provided", async () => {

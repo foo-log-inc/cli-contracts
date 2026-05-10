@@ -31,7 +31,7 @@ describe("explain-diff command", () => {
     expect(r.prompt).toContain("Versions");
   });
 
-  it("dry-run context includes instructions", async () => {
+  it("dry-run context includes diff data", async () => {
     const { result } = await runExplainDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
@@ -39,9 +39,9 @@ describe("explain-diff command", () => {
     );
 
     const r = result as { prompt: string };
-    expect(r.prompt).toContain("migration notes");
-    expect(r.prompt).toContain("semver version bump");
-    expect(r.prompt).toContain("release notes");
+    expect(r.prompt).toContain("Diff Explanation Request");
+    expect(r.prompt).toContain("Diff Summary");
+    expect(r.prompt).toContain("Changes");
   });
 
   it("returns exit code 2 when old file is missing", async () => {

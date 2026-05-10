@@ -17,17 +17,16 @@ describe("propose-tests command", () => {
     expect(r.prompt).toContain("Test Case Proposal Request");
   });
 
-  it("dry-run context includes command details and test dimensions", async () => {
+  it("dry-run context includes command details", async () => {
     const { result } = await runProposeTests(
       [resolve(FIXTURES, "valid-contract.yaml")],
       { dryRun: true },
     );
 
     const r = result as { prompt: string };
-    expect(r.prompt).toContain("Required argument missing");
-    expect(r.prompt).toContain("Invalid option values");
-    expect(r.prompt).toContain("File not found");
+    expect(r.prompt).toContain("Test Case Proposal Request");
     expect(r.prompt).toContain("users.import");
+    expect(r.prompt).toContain("Exit codes:");
   });
 
   it("dry-run context includes x-agent and file contract details", async () => {

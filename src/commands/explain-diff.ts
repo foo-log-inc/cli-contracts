@@ -9,7 +9,7 @@ import type { AuditConfig, AuditOptions } from "../auditor/types.js";
 export interface ExplainDiffOptions {
   base?: string;
   head?: string;
-  file?: string;
+  contractPath?: string;
   adapter?: string;
   model?: string;
   dryRun?: boolean;

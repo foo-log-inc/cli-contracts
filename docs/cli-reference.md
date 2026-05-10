@@ -32,10 +32,19 @@ Contract-first specification and toolchain for CLI interfaces.
 |---|---|---|---|---|
 | `--config` | -c | No | `"cli-contracts.config.yaml"` | Path to cli-contracts.config.yaml. |
 | `--verbose` | -v | No | `false` | Enable verbose output. |
-| `--format` | -F | No | `"yaml"` | Output format for structured results. |
+| `--format` | -F | No | `"yaml"` | Output format for structured results. Overrides the per-exit declared format at runtime; exit format declarations represent the default when this option is not explicitly set. |
 | `--quiet` | -q | No | `false` | Suppress non-error output. |
 | `--version` | -V | No |  | Print version and exit. |
 | `--help` | -h | No |  | Show help and exit. |
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `CURSOR_API_KEY` | API key for the Cursor adapter (required when --adapter=cursor). |
+| `GEMINI_API_KEY` | API key for the Gemini adapter (required when --adapter=gemini). |
+| `OPENAI_API_KEY` | API key for the OpenAI adapter (required when --adapter=openai). |
+| `ANTHROPIC_API_KEY` | API key for the Claude adapter (required when --adapter=claude). |
 
 ### init
 
@@ -1004,9 +1013,12 @@ x-agent:
   riskLevel: medium
   requiresConfirmation: false
   idempotent: true
+  idempotentNote: Idempotent for final state; --clean creates a transient destructive intermediate state (removes output directory).
   sideEffects: 
     - filesystem
   safeDryRunOption: dry-run
+  dangerousOptions: 
+    - clean
 ```
 
 ---
@@ -1303,6 +1315,7 @@ x-agent:
   sideEffects: 
     - filesystem
   safeDryRunOption: dry-run
+  preferAlternative: generate markdown
 ```
 
 ---
@@ -1646,7 +1659,7 @@ cli-contracts test --case users.import.success
 
   </details>
 
-**Exit 6:** One or more tests failed.
+**Exit 6:** One or more tests failed. Uses a single failure exit code (no partial-success distinction) by design.
 
 - **stdout:** format=`yaml`
 
@@ -1793,7 +1806,7 @@ Compares two contract files (or git revisions) and reports additions, removals, 
 cli-contracts diff old.yaml new.yaml
 ```
 ```
-cli-contracts diff --base main --head HEAD
+cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
 ```
 
 #### Arguments
@@ -1809,7 +1822,7 @@ cli-contracts diff --base main --head HEAD
 |---|---|---|---|---|
 | `--base` |  | No |  | Git ref for the base version (e.g. main, v1.0.0). |
 | `--head` |  | No |  | Git ref for the head version (e.g. HEAD, feature-branch). |
-| `--file` | -f | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
+| `--contract-path` | -p | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--breaking-only` |  | No | `false` | Only report breaking changes. |
 | `--text` |  | No | `false` | Output human-readable text summary instead of structured data. |
 
@@ -2056,7 +2069,7 @@ x-agent:
 
 Detect missing or inconsistent x-agent policies via LLM.
 
-Analyzes CLI contract commands and proposes x-agent execution policies (riskLevel, requiresConfirmation, sideEffects, etc.) for commands that lack them. Uses agent-contracts-runtime as an optional peer dependency for LLM integration.
+Analyzes CLI contract commands and proposes x-agent execution policies (riskLevel, requiresConfirmation, sideEffects, etc.) for commands that lack them. Uses agent-contracts-runtime as an optional peer dependency for LLM integration. Overlaps with "audit --checks agent-policy"; prefer audit for comprehensive review, this command for focused policy generation.
 
 **Usage:**
 
@@ -2069,6 +2082,12 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --dry
 ```
 cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
 ```
+
+#### Arguments
+
+| Name | Required | Description |
+|---|---|---|
+| `contract` | No | Contract file to analyze. Alternative to --file. |
 
 #### Options
 
@@ -2086,7 +2105,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
 **Exit 0:** Completed without blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -2417,7 +2436,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
 **Exit 10:** Completed with blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -2741,6 +2760,12 @@ cli-contracts audit --file cli-contract.yaml --checks agent-policy
 cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 ```
 
+#### Arguments
+
+| Name | Required | Description |
+|---|---|---|
+| `contract` | No | Contract file to audit. Alternative to --file. |
+
 #### Options
 
 | Option | Aliases | Required | Default | Description |
@@ -2758,7 +2783,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
 **Exit 0:** Completed without blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -3089,7 +3114,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
 **Exit 10:** Completed with blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -3856,6 +3881,12 @@ cli-contracts propose-tests --file cli-contract.yaml --adapter gemini
 cli-contracts propose-tests --file cli-contract.yaml --dry-run
 ```
 
+#### Arguments
+
+| Name | Required | Description |
+|---|---|---|
+| `contract` | No | Contract file to analyze. Alternative to --file. |
+
 #### Options
 
 | Option | Aliases | Required | Default | Description |
@@ -3872,7 +3903,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
 **Exit 0:** Completed without blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -4203,7 +4234,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
 **Exit 10:** Completed with blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -4540,7 +4571,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 |---|---|---|---|---|
 | `--base` |  | No |  | Git ref for the base version. |
 | `--head` |  | No |  | Git ref for the head version. |
-| `--file` | -f | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
+| `--contract-path` | -p | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
@@ -4552,7 +4583,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 
 **Exit 0:** Completed without blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -4883,7 +4914,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
 
 **Exit 10:** Completed with blocking findings.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -5193,7 +5224,7 @@ x-agent:
 
 Generate a contract draft from existing CLI sources.
 
-Generates a cli-contract.yaml draft from existing CLI sources such as README, --help output, or source code. Results require human review before adoption.
+Generates a cli-contract.yaml draft from existing CLI sources such as README, --help output, or source code. Results require human review before adoption. At least one --from-* option must be provided.
 
 **Usage:**
 
@@ -5227,7 +5258,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
 **Exit 0:** Suggestion generated successfully.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -5558,7 +5589,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
 **Exit 10:** Suggestion generated with blocking issues.
 
-- **stdout:** format=`json`
+- **stdout:** format=`{options.report-format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|

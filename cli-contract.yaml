@@ -16,6 +16,27 @@ info:
 commandSets:
   cli-contracts:
     summary: Contract-first specification and toolchain for CLI interfaces.
+    x-stdin: >-
+      No command reads from stdin. All inputs are provided via file options
+      or positional arguments. Pipeline composition is not supported.
+
+    env:
+      CURSOR_API_KEY:
+        description: API key for the Cursor adapter (required when --adapter=cursor).
+        required: false
+        requiredWhen: '{options.adapter} == "cursor"'
+      GEMINI_API_KEY:
+        description: API key for the Gemini adapter (required when --adapter=gemini).
+        required: false
+        requiredWhen: '{options.adapter} == "gemini"'
+      OPENAI_API_KEY:
+        description: API key for the OpenAI adapter (required when --adapter=openai).
+        required: false
+        requiredWhen: '{options.adapter} == "openai"'
+      ANTHROPIC_API_KEY:
+        description: API key for the Claude adapter (required when --adapter=claude).
+        required: false
+        requiredWhen: '{options.adapter} == "claude"'
 
     globalOptions:
       - name: config
@@ -40,12 +61,16 @@ commandSets:
 
       - name: format
         aliases: [F]
-        description: Output format for structured results.
+        description: >-
+          Output format for structured results. Overrides the per-exit
+          declared format at runtime; exit format declarations represent
+          the default when this option is not explicitly set.
         valueName: format
         schema:
           type: string
           enum: [yaml, json]
           default: yaml
+        x-stability: immutable-default
 
       - name: quiet
         aliases: [q]
@@ -249,8 +274,12 @@ commandSets:
           riskLevel: medium
           requiresConfirmation: false
           idempotent: true
+          idempotentNote: >-
+            Idempotent for final state; --clean creates a transient
+            destructive intermediate state (removes output directory).
           sideEffects: [filesystem]
           safeDryRunOption: dry-run
+          dangerousOptions: [clean]
 
         arguments:
           - name: generators
@@ -359,6 +388,7 @@ commandSets:
           idempotent: true
           sideEffects: [filesystem]
           safeDryRunOption: dry-run
+          preferAlternative: generate markdown
 
         options:
           - name: file
@@ -510,7 +540,9 @@ commandSets:
                 $ref: '#/components/schemas/ValidateResult'
 
           '6':
-            description: One or more tests failed.
+            description: >-
+              One or more tests failed. Uses a single failure exit code
+              (no partial-success distinction) by design.
             stdout:
               format: yaml
               schema:
@@ -527,7 +559,7 @@ commandSets:
           arguments (old new) or --base/--head options.
         usage:
           - cli-contracts diff old.yaml new.yaml
-          - cli-contracts diff --base main --head HEAD
+          - cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
 
         x-agent:
           riskLevel: low
@@ -577,10 +609,10 @@ commandSets:
             schema:
               type: string
 
-          - name: file
-            aliases: [f]
+          - name: contract-path
+            aliases: [p]
             description: Contract file path within the repository (used with --base/--head).
-            valueName: file
+            valueName: path
             schema:
               type: string
               default: cli-contract.yaml
@@ -633,11 +665,26 @@ commandSets:
           Analyzes CLI contract commands and proposes x-agent execution
           policies (riskLevel, requiresConfirmation, sideEffects, etc.)
           for commands that lack them. Uses agent-contracts-runtime as
-          an optional peer dependency for LLM integration.
+          an optional peer dependency for LLM integration. Overlaps with
+          "audit --checks agent-policy"; prefer audit for comprehensive
+          review, this command for focused policy generation.
         usage:
           - cli-contracts propose-agent-policy cli-contract.yaml
           - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --dry-run
           - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: Contract file to analyze. Alternative to --file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
 
         options:
           - name: file
@@ -695,7 +742,7 @@ commandSets:
             valueName: fmt
             schema:
               type: string
-              enum: [json, text]
+              enum: [json, text, yaml]
               default: json
 
         x-agent:
@@ -709,7 +756,7 @@ commandSets:
           '0':
             description: Completed without blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -737,7 +784,7 @@ commandSets:
           '10':
             description: Completed with blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -767,6 +814,19 @@ commandSets:
           - cli-contracts audit cli-contract.yaml
           - cli-contracts audit --file cli-contract.yaml --checks agent-policy
           - cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: Contract file to audit. Alternative to --file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
 
         options:
           - name: file
@@ -832,7 +892,7 @@ commandSets:
             valueName: fmt
             schema:
               type: string
-              enum: [json, text]
+              enum: [json, text, yaml]
               default: json
 
         x-agent:
@@ -846,7 +906,7 @@ commandSets:
           '0':
             description: Completed without blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -874,7 +934,7 @@ commandSets:
           '10':
             description: Completed with blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1001,6 +1061,19 @@ commandSets:
           - cli-contracts propose-tests --file cli-contract.yaml --adapter gemini
           - cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: Contract file to analyze. Alternative to --file.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
         options:
           - name: file
             aliases: [f]
@@ -1057,7 +1130,7 @@ commandSets:
             valueName: fmt
             schema:
               type: string
-              enum: [json, text]
+              enum: [json, text, yaml]
               default: json
 
         x-agent:
@@ -1071,7 +1144,7 @@ commandSets:
           '0':
             description: Completed without blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1099,7 +1172,7 @@ commandSets:
           '10':
             description: Completed with blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1169,10 +1242,10 @@ commandSets:
             schema:
               type: string
 
-          - name: file
-            aliases: [f]
+          - name: contract-path
+            aliases: [p]
             description: Contract file path within the repository (used with --base/--head).
-            valueName: file
+            valueName: path
             schema:
               type: string
               default: cli-contract.yaml
@@ -1220,7 +1293,7 @@ commandSets:
             valueName: fmt
             schema:
               type: string
-              enum: [json, text]
+              enum: [json, text, yaml]
               default: json
 
         x-agent:
@@ -1234,7 +1307,7 @@ commandSets:
           '0':
             description: Completed without blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1262,7 +1335,7 @@ commandSets:
           '10':
             description: Completed with blocking findings.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1286,12 +1359,16 @@ commandSets:
         description: >-
           Generates a cli-contract.yaml draft from existing CLI sources
           such as README, --help output, or source code. Results require
-          human review before adoption.
+          human review before adoption. At least one --from-* option must
+          be provided.
         usage:
           - cli-contracts suggest --from-readme README.md
           - cli-contracts suggest --from-help help.txt
           - cli-contracts suggest --from-source src/cli.ts
           - cli-contracts suggest --from-readme README.md --adapter gemini
+
+        constraints:
+          requiredOneOf: [from-readme, from-help, from-source]
 
         options:
           - name: from-readme
@@ -1373,7 +1450,7 @@ commandSets:
           '0':
             description: Suggestion generated successfully.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 
@@ -1401,7 +1478,7 @@ commandSets:
           '10':
             description: Suggestion generated with blocking issues.
             stdout:
-              format: json
+              format: '{options.report-format}'
               schema:
                 $ref: '#/components/schemas/AgentAuditResult'
 

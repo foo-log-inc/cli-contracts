@@ -88,7 +88,7 @@ export interface DiffArgs {
 export interface DiffOptions {
   base?: string;
   head?: string;
-  file?: string;
+  contractPath?: string;
   breakingOnly?: boolean;
   text?: boolean;
 }
@@ -101,6 +101,10 @@ export type DiffExitResult =
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 7; stdout: { hasBreakingChanges: boolean; breakingCount?: number; nonBreakingCount?: number; changes: { type: "added" | "removed" | "changed"; path: string; breaking: boolean; description: string }[] } };
 
+export interface ProposeAgentPolicyArgs {
+  contract?: string;
+}
+
 export interface ProposeAgentPolicyOptions {
   file?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
@@ -108,7 +112,7 @@ export interface ProposeAgentPolicyOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  reportFormat?: "json" | "text";
+  reportFormat?: "json" | "text" | "yaml";
 }
 
 export type ProposeAgentPolicyExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -122,6 +126,10 @@ export type ProposeAgentPolicyExitResult =
   | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface AuditArgs {
+  contract?: string;
+}
+
 export interface AuditOptions {
   file?: string;
   checks?: "agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk";
@@ -130,7 +138,7 @@ export interface AuditOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  reportFormat?: "json" | "text";
+  reportFormat?: "json" | "text" | "yaml";
 }
 
 export type AuditExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -163,6 +171,10 @@ export type ExtractExitResult =
   | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
   | { exitCode: 8; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface ProposeTestsArgs {
+  contract?: string;
+}
+
 export interface ProposeTestsOptions {
   file?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
@@ -170,7 +182,7 @@ export interface ProposeTestsOptions {
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  reportFormat?: "json" | "text";
+  reportFormat?: "json" | "text" | "yaml";
 }
 
 export type ProposeTestsExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -192,13 +204,13 @@ export interface ExplainDiffArgs {
 export interface ExplainDiffOptions {
   base?: string;
   head?: string;
-  file?: string;
+  contractPath?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
   dryRun?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
-  reportFormat?: "json" | "text";
+  reportFormat?: "json" | "text" | "yaml";
 }
 
 export type ExplainDiffExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
