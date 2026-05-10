@@ -129,13 +129,13 @@ describe("CLI integration", () => {
       expect(result.errorCount).toBe(0);
     });
 
-    it("detects errors in invalid contract (exit 3)", async () => {
+    it("detects errors in invalid contract (exit 9)", async () => {
       const { exitCode, stdout } = await runCli([
         "validate",
         "-f",
         resolve(FIXTURES, "invalid-contract.yaml"),
       ]);
-      expect(exitCode).toBe(3);
+      expect(exitCode).toBe(9);
       const result = JSON.parse(stdout);
       expect(result.valid).toBe(false);
       expect(result.errorCount).toBeGreaterThan(0);

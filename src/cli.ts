@@ -68,7 +68,7 @@ const handlers: CommandHandlers = {
         resolveRefs: options.resolveRefs,
       });
       writeOut(result, fmt);
-      process.exit(result.valid ? 0 : 3);
+      process.exit(result.valid ? 0 : 9);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);

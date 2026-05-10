@@ -327,6 +327,7 @@ export async function cliContractsSuggest(
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
     if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
   }

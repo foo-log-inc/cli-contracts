@@ -21,13 +21,13 @@ export interface ValidateOptions {
   resolveRefs?: boolean;
 }
 
-export type ValidateExitCode = 0 | 1 | 2 | 3;
+export type ValidateExitCode = 0 | 1 | 2 | 9;
 
 export type ValidateExitResult =
   { exitCode: 0; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
   | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
-  | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] }; stderr?: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 9; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] }; stderr?: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface GenerateArgs {
   generators?: string[];
@@ -231,6 +231,7 @@ export interface SuggestOptions {
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
   dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
 }

@@ -32,8 +32,8 @@ Contract-first specification and toolchain for CLI interfaces.
 |---|---|---|---|---|
 | `--config` | -c | No | `"cli-contracts.config.yaml"` | Path to cli-contracts.config.yaml. |
 | `--verbose` | -v | No | `false` | Enable verbose output. |
-| `--format` | -F | No | `"yaml"` | Output format for structured results. Overrides the per-exit declared format at runtime; exit format declarations represent the default when this option is not explicitly set. |
-| `--quiet` | -q | No | `false` | Suppress non-error output. |
+| `--format` | -F | No | `"yaml"` | Output format for structured results (core commands only). Overrides the per-exit declared format at runtime; exit format declarations represent the default when this option is not explicitly set. Does NOT apply to LLM-powered commands which use --report-format instead. Precedence: core commands use --format; LLM commands use --report-format; --format is ignored by LLM commands. |
+| `--quiet` | -q | No | `false` | Suppress informational/verbose output only. Does NOT suppress the primary structured stdout (schema guarantees remain valid). Only affects supplementary human-readable messages. |
 | `--version` | -V | No |  | Print version and exit. |
 | `--help` | -h | No |  | Show help and exit. |
 
@@ -451,7 +451,7 @@ cli-contracts validate --strict
 
   </details>
 
-**Exit 3:** Validation failed. One or more errors found.
+**Exit 9:** Validation completed but found errors in the contract.
 
 - **stdout:** format=`yaml`
 
@@ -1012,6 +1012,8 @@ cli-contracts generate custom-go
 x-agent: 
   riskLevel: medium
   requiresConfirmation: false
+  requiresConfirmationWhen: 
+    - clean
   idempotent: true
   idempotentNote: Idempotent for final state; --clean creates a transient destructive intermediate state (removes output directory).
   sideEffects: 
@@ -1786,10 +1788,11 @@ cli-contracts test --case users.import.success
 ```yaml
 x-agent: 
   riskLevel: medium
-  requiresConfirmation: false
+  requiresConfirmation: true
   idempotent: false
   sideEffects: 
     - process-execution
+  sideEffectNote: Actual side effects depend on the target CLI and test cases being executed. The process-execution declaration is a lower bound; transitive effects may include filesystem, network, or other operations performed by the target CLI.
 ```
 
 ---
@@ -1824,13 +1827,13 @@ cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
 | `--head` |  | No |  | Git ref for the head version (e.g. HEAD, feature-branch). |
 | `--contract-path` | -p | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--breaking-only` |  | No | `false` | Only report breaking changes. |
-| `--text` |  | No | `false` | Output human-readable text summary instead of structured data. |
+| `--text` |  | No | `false` | Output human-readable text summary instead of structured data. When active, stdout is plain text and does not conform to the DiffResult schema. Agents should avoid this option for parsing. |
 
 #### Exit Codes
 
 **Exit 0:** No breaking changes detected (may include non-breaking changes).
 
-- **stdout:** format=`yaml`
+- **stdout:** format=`{options.text ? "text" : globalOptions.format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -1979,7 +1982,7 @@ cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
 
 **Exit 7:** Breaking changes detected.
 
-- **stdout:** format=`yaml`
+- **stdout:** format=`{options.text ? "text" : globalOptions.format}`
 
   | Property | Type | Required | Description |
   |---|---|---|---|
@@ -2087,13 +2090,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
 | Name | Required | Description |
 |---|---|---|
-| `contract` | No | Contract file to analyze. Alternative to --file. |
+| `contract` | No | Contract file to analyze. Mutually exclusive with --file; positional argument takes precedence if both are provided. |
 
 #### Options
 
 | Option | Aliases | Required | Default | Description |
 |---|---|---|---|---|
-| `--file` | -f | No |  | Contract file to analyze. |
+| `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
@@ -2736,8 +2739,13 @@ x-agent:
   requiresConfirmation: false
   idempotent: true
   sideEffects: 
-
+    - network
+  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: dry-run
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
 ```
 
 ---
@@ -2764,13 +2772,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
 
 | Name | Required | Description |
 |---|---|---|
-| `contract` | No | Contract file to audit. Alternative to --file. |
+| `contract` | No | Contract file to audit. Mutually exclusive with --file; positional argument takes precedence if both are provided. |
 
 #### Options
 
 | Option | Aliases | Required | Default | Description |
 |---|---|---|---|---|
-| `--file` | -f | No |  | Contract file to audit. |
+| `--file` | -f | No |  | Contract file to audit (alternative to positional argument). |
 | `--checks` |  | No |  | Audit dimension(s) to run. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
@@ -3414,8 +3422,13 @@ x-agent:
   requiresConfirmation: false
   idempotent: true
   sideEffects: 
-
+    - network
+  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: dry-run
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
 ```
 
 ---
@@ -3885,13 +3898,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
 
 | Name | Required | Description |
 |---|---|---|
-| `contract` | No | Contract file to analyze. Alternative to --file. |
+| `contract` | No | Contract file to analyze. Mutually exclusive with --file; positional argument takes precedence if both are provided. |
 
 #### Options
 
 | Option | Aliases | Required | Default | Description |
 |---|---|---|---|---|
-| `--file` | -f | No |  | Contract file to analyze. |
+| `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
@@ -4534,8 +4547,13 @@ x-agent:
   requiresConfirmation: false
   idempotent: true
   sideEffects: 
-
+    - network
+  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: dry-run
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
 ```
 
 ---
@@ -5214,8 +5232,13 @@ x-agent:
   requiresConfirmation: false
   idempotent: true
   sideEffects: 
-
+    - network
+  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: dry-run
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
 ```
 
 ---
@@ -5251,6 +5274,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--dry-run` |  | No | `false` | Output the prompt context without making an LLM call. |
+| `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the suggestion report. |
 
@@ -5889,8 +5913,13 @@ x-agent:
   requiresConfirmation: false
   idempotent: true
   sideEffects: 
-
+    - network
+  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: dry-run
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
 ```
 
 ---

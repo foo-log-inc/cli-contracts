@@ -62,9 +62,13 @@ commandSets:
       - name: format
         aliases: [F]
         description: >-
-          Output format for structured results. Overrides the per-exit
-          declared format at runtime; exit format declarations represent
-          the default when this option is not explicitly set.
+          Output format for structured results (core commands only).
+          Overrides the per-exit declared format at runtime; exit format
+          declarations represent the default when this option is not
+          explicitly set. Does NOT apply to LLM-powered commands which
+          use --report-format instead. Precedence: core commands use
+          --format; LLM commands use --report-format; --format is ignored
+          by LLM commands.
         valueName: format
         schema:
           type: string
@@ -74,7 +78,10 @@ commandSets:
 
       - name: quiet
         aliases: [q]
-        description: Suppress non-error output.
+        description: >-
+          Suppress informational/verbose output only. Does NOT suppress
+          the primary structured stdout (schema guarantees remain valid).
+          Only affects supplementary human-readable messages.
         schema:
           type: boolean
           default: false
@@ -244,8 +251,8 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
 
-          '3':
-            description: Validation failed. One or more errors found.
+          '9':
+            description: Validation completed but found errors in the contract.
             stdout:
               format: yaml
               schema:
@@ -273,6 +280,7 @@ commandSets:
         x-agent:
           riskLevel: medium
           requiresConfirmation: false
+          requiresConfirmationWhen: [clean]
           idempotent: true
           idempotentNote: >-
             Idempotent for final state; --clean creates a transient
@@ -471,9 +479,14 @@ commandSets:
 
         x-agent:
           riskLevel: medium
-          requiresConfirmation: false
+          requiresConfirmation: true
           idempotent: false
           sideEffects: [process-execution]
+          sideEffectNote: >-
+            Actual side effects depend on the target CLI and test cases
+            being executed. The process-execution declaration is a lower
+            bound; transitive effects may include filesystem, network, or
+            other operations performed by the target CLI.
 
         options:
           - name: profile
@@ -624,18 +637,24 @@ commandSets:
               default: false
 
           - name: text
-            description: Output human-readable text summary instead of structured data.
+            description: >-
+              Output human-readable text summary instead of structured data.
+              When active, stdout is plain text and does not conform to the
+              DiffResult schema. Agents should avoid this option for parsing.
             schema:
               type: boolean
               default: false
+            x-agent:
+              disablesStructuredOutput: true
 
         exits:
           '0':
             description: No breaking changes detected (may include non-breaking changes).
             stdout:
-              format: yaml
+              format: '{options.text ? "text" : globalOptions.format}'
               schema:
                 $ref: '#/components/schemas/DiffResult'
+              schemaNote: Schema applies only when --text is not set.
 
           '1':
             description: Unexpected error.
@@ -654,9 +673,10 @@ commandSets:
           '7':
             description: Breaking changes detected.
             stdout:
-              format: yaml
+              format: '{options.text ? "text" : globalOptions.format}'
               schema:
                 $ref: '#/components/schemas/DiffResult'
+              schemaNote: Schema applies only when --text is not set.
 
       # ── propose-agent-policy ─────────────────────────────
       propose-agent-policy:
@@ -677,7 +697,9 @@ commandSets:
           - name: contract
             index: 0
             required: false
-            description: Contract file to analyze. Alternative to --file.
+            description: >-
+              Contract file to analyze. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
             schema:
               type: string
             file:
@@ -686,10 +708,13 @@ commandSets:
               mediaType: application/yaml
               encoding: utf-8
 
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
         options:
           - name: file
             aliases: [f]
-            description: Contract file to analyze.
+            description: Contract file to analyze (alternative to positional argument).
             valueName: file
             schema:
               type: string
@@ -749,8 +774,13 @@ commandSets:
           riskLevel: low
           requiresConfirmation: false
           idempotent: true
-          sideEffects: []
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
           safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -819,7 +849,9 @@ commandSets:
           - name: contract
             index: 0
             required: false
-            description: Contract file to audit. Alternative to --file.
+            description: >-
+              Contract file to audit. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
             schema:
               type: string
             file:
@@ -828,10 +860,13 @@ commandSets:
               mediaType: application/yaml
               encoding: utf-8
 
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
         options:
           - name: file
             aliases: [f]
-            description: Contract file to audit.
+            description: Contract file to audit (alternative to positional argument).
             valueName: file
             schema:
               type: string
@@ -899,8 +934,13 @@ commandSets:
           riskLevel: low
           requiresConfirmation: false
           idempotent: true
-          sideEffects: []
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
           safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1065,7 +1105,9 @@ commandSets:
           - name: contract
             index: 0
             required: false
-            description: Contract file to analyze. Alternative to --file.
+            description: >-
+              Contract file to analyze. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
             schema:
               type: string
             file:
@@ -1074,10 +1116,13 @@ commandSets:
               mediaType: application/yaml
               encoding: utf-8
 
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
         options:
           - name: file
             aliases: [f]
-            description: Contract file to analyze.
+            description: Contract file to analyze (alternative to positional argument).
             valueName: file
             schema:
               type: string
@@ -1137,8 +1182,13 @@ commandSets:
           riskLevel: low
           requiresConfirmation: false
           idempotent: true
-          sideEffects: []
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
           safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1300,8 +1350,13 @@ commandSets:
           riskLevel: low
           requiresConfirmation: false
           idempotent: true
-          sideEffects: []
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
           safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1420,6 +1475,14 @@ commandSets:
               type: boolean
               default: false
 
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
           - name: output
             aliases: [o]
             description: Write result to a file instead of stdout.
@@ -1443,8 +1506,13 @@ commandSets:
           riskLevel: low
           requiresConfirmation: false
           idempotent: true
-          sideEffects: []
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
           safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':

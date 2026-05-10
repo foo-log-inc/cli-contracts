@@ -12,6 +12,7 @@ export interface SuggestOptions {
   adapter?: string;
   model?: string;
   dryRun?: boolean;
+  failOn?: string;
   output?: string;
   reportFormat?: string;
 }
@@ -52,7 +53,7 @@ export async function runSuggest(
     taskId: "suggest-contract",
     format: (options.reportFormat as "json" | "text") ?? "json",
     dryRun: options.dryRun ?? false,
-    failOn: "error",
+    failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
 
