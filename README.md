@@ -31,7 +31,7 @@ Use the same contract to:
 - **Test** real CLI implementations against the contract
 - **Diff** contract versions to detect breaking changes before release
 - **Declare AI-agent execution policies** — risk level, side effects, idempotency, confirmation, and safe dry-run options via `x-agent`
-- **Audit** contract design quality, propose `x-agent` policies, generate test cases, explain diffs, and draft contracts from existing sources — all via LLM-backed commands
+- **Audit** contract design quality, propose `x-agent` policies, generate test cases, explain diffs, check LLM command conformance against the reference specification, and draft contracts from existing sources — all via LLM-backed commands
 
 Key contract features:
 
@@ -71,6 +71,9 @@ npx cli-contracts diff old.yaml new.yaml
 
 # Audit contract design quality (requires agent-contracts-runtime)
 npx cli-contracts audit cli-contract.yaml --adapter gemini
+
+# Check LLM command conformance against the reference specification
+npx cli-contracts check-reference path/to/cli-contract.yaml --adapter openai
 
 # Generate a contract draft from an existing README
 npx cli-contracts suggest --from-readme README.md --adapter cursor
@@ -401,6 +404,7 @@ contractTests:
 | `cli-contracts audit [contract]` | Semantic audit of CLI contract design quality |
 | `cli-contracts propose-tests [contract]` | Propose contract test cases via LLM analysis |
 | `cli-contracts explain-diff [old] [new]` | Explain contract diff in human- and agent-readable form |
+| `cli-contracts check-reference [contract]` | Check LLM command conformance against the reference specification |
 | `cli-contracts suggest` | Generate a contract draft from existing CLI sources |
 
 ### Global options
@@ -559,6 +563,32 @@ At least one `--from-*` option is required.
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
+
+### check-reference
+
+Verifies whether LLM-powered commands in a target `cli-contract.yaml` conform to the cli-contracts reference specification. Performs deterministic pre-analysis (option presence, exit code coverage, schema structure, x-agent metadata) and uses LLM for semantic evaluation of overall conformance quality.
+
+| Argument | Description |
+|---|---|
+| `[contract]` | Contract file to check (mutually exclusive with `--file`) |
+
+| Option | Default | Description |
+|---|---|---|
+| `--file <file>` / `-f` | | Contract file to check (alternative to positional argument) |
+| `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
+| `--model <name>` | | Model name to pass to the adapter |
+| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
+| `--output <file>` | | Write result to a file instead of stdout |
+| `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
+
+Conformance checks include:
+
+- Standard LLM option set (`--adapter`, `--model`, `--dry-run`, `--fail-on`, `--output`, `--report-format`)
+- Exit code coverage (0, 1, 10, 11, 12)
+- `x-agent` metadata (`safeDryRunOption`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
+- Stdout schema conformance to `AgentAuditResult` / `AgentFinding` shape
+- `AgentEvidence` base property alignment
 
 For full details on every command, option, exit code, and output schema, see the [CLI Reference](docs/cli-reference.md).
 
@@ -798,7 +828,7 @@ interface AgentAuditResult {
 
 ### LLM-Backed Commands
 
-Five commands use LLM integration via `agent-contracts-runtime` (optional peer dependency) to perform semantic analysis:
+Six commands use LLM integration via `agent-contracts-runtime` (optional peer dependency) to perform semantic analysis:
 
 | Command | Purpose |
 |---|---|
@@ -806,6 +836,7 @@ Five commands use LLM integration via `agent-contracts-runtime` (optional peer d
 | `audit` | Semantic audit of contract design quality |
 | `propose-tests` | Generate test case proposals from contract definitions |
 | `explain-diff` | Generate human-readable explanations of contract diffs |
+| `check-reference` | Verify LLM command conformance against the reference specification |
 | `suggest` | Draft a contract from existing CLI sources (README, --help, source code) |
 
 ```bash
@@ -820,6 +851,9 @@ cli-contracts propose-tests cli-contract.yaml --adapter openai --report-format y
 
 # Explain a diff between contract versions
 cli-contracts explain-diff old.yaml new.yaml --adapter gemini
+
+# Check LLM command conformance against the reference specification
+cli-contracts check-reference path/to/cli-contract.yaml --adapter openai
 
 # Generate a contract draft from an existing README
 cli-contracts suggest --from-readme README.md --adapter cursor

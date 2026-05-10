@@ -163,9 +163,37 @@ export const suggestContract: TaskContract = {
   optional: false,
 };
 
+export const checkReferenceConformance: TaskContract = {
+  id: "check-reference-conformance",
+  description: "Check LLM command conformance against the cli-contracts reference specification",
+  target_agent: "cli-reference-checker",
+  allowed_from_agents: [
+  "cli-reference-checker"
+],
+  workflow: "",
+  invocation_handoff: "cli-audit-request",
+  result_handoff: "cli-audit-result",
+  input_artifacts: [],
+  responsibilities: [
+  "Identify LLM-powered commands in the target contract",
+  "Verify standard option set, exit codes, x-agent metadata, and schema conformance",
+  "Report conformance gaps as structured findings"
+],
+  completion_criteria: [
+  "All LLM commands identified and evaluated",
+  "Standard options checked against reference set",
+  "Exit code coverage verified",
+  "x-agent metadata evaluated for completeness",
+  "Output schema conformance assessed against AgentAuditResult",
+  "AgentEvidence base properties checked when applicable"
+],
+  optional: false,
+};
+
 export const taskRegistry: Record<string, TaskContract> = {
   "audit-agent-policy": auditAgentPolicy,
   "audit-contract-design": auditContractDesign,
+  "check-reference-conformance": checkReferenceConformance,
   "propose-test-cases": proposeTestCases,
   "explain-contract-diff": explainContractDiff,
   "suggest-contract": suggestContract,

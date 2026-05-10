@@ -1408,6 +1408,160 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
 
+      # ── check-reference ───────────────────────────────────
+      check-reference:
+        summary: Check LLM command conformance against the reference specification.
+        description: >-
+          Verifies whether LLM-powered commands in a target cli-contract.yaml
+          conform to the cli-contracts reference specification. Checks standard
+          option sets, exit codes, x-agent metadata, output schema conformance
+          (AgentAuditResult / AgentFinding), and AgentEvidence base properties.
+          Performs deterministic pre-analysis and uses LLM for semantic
+          evaluation of overall conformance quality.
+        usage:
+          - cli-contracts check-reference path/to/cli-contract.yaml
+          - cli-contracts check-reference --file path/to/cli-contract.yaml --adapter openai
+          - cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
+
+        arguments:
+          - name: contract
+            index: 0
+            required: false
+            description: >-
+              Contract file to check. Mutually exclusive with --file;
+              positional argument takes precedence if both are provided.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to check (alternative to positional argument).
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: write
+              mediaType: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the conformance report.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Network calls to LLM provider when adapter is not mock.
+            Filesystem write only when --output is specified.
+          safeDryRunOption: dry-run
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
+
+        exits:
+          '0':
+            description: All LLM commands conform to the reference specification.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Contract validation/parse failed.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Conformance issues found above --fail-on threshold.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
       # ── suggest ──────────────────────────────────────────
       suggest:
         summary: Generate a contract draft from existing CLI sources.

@@ -13,6 +13,7 @@ export interface CommandHandlers {
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
@@ -173,6 +174,21 @@ export function createProgram(
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
     .action(async (old, newArg, opts, cmd) => {
       await handlers.explainDiff(old, newArg, opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("check-reference")
+    .description("Check LLM command conformance against the reference specification.")
+    .argument("[contract]", "Contract file to check. Mutually exclusive with --file; positional argument takes precedence if both are provided.")
+    .option("-f, --file <file>", "Contract file to check (alternative to positional argument).")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--report-format <fmt>", "Output format for the conformance report.", "json")
+    .action(async (contract, opts, cmd) => {
+      await handlers.checkReference(contract, opts, cmd.optsWithGlobals());
     });
 
   program
