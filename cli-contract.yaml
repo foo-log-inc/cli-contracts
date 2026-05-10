@@ -560,6 +560,236 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/DiffResult'
 
+      # ── propose-agent-policy ─────────────────────────────
+      propose-agent-policy:
+        summary: Detect missing or inconsistent x-agent policies via LLM.
+        description: >-
+          Analyzes CLI contract commands and proposes x-agent execution
+          policies (riskLevel, requiresConfirmation, sideEffects, etc.)
+          for commands that lack them. Uses agent-contracts-runtime as
+          an optional peer dependency for LLM integration.
+        usage:
+          - cli-contracts propose-agent-policy cli-contract.yaml
+          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --dry-run
+          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to analyze.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+
+          - name: format
+            description: Output format for the result.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
+          safeDryRunOption: dry-run
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '4':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── audit ──────────────────────────────────────────
+      audit:
+        summary: Semantic audit of CLI contract design quality.
+        description: >-
+          Performs a comprehensive audit of CLI contract design quality
+          including responsibility boundaries, exit code consistency,
+          output schema coverage, and AI-agent safety metadata.
+          Uses agent-contracts-runtime as an optional peer dependency.
+        usage:
+          - cli-contracts audit cli-contract.yaml
+          - cli-contracts audit --file cli-contract.yaml --checks agent-policy
+          - cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to audit.
+            valueName: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: application/yaml
+              encoding: utf-8
+
+          - name: checks
+            description: Audit dimension(s) to run.
+            valueName: check
+            repeatable: true
+            schema:
+              type: string
+              enum: [agent-policy, responsibility, exit-code, output-schema, breaking-risk]
+
+          - name: adapter
+            description: LLM adapter to use.
+            valueName: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            valueName: name
+            schema:
+              type: string
+
+          - name: dry-run
+            description: Output the prompt context without making an LLM call.
+            schema:
+              type: boolean
+              default: false
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            valueName: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            valueName: file
+            schema:
+              type: string
+
+          - name: format
+            description: Output format for the result.
+            valueName: fmt
+            schema:
+              type: string
+              enum: [json, text]
+              default: json
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
+          safeDryRunOption: dry-run
+
+        exits:
+          '0':
+            description: Completed without blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '1':
+            description: Completed with blocking findings.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/AgentAuditResult'
+
+          '2':
+            description: Invalid input or configuration.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '3':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '4':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
       # ── extract ─────────────────────────────────────────
       extract:
         summary: Extract a subset of the contract for specific commands.
@@ -879,3 +1109,121 @@ components:
           type: boolean
         description:
           type: string
+
+    # ── AI Agent Interoperability Reference Schemas ──────
+
+    AgentEvidence:
+      type: object
+      description: >-
+        Evidence supporting an agent finding.
+        Reference schema for AI agent interoperability.
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [file, command, schema, diff, stdout, stderr, text]
+        target:
+          type: string
+          description: Target identifier (file path, command ID, schema name).
+        location:
+          type: string
+          description: Location within the target (line number, JSON pointer).
+        excerpt:
+          type: string
+          description: Relevant excerpt from the target.
+
+    AgentFinding:
+      type: object
+      description: >-
+        A single finding from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [severity, category, message]
+      properties:
+        id:
+          type: string
+          description: Unique finding identifier.
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+        category:
+          type: string
+          description: Finding category (e.g. missing-policy, inconsistent-risk).
+        target:
+          type: string
+          description: Target of the finding (command ID, schema path).
+        location:
+          type: string
+          description: Location within the target.
+        message:
+          type: string
+        recommendation:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score (0-1) for LLM-generated findings.
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentEvidence'
+        details:
+          type: object
+          additionalProperties: true
+
+    AgentRecommendedAction:
+      type: object
+      description: >-
+        A recommended action from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [kind, title]
+      properties:
+        kind:
+          type: string
+          enum: [run_command, edit_file, review, confirm, block, ignore]
+        title:
+          type: string
+        command:
+          type: string
+          description: CLI command to run (for run_command kind).
+        target:
+          type: string
+          description: Target file or resource.
+        rationale:
+          type: string
+
+    AgentAuditResult:
+      type: object
+      description: >-
+        Top-level result from an agent audit.
+        Reference schema for AI agent interoperability.
+      required: [summary, riskLevel, findings]
+      properties:
+        summary:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentFinding'
+        recommendedActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentRecommendedAction'
+        metadata:
+          type: object
+          properties:
+            tool:
+              type: string
+            command:
+              type: string
+            version:
+              type: string
+            generatedAt:
+              type: string
+            adapter:
+              type: string
+            model:
+              type: string

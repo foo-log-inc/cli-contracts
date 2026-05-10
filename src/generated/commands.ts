@@ -164,6 +164,63 @@ export async function cliContractsDiff(
   }
 }
 
+export async function cliContractsProposeAgentPolicy(
+  executable: string,
+  options?: Partial<import("./types.js").ProposeAgentPolicyOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["propose-agent-policy"];
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
+export async function cliContractsAudit(
+  executable: string,
+  options?: Partial<import("./types.js").AuditOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["audit"];
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.checks !== undefined) cmdArgs.push("--checks", String(options.checks));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.dryRun) cmdArgs.push("--dry-run");
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
 export async function cliContractsExtract(
   executable: string,
   args: import("./types.js").ExtractArgs,

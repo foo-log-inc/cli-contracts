@@ -585,6 +585,337 @@ export const schemas = {
       }
     }
   },
+  AgentEvidence: {
+    "type": "object",
+    "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+    "required": [
+      "kind"
+    ],
+    "properties": {
+      "kind": {
+        "type": "string",
+        "enum": [
+          "file",
+          "command",
+          "schema",
+          "diff",
+          "stdout",
+          "stderr",
+          "text"
+        ]
+      },
+      "target": {
+        "type": "string",
+        "description": "Target identifier (file path, command ID, schema name)."
+      },
+      "location": {
+        "type": "string",
+        "description": "Location within the target (line number, JSON pointer)."
+      },
+      "excerpt": {
+        "type": "string",
+        "description": "Relevant excerpt from the target."
+      }
+    }
+  },
+  AgentFinding: {
+    "type": "object",
+    "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+    "required": [
+      "severity",
+      "category",
+      "message"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Unique finding identifier."
+      },
+      "severity": {
+        "type": "string",
+        "enum": [
+          "info",
+          "warning",
+          "error",
+          "critical"
+        ]
+      },
+      "category": {
+        "type": "string",
+        "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+      },
+      "target": {
+        "type": "string",
+        "description": "Target of the finding (command ID, schema path)."
+      },
+      "location": {
+        "type": "string",
+        "description": "Location within the target."
+      },
+      "message": {
+        "type": "string"
+      },
+      "recommendation": {
+        "type": "string"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Confidence score (0-1) for LLM-generated findings."
+      },
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "file",
+                "command",
+                "schema",
+                "diff",
+                "stdout",
+                "stderr",
+                "text"
+              ]
+            },
+            "target": {
+              "type": "string",
+              "description": "Target identifier (file path, command ID, schema name)."
+            },
+            "location": {
+              "type": "string",
+              "description": "Location within the target (line number, JSON pointer)."
+            },
+            "excerpt": {
+              "type": "string",
+              "description": "Relevant excerpt from the target."
+            }
+          }
+        }
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  },
+  AgentRecommendedAction: {
+    "type": "object",
+    "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+    "required": [
+      "kind",
+      "title"
+    ],
+    "properties": {
+      "kind": {
+        "type": "string",
+        "enum": [
+          "run_command",
+          "edit_file",
+          "review",
+          "confirm",
+          "block",
+          "ignore"
+        ]
+      },
+      "title": {
+        "type": "string"
+      },
+      "command": {
+        "type": "string",
+        "description": "CLI command to run (for run_command kind)."
+      },
+      "target": {
+        "type": "string",
+        "description": "Target file or resource."
+      },
+      "rationale": {
+        "type": "string"
+      }
+    }
+  },
+  AgentAuditResult: {
+    "type": "object",
+    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "required": [
+      "summary",
+      "riskLevel",
+      "findings"
+    ],
+    "properties": {
+      "summary": {
+        "type": "string"
+      },
+      "riskLevel": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "required": [
+            "severity",
+            "category",
+            "message"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique finding identifier."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "error",
+                "critical"
+              ]
+            },
+            "category": {
+              "type": "string",
+              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target of the finding (command ID, schema path)."
+            },
+            "location": {
+              "type": "string",
+              "description": "Location within the target."
+            },
+            "message": {
+              "type": "string"
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence score (0-1) for LLM-generated findings."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "command",
+                      "schema",
+                      "diff",
+                      "stdout",
+                      "stderr",
+                      "text"
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Target identifier (file path, command ID, schema name)."
+                  },
+                  "location": {
+                    "type": "string",
+                    "description": "Location within the target (line number, JSON pointer)."
+                  },
+                  "excerpt": {
+                    "type": "string",
+                    "description": "Relevant excerpt from the target."
+                  }
+                }
+              }
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "recommendedActions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "required": [
+            "kind",
+            "title"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "run_command",
+                "edit_file",
+                "review",
+                "confirm",
+                "block",
+                "ignore"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string",
+              "description": "CLI command to run (for run_command kind)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target file or resource."
+            },
+            "rationale": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
 } as const;
 
 export const initExitCodes = [0, 1, 2, 4] as const;
@@ -593,4 +924,6 @@ export const generateExitCodes = [0, 1, 2, 3, 5] as const;
 export const docsExitCodes = [0, 1, 2, 3] as const;
 export const testExitCodes = [0, 1, 2, 3, 6] as const;
 export const diffExitCodes = [0, 1, 2, 7] as const;
+export const proposeAgentPolicyExitCodes = [0, 1, 2, 3, 4] as const;
+export const auditExitCodes = [0, 1, 2, 3, 4] as const;
 export const extractExitCodes = [0, 1, 2, 3, 8] as const;

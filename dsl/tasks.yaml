@@ -1,0 +1,54 @@
+audit-agent-policy:
+  description: Audit and propose x-agent execution policies for CLI commands
+  target_agent: cli-policy-auditor
+  allowed_from_agents:
+    - cli-policy-auditor
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Analyze all commands for x-agent policy presence
+    - Evaluate risk level based on command semantics
+    - Propose missing or improved policies
+  completion_criteria:
+    - All commands evaluated
+    - Missing policies identified with recommendations
+    - Risk assessments provided with confidence scores
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: analyze-commands
+      action: Analyze each command for policy gaps
+    - id: produce-findings
+      action: Produce findings and recommended actions
+  escalation_criteria:
+    - condition: Contract cannot be parsed or is structurally invalid
+      action: stop_and_report
+
+audit-contract-design:
+  description: Audit CLI contract design quality
+  target_agent: cli-contract-auditor
+  allowed_from_agents:
+    - cli-contract-auditor
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Check command responsibility boundaries
+    - Review exit code coverage and consistency
+    - Assess output schema completeness
+    - Evaluate automation readiness
+  completion_criteria:
+    - All requested dimensions audited
+    - Findings classified by severity
+    - Actionable recommendations provided
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: run-checks
+      action: Execute requested audit dimensions
+    - id: produce-findings
+      action: Produce audit report with findings
+  escalation_criteria:
+    - condition: Structural contract defects prevent meaningful audit
+      action: stop_and_report

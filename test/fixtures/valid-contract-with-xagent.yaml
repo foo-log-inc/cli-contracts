@@ -1,0 +1,74 @@
+cliContracts: 0.1.0
+
+info:
+  title: X-Agent Test CLI
+  version: 1.0.0
+  description: Fixture with complete x-agent policies.
+
+commandSets:
+  xagent-test:
+    summary: Test CLI with x-agent policies.
+
+    commands:
+      safe-read:
+        summary: Read data safely.
+        exits:
+          '0':
+            description: Success.
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: []
+
+      dangerous-write:
+        summary: Write data to database.
+        arguments:
+          - name: input
+            required: true
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              mediaType: text/csv
+              encoding: utf-8
+        options:
+          - name: dry-run
+            aliases: [n]
+            description: Validate only.
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: Import succeeded.
+          '1':
+            description: Unexpected error.
+        x-agent:
+          riskLevel: high
+          requiresConfirmation: true
+          idempotent: false
+          sideEffects:
+            - database_write
+          safeDryRunOption: dry-run
+          recommendedBeforeUse:
+            - Run with --dry-run first.
+            - Validate input file.
+
+      network-op:
+        summary: Call external API.
+        exits:
+          '0':
+            description: Success.
+          '1':
+            description: Error.
+        x-agent:
+          riskLevel: medium
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects:
+            - api_call
+          requiresNetwork: true
+          requiresSecrets:
+            - API_KEY

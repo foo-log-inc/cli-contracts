@@ -12,6 +12,18 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent.js",
+      "types": "./dist/agent.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "agent-contracts-runtime": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "agent-contracts-runtime": {
+      "optional": true
     }
   },
   "files": [

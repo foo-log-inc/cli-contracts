@@ -100,6 +100,45 @@ export type DiffExitResult =
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 7; stdout: { hasBreakingChanges: boolean; breakingCount?: number; nonBreakingCount?: number; changes: { type: "added" | "removed" | "changed"; path: string; breaking: boolean; description: string }[] } };
 
+export interface ProposeAgentPolicyOptions {
+  file?: string;
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
+  output?: string;
+  format?: "json" | "text";
+}
+
+export type ProposeAgentPolicyExitCode = 0 | 1 | 2 | 3 | 4;
+
+export type ProposeAgentPolicyExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
+export interface AuditOptions {
+  file?: string;
+  checks?: "agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk";
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
+  output?: string;
+  format?: "json" | "text";
+}
+
+export type AuditExitCode = 0 | 1 | 2 | 3 | 4;
+
+export type AuditExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
 export interface ExtractArgs {
   commands?: string[];
 }
@@ -207,4 +246,40 @@ export interface DiffChange {
   path: string;
   breaking: boolean;
   description: string;
+}
+
+export interface AgentEvidence {
+  kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text";
+  target?: string;
+  location?: string;
+  excerpt?: string;
+}
+
+export interface AgentFinding {
+  id?: string;
+  severity: "info" | "warning" | "error" | "critical";
+  category: string;
+  target?: string;
+  location?: string;
+  message: string;
+  recommendation?: string;
+  confidence?: number;
+  evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[];
+  details?: Record<string, unknown>;
+}
+
+export interface AgentRecommendedAction {
+  kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore";
+  title: string;
+  command?: string;
+  target?: string;
+  rationale?: string;
+}
+
+export interface AgentAuditResult {
+  summary: string;
+  riskLevel: "low" | "medium" | "high" | "critical";
+  findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[];
+  recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[];
+  metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string };
 }

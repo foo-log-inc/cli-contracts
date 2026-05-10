@@ -8,6 +8,8 @@ export interface CommandHandlers {
   docs: (options: { file?: string; output?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeAgentPolicy: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  audit: (options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
@@ -92,6 +94,35 @@ export function createProgram(
     .option("--text", "Output human-readable text summary instead of structured data.", false)
     .action(async (old, newArg, opts, cmd) => {
       await handlers.diff(old, newArg, opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("propose-agent-policy")
+    .description("Detect missing or inconsistent x-agent policies via LLM.")
+    .option("-f, --file <file>", "Contract file to analyze.")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--format <fmt>", "Output format for the result.", "json")
+    .action(async (opts, cmd) => {
+      await handlers.proposeAgentPolicy(opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("audit")
+    .description("Semantic audit of CLI contract design quality.")
+    .option("-f, --file <file>", "Contract file to audit.")
+    .option("--checks <check...>", "Audit dimension(s) to run.")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--format <fmt>", "Output format for the result.", "json")
+    .action(async (opts, cmd) => {
+      await handlers.audit(opts, cmd.optsWithGlobals());
     });
 
   program

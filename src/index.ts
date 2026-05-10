@@ -34,6 +34,9 @@ export type {
   GenerateResult,
   DiffChange,
   DiffResult,
+  XAgent,
+  HumanReview,
+  Rollback,
 } from "./types.js";
 
 export {
@@ -50,6 +53,9 @@ export {
   StreamsSchema,
   StreamContractSchema,
   ComponentsSchema,
+  XAgentSchema,
+  HumanReviewSchema,
+  RollbackSchema,
 } from "./schema.js";
 
 export { parseContractFile, parseContractString } from "./parser.js";

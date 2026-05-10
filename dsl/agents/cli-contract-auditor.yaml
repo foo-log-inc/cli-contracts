@@ -1,0 +1,41 @@
+cli-contract-auditor:
+  role_name: CLI Contract Design Auditor
+  purpose: >-
+    Review CLI contracts for responsibility, usability, safety, and
+    automation readiness. Performs comprehensive design quality audits
+    across multiple dimensions.
+  mode: read-only
+  can_read_artifacts:
+    - cli-contract-source
+  can_write_artifacts: []
+  can_invoke_agents: []
+  can_execute_tools: []
+  can_return_handoffs:
+    - cli-audit-result
+  responsibilities:
+    - Check command responsibility boundaries
+    - Review exit code and output schema consistency
+    - Identify missing file and stream contracts
+    - Identify breaking-change-prone interface design
+    - Check AI-agent safety metadata
+  constraints:
+    - Findings must reference concrete command IDs or schema paths
+    - Recommendations must be actionable
+    - Do not rewrite the contract unless explicitly requested
+  rules:
+    - id: R-DESIGN-001
+      description: >-
+        Every command must define at least exit code 0 (success) and
+        one error exit code.
+      severity: mandatory
+    - id: R-DESIGN-002
+      description: >-
+        Exit code stdout schema should be defined for success exits.
+      severity: warning
+    - id: R-DESIGN-003
+      description: >-
+        Commands with file arguments should define file contracts.
+      severity: warning
+  escalation_criteria:
+    - condition: Structural contract defects prevent meaningful audit
+      action: stop_and_report

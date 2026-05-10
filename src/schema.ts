@@ -151,6 +151,36 @@ export const DeprecationInfoSchema = z.object({
   alternative: z.string().optional(),
 });
 
+// ─── x-agent Extension Schema ───────────────────────────────────
+
+export const HumanReviewSchema = z.object({
+  required: z.boolean(),
+  reason: z.string().optional(),
+});
+
+export const RollbackSchema = z.object({
+  supported: z.boolean(),
+  notes: z.string().optional(),
+});
+
+export const XAgentSchema = z.object({
+  riskLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
+  requiresConfirmation: z.boolean().optional(),
+  idempotent: z.boolean().optional(),
+  sideEffects: z.array(z.string()).optional(),
+  safeDryRunOption: z.string().optional(),
+  recommendedBeforeUse: z.array(z.string()).optional(),
+  executionMode: z.string().optional(),
+  reads: z.array(z.string()).optional(),
+  writes: z.array(z.string()).optional(),
+  requiresNetwork: z.boolean().optional(),
+  requiresSecrets: z.array(z.string()).optional(),
+  humanReview: HumanReviewSchema.optional(),
+  rollback: RollbackSchema.optional(),
+}).passthrough();
+
+// ─── Command Schema ─────────────────────────────────────────────
+
 export const CommandSchema = z
   .object({
     path: z.array(z.string()).optional(),
@@ -292,6 +322,9 @@ export type Example = z.infer<typeof ExampleSchema>;
 export type DeprecationInfo = z.infer<typeof DeprecationInfoSchema>;
 export type Components = z.infer<typeof ComponentsSchema>;
 export type EnvVar = z.infer<typeof EnvVarSchema>;
+export type XAgent = z.infer<typeof XAgentSchema>;
+export type HumanReview = z.infer<typeof HumanReviewSchema>;
+export type Rollback = z.infer<typeof RollbackSchema>;
 
 export type CliContractsConfig = z.infer<typeof CliContractsConfigSchema>;
 export type InputConfig = z.infer<typeof InputConfigSchema>;

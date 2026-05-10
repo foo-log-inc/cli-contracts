@@ -11,6 +11,9 @@ import { runDocs } from "./commands/docs.js";
 import { runDiff } from "./commands/diff.js";
 import { runContractTests } from "./commands/test.js";
 import { runExtract } from "./commands/extract.js";
+import { runProposeAgentPolicy } from "./commands/propose-agent-policy.js";
+import { runAuditCommand } from "./commands/audit.js";
+import { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR } from "./auditor/auditor.js";
 import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
 function getFormat(parentOpts: Record<string, unknown>): OutputFormat {
@@ -166,6 +169,70 @@ const handlers: CommandHandlers = {
       writeOut(result, fmt);
       process.exit(result.hasBreakingChanges ? 7 : 0);
     } catch (err) {
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async proposeAgentPolicy(options, parentOpts) {
+    try {
+      const configResult = await loadConfig(
+        parentOpts.config as string | undefined,
+      );
+      const files = options.file
+        ? [options.file]
+        : getContractFiles(configResult?.config);
+
+      const { result, exitCode } = await runProposeAgentPolicy(files, options);
+
+      if (options.format === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(3);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(4);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async audit(options, parentOpts) {
+    try {
+      const configResult = await loadConfig(
+        parentOpts.config as string | undefined,
+      );
+      const files = options.file
+        ? [options.file]
+        : getContractFiles(configResult?.config);
+
+      const { result, exitCode } = await runAuditCommand(files, options);
+
+      if (options.format === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(3);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(4);
+      }
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
     }

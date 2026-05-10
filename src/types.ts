@@ -32,6 +32,9 @@ export type {
   GeneratorConfig,
   ContractTestsConfig,
   DiffConfig,
+  XAgent,
+  HumanReview,
+  Rollback,
 } from "./schema.js";
 
 // ─── Normalized Context (for generators) ────────────────────────
