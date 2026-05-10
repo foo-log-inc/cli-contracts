@@ -383,6 +383,9 @@ contractTests:
 | `cli-contracts docs` | Generate Markdown documentation |
 | `cli-contracts test` | Run contract tests against a real CLI |
 | `cli-contracts diff <old> <new>` | Detect breaking changes between versions |
+| `cli-contracts extract` | Extract a subset of the contract for specific commands |
+| `cli-contracts propose-agent-policy` | Detect missing or inconsistent `x-agent` policies via LLM |
+| `cli-contracts audit` | Semantic audit of CLI contract design quality |
 
 ### Global options
 
@@ -452,6 +455,31 @@ contractTests:
 |---|---|---|
 | `--breaking-only` | `false` | Only report breaking changes |
 | `--format <format>` | `json` | Output format (`json` or `text`) |
+
+### propose-agent-policy
+
+| Option | Default | Description |
+|---|---|---|
+| `--file <file>` | config input | Contract file to analyze |
+| `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
+| `--model <name>` | | Model name to pass to the adapter |
+| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
+| `--output <file>` | | Write result to a file instead of stdout |
+| `--format <fmt>` | `json` | Output format (`json` or `text`) |
+
+### audit
+
+| Option | Default | Description |
+|---|---|---|
+| `--file <file>` | config input | Contract file to audit |
+| `--checks <check...>` | all | Audit dimension(s) to run (`agent-policy`, `responsibility`, `exit-code`, `output-schema`, `breaking-risk`) |
+| `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
+| `--model <name>` | | Model name to pass to the adapter |
+| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit |
+| `--output <file>` | | Write result to a file instead of stdout |
+| `--format <fmt>` | `json` | Output format (`json` or `text`) |
 
 For full details on every command, option, exit code, and output schema, see the [CLI Reference](docs/cli-reference.md).
 
@@ -607,6 +635,78 @@ import { CliContractsDocumentSchema } from "cli-contracts";
 
 const result = CliContractsDocumentSchema.safeParse(rawYamlObject);
 ```
+
+## AI Agent Interoperability Reference
+
+CLI Contracts provides two sets of reference specifications for AI agent interoperability. These are not mandatory standards, but shared conventions that toolchains can adopt for uniform agent integration.
+
+### `x-agent`: Pre-Execution Policy
+
+The `x-agent` extension on commands declares execution policies that AI agents can read before running a command. It is now formalized with a typed Zod schema (`XAgentSchema`) and validated during `cli-contracts validate`:
+
+```yaml
+x-agent:
+  riskLevel: high             # low | medium | high | critical
+  requiresConfirmation: true
+  idempotent: false
+  sideEffects:
+    - database_write
+  safeDryRunOption: dry-run
+  recommendedBeforeUse:
+    - Run with --dry-run before actual import.
+```
+
+Validation rules:
+
+- `riskLevel` of `high` or `critical` without `requiresConfirmation: true` produces a warning
+- `sideEffects` present without `idempotent` declared produces a warning
+- Extended fields (`executionMode`, `reads`, `writes`, `requiresNetwork`, `requiresSecrets`, `humanReview`, `rollback`) are accepted via passthrough
+
+### Agent Response Reference Schemas
+
+`AgentFinding`, `AgentAuditResult`, `AgentRecommendedAction`, and `AgentEvidence` are reference schemas for agent-facing diagnostic output, defined in `cli-contract.yaml` `components/schemas` and exported via the `cli-contracts/agent` subpath:
+
+```typescript
+import type { AgentAuditResult, AgentFinding } from "cli-contracts/agent";
+import { XAgentSchema, validateXAgent } from "cli-contracts/agent";
+```
+
+`AgentAuditResult` is the standard output format for LLM-backed audit commands across the toolchain:
+
+```typescript
+interface AgentAuditResult {
+  summary: string;
+  riskLevel: "low" | "medium" | "high" | "critical";
+  findings: AgentFinding[];
+  recommendedActions?: AgentRecommendedAction[];
+  metadata?: { tool?: string; command?: string; version?: string; ... };
+}
+```
+
+### LLM-Backed Commands
+
+The `propose-agent-policy` and `audit` commands use LLM integration via `agent-contracts-runtime` (optional peer dependency) to perform semantic analysis:
+
+```bash
+# Propose x-agent policies for commands missing them
+cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
+
+# Audit contract design quality
+cli-contracts audit --file cli-contract.yaml --checks agent-policy --adapter claude
+
+# Inspect the prompt without making an LLM call
+cli-contracts propose-agent-policy --file cli-contract.yaml --dry-run
+```
+
+These commands share a common option interface (`--adapter`, `--model`, `--dry-run`, `--fail-on`, `--output`, `--format`) designed to be adopted by any LLM-backed CLI command in the toolchain.
+
+Install the optional runtime dependency to enable LLM calls:
+
+```bash
+npm install agent-contracts-runtime
+```
+
+Without it, use `--dry-run` to inspect the prompt context that would be sent to the LLM.
 
 ## Why not OpenCLI?
 
