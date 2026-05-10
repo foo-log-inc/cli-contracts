@@ -70,7 +70,84 @@ export const auditContractDesign: TaskContract = {
   optional: false,
 };
 
+export const proposeTestCases: TaskContract = {
+  id: "propose-test-cases",
+  description: "Propose contract test cases for CLI commands",
+  target_agent: "cli-test-proposer",
+  allowed_from_agents: [
+  "cli-test-proposer"
+],
+  workflow: "",
+  invocation_handoff: "cli-audit-request",
+  result_handoff: "cli-audit-result",
+  input_artifacts: [],
+  responsibilities: [
+  "Analyze contract surface area for test coverage",
+  "Propose success, error, and edge case tests",
+  "Identify missing test scenarios"
+],
+  completion_criteria: [
+  "All commands analyzed for test coverage",
+  "Test case proposals include concrete scenarios",
+  "Coverage gaps identified with recommendations"
+],
+  optional: false,
+};
+
+export const explainContractDiff: TaskContract = {
+  id: "explain-contract-diff",
+  description: "Explain contract diff in human- and agent-readable terms",
+  target_agent: "cli-diff-explainer",
+  allowed_from_agents: [
+  "cli-diff-explainer"
+],
+  workflow: "",
+  invocation_handoff: "cli-audit-request",
+  result_handoff: "cli-audit-result",
+  input_artifacts: [],
+  responsibilities: [
+  "Explain each breaking change with impact",
+  "Draft migration notes and release notes",
+  "Suggest semver version bump",
+  "Highlight AI-agent-relevant changes"
+],
+  completion_criteria: [
+  "All changes explained",
+  "Breaking changes have migration notes",
+  "Semver suggestion provided"
+],
+  optional: false,
+};
+
+export const suggestContract: TaskContract = {
+  id: "suggest-contract",
+  description: "Generate cli-contract.yaml draft from CLI sources",
+  target_agent: "cli-contract-suggester",
+  allowed_from_agents: [
+  "cli-contract-suggester"
+],
+  workflow: "",
+  invocation_handoff: "cli-audit-request",
+  result_handoff: "cli-audit-result",
+  input_artifacts: [],
+  responsibilities: [
+  "Extract command structure from source material",
+  "Infer argument and option types",
+  "Propose exit codes and schemas",
+  "Assign confidence to each suggestion"
+],
+  completion_criteria: [
+  "All recognizable commands extracted",
+  "Contract draft is valid YAML",
+  "Confidence scores assigned to inferred elements"
+],
+  optional: false,
+};
+
 export const taskRegistry: Record<string, TaskContract> = {
   "audit-agent-policy": auditAgentPolicy,
   "audit-contract-design": auditContractDesign,
+  "propose-test-cases": proposeTestCases,
+  "explain-contract-diff": explainContractDiff,
+  "suggest-contract": suggestContract,
 };

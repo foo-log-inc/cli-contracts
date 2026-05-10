@@ -1,5 +1,6 @@
 import * as yaml from "yaml";
 import type { CliContractsDocument } from "../types.js";
+import type { DiffResult, DiffChange } from "../types.js";
 
 /**
  * Builds the user_request string from a CLI contract document.
@@ -61,6 +62,159 @@ export function buildDesignAuditContext(
   }
 
   sections.push("## Full Contract\n```yaml\n" + yaml.stringify(doc) + "```");
+
+  return sections.join("\n\n");
+}
+
+export function buildTestProposalContext(
+  doc: CliContractsDocument,
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Test Case Proposal Request");
+  sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
+  sections.push(
+    "## Instructions\nAnalyze each command and propose test cases. For each command, consider:\n" +
+    "- Success scenarios (exit 0)\n" +
+    "- Required argument missing\n" +
+    "- Invalid option values\n" +
+    "- File not found / file exists violations\n" +
+    "- Invalid file media type\n" +
+    "- stdout/stderr schema mismatch scenarios\n" +
+    "- Dry-run mode\n" +
+    "- Destructive command confirmation\n" +
+    "- Stream malformed input\n" +
+    "- Timeout / signal handling",
+  );
+
+  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+    sections.push(`## Command Set: ${setId}`);
+
+    for (const [cmdId, cmd] of Object.entries(cs.commands)) {
+      const lines: string[] = [`### Command: ${cmdId}`];
+      lines.push(`- Summary: ${cmd.summary}`);
+
+      if (cmd.arguments && cmd.arguments.length > 0) {
+        const argDetail = cmd.arguments.map((a) => {
+          const parts = [a.name];
+          if (a.required) parts.push("(required)");
+          if (a.variadic) parts.push("(variadic)");
+          if (a.file) parts.push(`[file: mode=${a.file.mode}, exists=${a.file.exists}]`);
+          return parts.join(" ");
+        });
+        lines.push(`- Arguments: ${argDetail.join("; ")}`);
+      }
+
+      if (cmd.options && cmd.options.length > 0) {
+        const optDetail = cmd.options.map((o) => {
+          const parts = [`--${o.name}`];
+          if (o.required) parts.push("(required)");
+          if (o.schema?.enum) parts.push(`enum: [${(o.schema.enum as string[]).join(",")}]`);
+          if (o.schema?.default !== undefined) parts.push(`default: ${o.schema.default}`);
+          if (o.file) parts.push(`[file: mode=${o.file.mode}, exists=${o.file.exists}]`);
+          return parts.join(" ");
+        });
+        lines.push(`- Options: ${optDetail.join("; ")}`);
+      }
+
+      const exits = Object.entries(cmd.exits).map(
+        ([code, exit]) => `  ${code}: ${exit.description}`,
+      );
+      lines.push(`- Exit codes:\n${exits.join("\n")}`);
+
+      if (cmd.streams) {
+        lines.push(`- Streams: ${Object.keys(cmd.streams).join(", ")}`);
+      }
+
+      const xAgent = (cmd as Record<string, unknown>)["x-agent"];
+      if (xAgent) {
+        lines.push(`- x-agent:\n\`\`\`yaml\n${yaml.stringify(xAgent)}\`\`\``);
+      }
+
+      sections.push(lines.join("\n"));
+    }
+  }
+
+  return sections.join("\n\n");
+}
+
+export function buildDiffExplainContext(
+  diffResult: DiffResult,
+  oldVersion?: string,
+  newVersion?: string,
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Diff Explanation Request");
+
+  if (oldVersion || newVersion) {
+    sections.push(
+      `## Versions\n- Old: ${oldVersion ?? "(unknown)"}\n- New: ${newVersion ?? "(unknown)"}`,
+    );
+  }
+
+  sections.push(
+    `## Diff Summary\n` +
+    `- Has breaking changes: ${diffResult.hasBreakingChanges}\n` +
+    `- Breaking count: ${diffResult.breakingCount ?? 0}\n` +
+    `- Non-breaking count: ${diffResult.nonBreakingCount ?? 0}`,
+  );
+
+  sections.push(
+    "## Instructions\nFor each change:\n" +
+    "1. Explain the impact in human-readable terms\n" +
+    "2. If breaking: provide migration notes\n" +
+    "3. Highlight changes affecting AI agent consumers (x-agent policy changes)\n" +
+    "4. Suggest a semver version bump (patch/minor/major)\n" +
+    "5. Draft release notes",
+  );
+
+  if (diffResult.changes.length > 0) {
+    sections.push("## Changes");
+    for (const change of diffResult.changes) {
+      const lines: string[] = [
+        `### ${change.type.toUpperCase()}: ${change.path}`,
+        `- Breaking: ${change.breaking}`,
+        `- Description: ${change.description}`,
+      ];
+      sections.push(lines.join("\n"));
+    }
+  }
+
+  return sections.join("\n\n");
+}
+
+export function buildSuggestContext(
+  sources: { readme?: string; help?: string; source?: string },
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Suggestion Request");
+  sections.push(
+    "## Instructions\nGenerate a cli-contract.yaml draft from the source material below.\n" +
+    "For each command found:\n" +
+    "1. Extract command name and description\n" +
+    "2. Infer arguments with types and required/optional status\n" +
+    "3. Infer options with types, defaults, and enums where visible\n" +
+    "4. Propose exit codes (at minimum 0 for success, 1 for error)\n" +
+    "5. Suggest stdout/stderr schemas where inferable\n" +
+    "6. Propose x-agent policies where behavior is evident\n" +
+    "7. Assign a confidence score (0-1) to each inferred element\n\n" +
+    "Return findings describing each suggested command, with the contract\n" +
+    "YAML draft as evidence excerpts.",
+  );
+
+  if (sources.readme) {
+    sections.push(`## Source: README\n\`\`\`\n${sources.readme}\n\`\`\``);
+  }
+
+  if (sources.help) {
+    sections.push(`## Source: --help output\n\`\`\`\n${sources.help}\n\`\`\``);
+  }
+
+  if (sources.source) {
+    sections.push(`## Source: CLI source code\n\`\`\`\n${sources.source}\n\`\`\``);
+  }
 
   return sections.join("\n\n");
 }

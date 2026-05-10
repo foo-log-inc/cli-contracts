@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { resolve } from "node:path";
 import { parseContractFile } from "../../../src/parser.js";
+import { runDiff } from "../../../src/commands/diff.js";
 import {
   buildPolicyAuditContext,
   buildDesignAuditContext,
+  buildTestProposalContext,
+  buildDiffExplainContext,
+  buildSuggestContext,
 } from "../../../src/auditor/context-builder.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../../fixtures");
@@ -75,5 +79,116 @@ describe("buildDesignAuditContext", () => {
     const context = buildDesignAuditContext(doc);
 
     expect(context).not.toContain("Requested Checks");
+  });
+});
+
+describe("buildTestProposalContext", () => {
+  it("builds context with test dimensions", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "valid-contract.yaml"),
+    );
+    const context = buildTestProposalContext(doc);
+
+    expect(context).toContain("Test Case Proposal Request");
+    expect(context).toContain("Success scenarios");
+    expect(context).toContain("Required argument missing");
+    expect(context).toContain("Invalid option values");
+  });
+
+  it("includes detailed argument and option info", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "valid-contract.yaml"),
+    );
+    const context = buildTestProposalContext(doc);
+
+    expect(context).toContain("users.import");
+    expect(context).toContain("Exit codes:");
+  });
+
+  it("includes x-agent details", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
+    );
+    const context = buildTestProposalContext(doc);
+
+    expect(context).toContain("x-agent:");
+    expect(context).toContain("riskLevel");
+  });
+});
+
+describe("buildDiffExplainContext", () => {
+  it("builds context from diff result", async () => {
+    const diffResult = await runDiff(
+      resolve(FIXTURES, "valid-contract.yaml"),
+      resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
+    );
+    const context = buildDiffExplainContext(diffResult, "1.0.0", "2.0.0");
+
+    expect(context).toContain("Diff Explanation Request");
+    expect(context).toContain("Old: 1.0.0");
+    expect(context).toContain("New: 2.0.0");
+    expect(context).toContain("Diff Summary");
+  });
+
+  it("includes instructions for explanation", async () => {
+    const diffResult = await runDiff(
+      resolve(FIXTURES, "valid-contract.yaml"),
+      resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
+    );
+    const context = buildDiffExplainContext(diffResult);
+
+    expect(context).toContain("migration notes");
+    expect(context).toContain("semver version bump");
+    expect(context).toContain("release notes");
+  });
+});
+
+describe("buildSuggestContext", () => {
+  it("builds context from README source", () => {
+    const context = buildSuggestContext({
+      readme: "# My CLI Tool\n\nUsage: my-cli init [options]\n",
+    });
+
+    expect(context).toContain("Suggestion Request");
+    expect(context).toContain("Source: README");
+    expect(context).toContain("my-cli init");
+  });
+
+  it("builds context from help output", () => {
+    const context = buildSuggestContext({
+      help: "Usage: my-cli [command]\n\nCommands:\n  init  Initialize\n",
+    });
+
+    expect(context).toContain("Source: --help output");
+    expect(context).toContain("Initialize");
+  });
+
+  it("builds context from source code", () => {
+    const context = buildSuggestContext({
+      source: "program.command('init').description('Initialize project');",
+    });
+
+    expect(context).toContain("Source: CLI source code");
+    expect(context).toContain("Initialize project");
+  });
+
+  it("includes instructions about confidence and types", () => {
+    const context = buildSuggestContext({
+      readme: "# Test",
+    });
+
+    expect(context).toContain("confidence score");
+    expect(context).toContain("x-agent policies");
+    expect(context).toContain("exit codes");
+  });
+
+  it("handles multiple sources", () => {
+    const context = buildSuggestContext({
+      readme: "# My Tool",
+      source: "program.parse()",
+    });
+
+    expect(context).toContain("Source: README");
+    expect(context).toContain("Source: CLI source code");
   });
 });

@@ -11,6 +11,9 @@ export interface CommandHandlers {
   proposeAgentPolicy: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   audit: (options: { file?: string; checks?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeTests: (options: { file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; file?: string; adapter?: string; model?: string; dryRun?: boolean; failOn?: string; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; dryRun?: boolean; output?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
 export function createProgram(
@@ -134,6 +137,53 @@ export function createProgram(
     .option("--include-meta", "Include extraction metadata (source, timestamp, etc.).", true)
     .action(async (commands, opts, cmd) => {
       await handlers.extract(commands, opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("propose-tests")
+    .description("Propose contract test cases via LLM analysis.")
+    .option("-f, --file <file>", "Contract file to analyze.")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--format <fmt>", "Output format for the result.", "json")
+    .action(async (opts, cmd) => {
+      await handlers.proposeTests(opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("explain-diff")
+    .description("Explain contract diff in human- and agent-readable form.")
+    .argument("[old]", "Path to the old (base) contract file.")
+    .argument("[new]", "Path to the new (head) contract file.")
+    .option("--base <ref>", "Git ref for the base version.")
+    .option("--head <ref>", "Git ref for the head version.")
+    .option("-f, --file <file>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--format <fmt>", "Output format for the result.", "json")
+    .action(async (old, newArg, opts, cmd) => {
+      await handlers.explainDiff(old, newArg, opts, cmd.optsWithGlobals());
+    });
+
+  program
+    .command("suggest")
+    .description("Generate a contract draft from existing CLI sources.")
+    .option("--from-readme <file>", "Path to a README file to extract CLI information from.")
+    .option("--from-help <file>", "Path to a file containing --help output.")
+    .option("--from-source <file>", "Path to CLI source code file.")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--dry-run", "Output the prompt context without making an LLM call.", false)
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--format <fmt>", "Output format for the result.", "json")
+    .action(async (opts, cmd) => {
+      await handlers.suggest(opts, cmd.optsWithGlobals());
     });
 
   return program;

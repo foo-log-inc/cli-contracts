@@ -13,6 +13,9 @@ import { runContractTests } from "./commands/test.js";
 import { runExtract } from "./commands/extract.js";
 import { runProposeAgentPolicy } from "./commands/propose-agent-policy.js";
 import { runAuditCommand } from "./commands/audit.js";
+import { runProposeTests } from "./commands/propose-tests.js";
+import { runExplainDiff } from "./commands/explain-diff.js";
+import { runSuggest } from "./commands/suggest.js";
 import { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR } from "./auditor/auditor.js";
 import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
@@ -219,6 +222,91 @@ const handlers: CommandHandlers = {
 
       if (options.format === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(3);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(4);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async proposeTests(options, _parentOpts) {
+    try {
+      const configResult = await loadConfig(
+        _parentOpts.config as string | undefined,
+      );
+      const files = options.file
+        ? [options.file]
+        : getContractFiles(configResult?.config);
+
+      const { result, exitCode } = await runProposeTests(files, options);
+
+      if (options.format === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(3);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(4);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async explainDiff(old, newArg, options, _parentOpts) {
+    try {
+      const { result, exitCode } = await runExplainDiff(old, newArg, options);
+
+      if (options.format === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(3);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(4);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async suggest(options, _parentOpts) {
+    try {
+      const { result, exitCode } = await runSuggest(options);
+
+      if (options.format === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
+      } else if (options.format === "yaml") {
+        const yaml = await import("yaml");
+        process.stdout.write(yaml.stringify(result) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }

@@ -52,3 +52,86 @@ audit-contract-design:
   escalation_criteria:
     - condition: Structural contract defects prevent meaningful audit
       action: stop_and_report
+
+propose-test-cases:
+  description: Propose contract test cases for CLI commands
+  target_agent: cli-test-proposer
+  allowed_from_agents:
+    - cli-test-proposer
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Analyze contract surface area for test coverage
+    - Propose success, error, and edge case tests
+    - Identify missing test scenarios
+  completion_criteria:
+    - All commands analyzed for test coverage
+    - Test case proposals include concrete scenarios
+    - Coverage gaps identified with recommendations
+  execution_steps:
+    - id: load-contract
+      action: Load and parse the CLI contract
+      required: true
+    - id: analyze-coverage
+      action: Analyze each command for test coverage gaps
+    - id: produce-proposals
+      action: Produce test case proposals as findings
+  escalation_criteria:
+    - condition: Contract structure prevents meaningful test analysis
+      action: stop_and_report
+
+explain-contract-diff:
+  description: Explain contract diff in human- and agent-readable terms
+  target_agent: cli-diff-explainer
+  allowed_from_agents:
+    - cli-diff-explainer
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Explain each breaking change with impact
+    - Draft migration notes and release notes
+    - Suggest semver version bump
+    - Highlight AI-agent-relevant changes
+  completion_criteria:
+    - All changes explained
+    - Breaking changes have migration notes
+    - Semver suggestion provided
+  execution_steps:
+    - id: compute-diff
+      action: Load diff result from context
+      required: true
+    - id: classify-changes
+      action: Classify each change by impact
+    - id: produce-explanation
+      action: Produce human-readable explanation with recommendations
+  escalation_criteria:
+    - condition: Diff result is empty or contracts cannot be compared
+      action: stop_and_report
+
+suggest-contract:
+  description: Generate cli-contract.yaml draft from CLI sources
+  target_agent: cli-contract-suggester
+  allowed_from_agents:
+    - cli-contract-suggester
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Extract command structure from source material
+    - Infer argument and option types
+    - Propose exit codes and schemas
+    - Assign confidence to each suggestion
+  completion_criteria:
+    - All recognizable commands extracted
+    - Contract draft is valid YAML
+    - Confidence scores assigned to inferred elements
+  execution_steps:
+    - id: load-source
+      action: Load and parse the source material
+      required: true
+    - id: extract-commands
+      action: Extract command definitions from source
+    - id: produce-contract
+      action: Produce contract draft with confidence-annotated findings
+  escalation_criteria:
+    - condition: Source material does not contain recognizable CLI patterns
+      action: stop_and_report

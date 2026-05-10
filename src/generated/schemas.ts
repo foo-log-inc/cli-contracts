@@ -927,3 +927,6 @@ export const diffExitCodes = [0, 1, 2, 7] as const;
 export const proposeAgentPolicyExitCodes = [0, 1, 2, 3, 4] as const;
 export const auditExitCodes = [0, 1, 2, 3, 4] as const;
 export const extractExitCodes = [0, 1, 2, 3, 8] as const;
+export const proposeTestsExitCodes = [0, 1, 2, 3, 4] as const;
+export const explainDiffExitCodes = [0, 1, 2, 3, 4] as const;
+export const suggestExitCodes = [0, 1, 2, 3, 4] as const;

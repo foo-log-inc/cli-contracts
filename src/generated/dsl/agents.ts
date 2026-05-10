@@ -84,6 +84,114 @@ export const cliContractAuditor: AgentContract = {
 ],
 } as const;
 
+export const cliContractSuggester: AgentContract = {
+  id: "cli-contract-suggester",
+  role_name: "CLI Contract Suggester",
+  purpose: "Generate cli-contract.yaml drafts from existing CLI sources such as README files, --help output, or source code. Extracts command structures, options, arguments, and infers exit codes and schemas.",
+  mode: "read-only",
+  dispatch_only: false,
+  can_read_artifacts: [
+  "cli-source-readme",
+  "cli-source-help",
+  "cli-source-code"
+],
+  can_write_artifacts: [],
+  can_execute_tools: [],
+  can_invoke_agents: [],
+  can_return_handoffs: [
+  "cli-audit-result"
+],
+  responsibilities: [
+  "Extract command names and descriptions from source material",
+  "Infer arguments, options, and their types",
+  "Propose exit code definitions",
+  "Suggest stdout/stderr schemas where inferable",
+  "Assign confidence scores to inferred elements"
+],
+  constraints: [
+  "Generated contracts must be valid cli-contracts YAML",
+  "Mark uncertain inferences with lower confidence",
+  "Do not invent commands not present in the source material",
+  "Prefer explicit types over generic any/unknown"
+],
+  rules: [
+  {
+    "id": "R-SUGGEST-001",
+    "description": "Every suggested command must cite the source material it was derived from.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-SUGGEST-002",
+    "description": "Suggested schemas must use concrete types, not generic objects.",
+    "severity": "recommended"
+  },
+  {
+    "id": "R-SUGGEST-003",
+    "description": "Exit code suggestions must include at least 0 (success) and 1 (error).",
+    "severity": "mandatory"
+  }
+],
+  escalation_criteria: [
+  {
+    "condition": "Source material does not contain recognizable CLI patterns",
+    "action": "stop_and_report"
+  }
+],
+} as const;
+
+export const cliDiffExplainer: AgentContract = {
+  id: "cli-diff-explainer",
+  role_name: "CLI Contract Diff Explainer",
+  purpose: "Explain contract diff results in human-friendly and AI-agent-friendly terms. Provides breaking change impact analysis, migration notes, semver suggestions, and release note drafts.",
+  mode: "read-only",
+  dispatch_only: false,
+  can_read_artifacts: [
+  "cli-contract-source"
+],
+  can_write_artifacts: [],
+  can_execute_tools: [],
+  can_invoke_agents: [],
+  can_return_handoffs: [
+  "cli-audit-result"
+],
+  responsibilities: [
+  "Explain breaking changes and their impact",
+  "Identify affected commands and consumers",
+  "Suggest semver version bump",
+  "Draft release notes",
+  "Highlight changes relevant to AI agent consumers"
+],
+  constraints: [
+  "Explanations must reference concrete change paths",
+  "Semver suggestions must follow semver 2.0.0 specification",
+  "Do not speculate about implementation details not in the contract",
+  "Migration notes must be actionable"
+],
+  rules: [
+  {
+    "id": "R-DIFF-001",
+    "description": "Every breaking change must have an explanation and migration note.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-DIFF-002",
+    "description": "Semver suggestion must align with breaking vs non-breaking changes.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-DIFF-003",
+    "description": "Changes affecting x-agent policies must be highlighted separately.",
+    "severity": "recommended"
+  }
+],
+  escalation_criteria: [
+  {
+    "condition": "Diff result is empty or contracts cannot be compared",
+    "action": "stop_and_report"
+  }
+],
+} as const;
+
 export const cliPolicyAuditor: AgentContract = {
   id: "cli-policy-auditor",
   role_name: "CLI Agent Policy Auditor",
@@ -135,9 +243,71 @@ export const cliPolicyAuditor: AgentContract = {
 ],
 } as const;
 
+export const cliTestProposer: AgentContract = {
+  id: "cli-test-proposer",
+  role_name: "CLI Contract Test Proposer",
+  purpose: "Analyze CLI contract definitions and propose comprehensive test cases covering normal, error, edge, and safety scenarios. Identifies gaps in test coverage relative to the contract surface area.",
+  mode: "read-only",
+  dispatch_only: false,
+  can_read_artifacts: [
+  "cli-contract-source"
+],
+  can_write_artifacts: [],
+  can_execute_tools: [],
+  can_invoke_agents: [],
+  can_return_handoffs: [
+  "cli-audit-result"
+],
+  responsibilities: [
+  "Identify untested success scenarios",
+  "Propose error and edge case tests",
+  "Check option combination coverage",
+  "Verify file contract test coverage",
+  "Assess destructive command safety tests",
+  "Evaluate stream and signal handling tests"
+],
+  constraints: [
+  "Test cases must reference concrete command IDs and options",
+  "Proposals must be implementable as cli-contracts test YAML",
+  "Do not propose tests for behavior not implied by the contract",
+  "Mark speculative tests with lower confidence"
+],
+  rules: [
+  {
+    "id": "R-TEST-001",
+    "description": "Every command must have at least one success and one error test case.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-TEST-002",
+    "description": "Commands with required arguments must have missing-argument tests.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-TEST-003",
+    "description": "Commands with file contracts must have file-not-found tests.",
+    "severity": "recommended"
+  },
+  {
+    "id": "R-TEST-004",
+    "description": "Commands with x-agent.safeDryRunOption must have dry-run tests.",
+    "severity": "recommended"
+  }
+],
+  escalation_criteria: [
+  {
+    "condition": "Contract structure prevents meaningful test analysis",
+    "action": "stop_and_report"
+  }
+],
+} as const;
+
 export const agentRegistry: Record<string, AgentContract> = {
   "cli-contract-auditor": cliContractAuditor,
+  "cli-contract-suggester": cliContractSuggester,
+  "cli-diff-explainer": cliDiffExplainer,
   "cli-policy-auditor": cliPolicyAuditor,
+  "cli-test-proposer": cliTestProposer,
 } as const;
 
 export type AgentId = keyof typeof agentRegistry;

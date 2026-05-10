@@ -158,6 +158,71 @@ export type ExtractExitResult =
   | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
   | { exitCode: 8; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface ProposeTestsOptions {
+  file?: string;
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
+  output?: string;
+  format?: "json" | "text";
+}
+
+export type ProposeTestsExitCode = 0 | 1 | 2 | 3 | 4;
+
+export type ProposeTestsExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
+export interface ExplainDiffArgs {
+  old?: string;
+  new?: string;
+}
+
+export interface ExplainDiffOptions {
+  base?: string;
+  head?: string;
+  file?: string;
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  failOn?: "warning" | "error" | "critical";
+  output?: string;
+  format?: "json" | "text";
+}
+
+export type ExplainDiffExitCode = 0 | 1 | 2 | 3 | 4;
+
+export type ExplainDiffExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
+export interface SuggestOptions {
+  fromReadme?: string;
+  fromHelp?: string;
+  fromSource?: string;
+  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  model?: string;
+  dryRun?: boolean;
+  output?: string;
+  format?: "json" | "text" | "yaml";
+}
+
+export type SuggestExitCode = 0 | 1 | 2 | 3 | 4;
+
+export type SuggestExitResult =
+  { exitCode: 0; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 1; stdout: { summary: string; riskLevel: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string } } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 3; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
 export interface Error {
   code: string;
   message: string;
