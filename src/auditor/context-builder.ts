@@ -187,6 +187,17 @@ interface CommandPreAnalysis {
   xAgentMissingRecommended: string[];
   stdoutSchemaRef: string | null;
   hasAgentAuditResultShape: boolean;
+  usesExternalHandoffRef: boolean;
+}
+
+const AUDIT_RESULT_REF_PATTERNS = [
+  "AgentAuditResult",
+  "agent-audit-result",
+  "audit-result",
+] as const;
+
+function isAuditResultRef(ref: string): boolean {
+  return AUDIT_RESULT_REF_PATTERNS.some((p) => ref.includes(p));
 }
 
 function isLlmCommand(cmd: Record<string, unknown>): boolean {
@@ -228,6 +239,7 @@ function analyzeCommand(
 
   let stdoutSchemaRef: string | null = null;
   let hasAgentAuditResultShape = false;
+  let usesExternalHandoffRef = false;
   if (exits) {
     const exit0 = exits["0"] as Record<string, unknown> | undefined;
     if (exit0) {
@@ -236,7 +248,8 @@ function analyzeCommand(
         const schema = stdout.schema as Record<string, unknown>;
         if (schema.$ref) {
           stdoutSchemaRef = schema.$ref as string;
-          hasAgentAuditResultShape = (stdoutSchemaRef as string).includes("AgentAuditResult");
+          hasAgentAuditResultShape = isAuditResultRef(stdoutSchemaRef);
+          usesExternalHandoffRef = !stdoutSchemaRef.startsWith("#/");
         } else if (schema.properties) {
           const props = schema.properties as Record<string, unknown>;
           hasAgentAuditResultShape = "summary" in props && "findings" in props;
@@ -250,7 +263,7 @@ function analyzeCommand(
     presentOptions, missingOptions,
     presentExitCodes, missingExitCodes,
     xAgentPresent, xAgentMissingRequired, xAgentMissingRecommended,
-    stdoutSchemaRef, hasAgentAuditResultShape,
+    stdoutSchemaRef, hasAgentAuditResultShape, usesExternalHandoffRef,
   };
 }
 
@@ -280,11 +293,15 @@ export function buildReferenceCheckContext(
     "- expectedDurationMs (recommended)\n" +
     "- retryableExitCodes (recommended)\n\n" +
     "### Output Schema\n" +
-    "- stdout for exit 0 and 10 should reference or extend AgentAuditResult\n" +
-    "- AgentAuditResult requires: summary, riskLevel, findings\n" +
-    "- AgentFinding requires: severity, category, message\n" +
-    "- AgentEvidence base properties: kind (required), target, location, excerpt\n" +
-    "- AgentRecommendedAction requires: kind, title",
+    "- stdout for exit 0 and 10 should reference or conform to the agent-audit-result schema\n" +
+    "- The canonical schema is defined in agent-contracts (components.schemas.agent-audit-result)\n" +
+    "- References via $ref to agent-contracts YAML or local agent-contracts DSL are preferred\n" +
+    "- Inline definitions in cli-contract.yaml components.schemas are deprecated\n" +
+    "- agent-audit-result requires: summary, riskLevel, findings\n" +
+    "- agent-finding requires: severity, category, message\n" +
+    "- agent-evidence base properties: kind (required), target, location, excerpt\n" +
+    "- agent-recommended-action requires: kind, title\n" +
+    "- Accepted $ref patterns: AgentAuditResult, agent-audit-result, audit-result (in handoff_types)",
   );
 
   const analyses: CommandPreAnalysis[] = [];
@@ -331,7 +348,12 @@ export function buildReferenceCheckContext(
     }
 
     lines.push(`**Output Schema**: ${a.stdoutSchemaRef ?? "(none)"}`);
-    lines.push(`- AgentAuditResult conformance: ${a.hasAgentAuditResultShape ? "YES" : "NO / UNKNOWN"}`);
+    lines.push(`- Audit result schema conformance: ${a.hasAgentAuditResultShape ? "YES" : "NO / UNKNOWN"}`);
+    if (a.usesExternalHandoffRef) {
+      lines.push("- References external handoff schema (agent-contracts canonical)");
+    } else if (a.stdoutSchemaRef?.startsWith("#/")) {
+      lines.push("- References internal schema (consider migrating to agent-contracts $ref)");
+    }
 
     sections.push(lines.join("\n"));
   }

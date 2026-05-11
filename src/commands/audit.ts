@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
@@ -24,7 +24,7 @@ export async function runAuditCommand(
   const filePath = resolve(options.file ?? contractFiles[0]);
   const doc = await parseContractFile(filePath);
 
-  const validation = validateContract(doc);
+  const validation = validateContract(doc, { basePath: dirname(filePath) });
   if (!validation.valid) {
     return {
       result: validation,

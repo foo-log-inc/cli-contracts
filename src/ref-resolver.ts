@@ -1,4 +1,7 @@
-import type { CliContractsDocument, JsonSchema } from "./types.js";
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { parse as parseYaml } from "yaml";
+import type { CliContractsDocument } from "./types.js";
 
 export class RefResolutionError extends Error {
   constructor(
@@ -10,20 +13,31 @@ export class RefResolutionError extends Error {
   }
 }
 
+export interface ResolveRefsOptions {
+  basePath?: string;
+}
+
 /**
- * Resolves internal `$ref` pointers (e.g. `#/components/schemas/Error`)
- * within a contract document. Returns a deep copy with all internal $refs
- * replaced by the referenced value.
+ * Resolves `$ref` pointers within a contract document.
  *
- * External `$ref` (file paths, URLs) are left as-is unless
- * `resolveExternal` is true (not yet implemented).
+ * - Internal refs (`#/components/schemas/Error`) are resolved against the
+ *   document root.
+ * - External file refs (`./path/to/file.yaml#/json/pointer`) are resolved
+ *   relative to `basePath` (the directory containing the contract file).
+ *   The referenced file is loaded, parsed as YAML, and the JSON pointer
+ *   is resolved within it. Nested `$ref` inside the external document
+ *   are resolved against that document's own root.
+ *
+ * Returns a deep copy with all $refs replaced by the referenced value.
  */
 export function resolveRefs(
   doc: CliContractsDocument,
-  options: { resolveExternal?: boolean } = {},
+  options: ResolveRefsOptions = {},
 ): CliContractsDocument {
   const resolved = new Set<string>();
-  return deepResolve(doc, doc, "", resolved, options) as CliContractsDocument;
+  const fileCache = new Map<string, unknown>();
+  const basePath = options.basePath ?? process.cwd();
+  return deepResolve(doc, doc, "", resolved, basePath, fileCache) as CliContractsDocument;
 }
 
 /**
@@ -45,24 +59,66 @@ export function collectRefs(obj: unknown): string[] {
 }
 
 /**
- * Validates that all internal $ref pointers resolve to existing paths.
+ * Validates that all $ref pointers resolve to existing paths.
+ * Checks both internal (`#/`) and external file refs.
  */
 export function validateRefs(
   doc: CliContractsDocument,
+  options: { basePath?: string } = {},
 ): { valid: boolean; unresolvedRefs: string[] } {
   const allRefs = collectRefs(doc);
   const unresolved: string[] = [];
+  const basePath = options.basePath ?? process.cwd();
 
   for (const ref of allRefs) {
-    if (!ref.startsWith("#/")) continue;
-    try {
-      resolveJsonPointer(doc, ref.slice(1));
-    } catch {
-      unresolved.push(ref);
+    if (ref.startsWith("#/")) {
+      try {
+        resolveJsonPointer(doc, ref.slice(1));
+      } catch {
+        unresolved.push(ref);
+      }
+    } else if (ref.includes("#/")) {
+      try {
+        resolveExternalRef(ref, basePath, new Map());
+      } catch {
+        unresolved.push(ref);
+      }
     }
   }
 
   return { valid: unresolved.length === 0, unresolvedRefs: unresolved };
+}
+
+function loadYamlFile(filePath: string, fileCache: Map<string, unknown>): unknown {
+  const absPath = resolve(filePath);
+  const cached = fileCache.get(absPath);
+  if (cached !== undefined) return cached;
+
+  try {
+    const content = readFileSync(absPath, "utf-8");
+    const parsed = parseYaml(content);
+    fileCache.set(absPath, parsed);
+    return parsed;
+  } catch (err) {
+    throw new RefResolutionError(
+      filePath,
+      `Cannot read external file: ${(err as Error).message}`,
+    );
+  }
+}
+
+function resolveExternalRef(
+  ref: string,
+  basePath: string,
+  fileCache: Map<string, unknown>,
+): unknown {
+  const hashIndex = ref.indexOf("#/");
+  const filePart = ref.slice(0, hashIndex);
+  const pointer = ref.slice(hashIndex + 1);
+
+  const absFilePath = resolve(basePath, filePart);
+  const externalDoc = loadYamlFile(absFilePath, fileCache);
+  return resolveJsonPointer(externalDoc, pointer);
 }
 
 function deepResolve(
@@ -70,14 +126,15 @@ function deepResolve(
   root: CliContractsDocument,
   path: string,
   resolved: Set<string>,
-  options: { resolveExternal?: boolean },
+  basePath: string,
+  fileCache: Map<string, unknown>,
 ): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value !== "object") return value;
 
   if (Array.isArray(value)) {
     return value.map((item, i) =>
-      deepResolve(item, root, `${path}/${i}`, resolved, options),
+      deepResolve(item, root, `${path}/${i}`, resolved, basePath, fileCache),
     );
   }
 
@@ -93,18 +150,44 @@ function deepResolve(
       resolved.add(ref);
       const pointer = ref.slice(1);
       const target = resolveJsonPointer(root, pointer);
-      const result = deepResolve(target, root, ref, resolved, options);
+      const result = deepResolve(target, root, ref, resolved, basePath, fileCache);
       resolved.delete(ref);
       return result;
     }
 
-    // External refs - leave as-is for now
+    if (ref.includes("#/")) {
+      if (resolved.has(ref)) {
+        throw new RefResolutionError(ref, "Circular reference detected");
+      }
+      resolved.add(ref);
+
+      const hashIndex = ref.indexOf("#/");
+      const filePart = ref.slice(0, hashIndex);
+      const absFilePath = resolve(basePath, filePart);
+      const externalDoc = loadYamlFile(absFilePath, fileCache);
+      const pointer = ref.slice(hashIndex + 1);
+      const target = resolveJsonPointer(externalDoc, pointer);
+
+      const externalBasePath = dirname(absFilePath);
+      const externalResolved = new Set<string>();
+      const result = deepResolve(
+        target,
+        externalDoc as CliContractsDocument,
+        ref,
+        externalResolved,
+        externalBasePath,
+        fileCache,
+      );
+      resolved.delete(ref);
+      return result;
+    }
+
     return obj;
   }
 
   const result: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(obj)) {
-    result[key] = deepResolve(val, root, `${path}/${key}`, resolved, options);
+    result[key] = deepResolve(val, root, `${path}/${key}`, resolved, basePath, fileCache);
   }
   return result;
 }

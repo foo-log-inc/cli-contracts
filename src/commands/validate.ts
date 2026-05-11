@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
 import type { ValidateResult } from "../types.js";
@@ -19,7 +19,7 @@ export async function runValidate(
   for (const file of contractFiles) {
     const filePath = resolve(file);
     const doc = await parseContractFile(filePath);
-    const result = validateContract(doc);
+    const result = validateContract(doc, { basePath: dirname(filePath) });
     allErrors.push(...result.errors);
     allWarnings.push(...result.warnings);
   }

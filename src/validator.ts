@@ -28,11 +28,14 @@ import type {
 import { XAgentSchema } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 
-export function validateContract(doc: CliContractsDocument): ValidateResult {
+export function validateContract(
+  doc: CliContractsDocument,
+  options: { basePath?: string } = {},
+): ValidateResult {
   const diagnostics: Diagnostic[] = [];
 
   validateCommandSets(doc, diagnostics);
-  validateRefsIntegrity(doc, diagnostics);
+  validateRefsIntegrity(doc, diagnostics, options.basePath);
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -296,8 +299,9 @@ function validateStreams(
 function validateRefsIntegrity(
   doc: CliContractsDocument,
   diagnostics: Diagnostic[],
+  basePath?: string,
 ): void {
-  const { unresolvedRefs } = validateRefs(doc);
+  const { unresolvedRefs } = validateRefs(doc, { basePath });
   for (const ref of unresolvedRefs) {
     diagnostics.push({
       path: ref,
