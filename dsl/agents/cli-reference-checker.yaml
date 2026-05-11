@@ -76,9 +76,11 @@ cli-reference-checker:
       severity: mandatory
     - id: R-REF-008
       description: >-
-        agent-evidence base properties: kind (required, enum: file,
-        command, schema, diff, stdout, stderr, text), target, location,
-        excerpt.
+        agent-evidence canonical properties are exactly: kind (required,
+        enum: file, command, schema, diff, stdout, stderr, text),
+        target, location, excerpt. These names are authoritative —
+        do NOT expect or suggest "type", "content", or "source" as
+        property names; they do not exist in the canonical schema.
       severity: mandatory
     - id: R-REF-009
       description: >-
