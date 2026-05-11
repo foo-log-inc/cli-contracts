@@ -32,23 +32,29 @@ cli-reference-checker:
     - id: R-REF-001
       description: >-
         Every LLM command must include the standard option set:
-        --adapter, --model, --dry-run, --fail-on, --output, --report-format.
+        --adapter, --model, --dry-run, --fail-on, --output (-o), --report-format.
       severity: mandatory
     - id: R-REF-002
       description: >-
-        Every LLM command must declare exit codes 0, 1, 10, 11, 12
-        with semantics matching the reference specification.
+        Every LLM command must declare exit codes with standard semantics:
+        0 (success), 1 (unexpected error), 10 (findings above --fail-on
+        threshold), 11 (runtime dependency missing / agent-contracts-runtime),
+        12 (LLM provider or adapter error).
       severity: mandatory
     - id: R-REF-003
       description: >-
-        Stdout schemas for LLM commands must reference or conform to the
-        agent-contracts canonical agent-audit-result schema. References
-        via $ref to agent-contracts YAML (agent-audit-result, audit-result)
-        or local DSL (AgentAuditResult) are accepted.
+        Stdout schemas for exit 0 and 10 must reference or conform to
+        agent-audit-result. The canonical schema is defined in
+        agent-contracts (components.schemas.agent-audit-result).
+        Required fields: summary (string), riskLevel (enum: low, medium,
+        high, critical), findings (array of agent-finding).
+        Accepted $ref patterns: AgentAuditResult, agent-audit-result,
+        audit-result (in handoff_types).
       severity: mandatory
     - id: R-REF-004
       description: >-
-        x-agent metadata must include safeDryRunOption for LLM commands.
+        x-agent metadata must include safeDryRunOption (mandatory) and
+        sideEffects must include 'network' for LLM commands.
       severity: mandatory
     - id: R-REF-005
       description: >-
@@ -57,10 +63,38 @@ cli-reference-checker:
       severity: recommended
     - id: R-REF-006
       description: >-
-        Handoff schemas (x-schema-source: handoff) defined inline in
-        cli-contract.yaml components.schemas are deprecated. They should
-        be referenced from agent-contracts via $ref instead.
+        Handoff schemas defined inline in cli-contract.yaml
+        components.schemas are deprecated. They should be referenced
+        from agent-contracts via $ref instead.
       severity: recommended
+    - id: R-REF-007
+      description: >-
+        agent-finding requires: severity (enum: info, warning, error,
+        critical), category (string), message (string). Optional:
+        id, target, location, recommendation, confidence (0-1),
+        evidence (array of agent-evidence).
+      severity: mandatory
+    - id: R-REF-008
+      description: >-
+        agent-evidence base properties: kind (required, enum: file,
+        command, schema, diff, stdout, stderr, text), target, location,
+        excerpt.
+      severity: mandatory
+    - id: R-REF-009
+      description: >-
+        agent-recommended-action requires: kind (enum: run_command,
+        edit_file, review, confirm, block, ignore), title (string).
+        Optional: command, target, rationale.
+      severity: mandatory
+    - id: R-REF-010
+      description: >-
+        Agent prompt templates, reference rules, and task instructions
+        must be defined in the agent-contracts DSL (agent definitions
+        and task definitions), not hardcoded in source code. The
+        context-builder should only construct data context (contract
+        info, pre-analysis results). runTask() injects agent rules
+        and task instructions from the DSL at runtime.
+      severity: mandatory
   escalation_criteria:
     - condition: Contract cannot be parsed or is structurally invalid
       action: stop_and_report

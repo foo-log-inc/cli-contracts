@@ -128,26 +128,24 @@ check-reference-conformance:
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
-    - Identify LLM-powered commands in the target contract
-    - Verify standard option set, exit codes, x-agent metadata, and schema conformance
-    - Report conformance gaps as structured findings
+    - Validate each conformance gap identified in the deterministic pre-analysis
+    - Perform semantic evaluation of overall conformance quality beyond structural checks
+    - Produce recommended actions to achieve full conformance
+    - Assess overall risk level
   completion_criteria:
-    - All LLM commands identified and evaluated
-    - Standard options checked against reference set
-    - Exit code coverage verified
-    - x-agent metadata evaluated for completeness
-    - Output schema conformance assessed against AgentAuditResult
-    - AgentEvidence base properties checked when applicable
+    - Every finding from pre-analysis has a corresponding structured finding
+    - Semantic evaluation covers consistency between command descriptions and metadata
+    - Each finding includes severity, category, target, message, and recommendation
+    - RecommendedActions are prioritized by impact
+    - Overall riskLevel reflects the worst conformance gap
   execution_steps:
-    - id: load-contract
-      action: Load and parse the target CLI contract
+    - id: review-pre-analysis
+      action: Review the deterministic pre-analysis results provided in context
       required: true
-    - id: deterministic-pre-analysis
-      action: Perform structural checks on options, exit codes, schemas, and x-agent metadata
     - id: semantic-evaluation
-      action: Use LLM to evaluate overall conformance quality and identify subtle issues
+      action: Evaluate semantic consistency beyond structural checks (e.g. description vs sideEffects mismatch)
     - id: produce-findings
-      action: Produce findings with severity, category, and recommended actions
+      action: Produce AgentAuditResult with findings, recommendedActions, and overall riskLevel
   escalation_criteria:
     - condition: Contract cannot be parsed or is structurally invalid
       action: stop_and_report
