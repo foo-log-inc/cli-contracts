@@ -5,9 +5,9 @@
  * for AI-agent diagnostic output (AgentAuditResult, AgentFinding, etc.)
  * that other toolchains can adopt as common conventions.
  *
- * The canonical schema definitions live in the agent-contracts DSL
- * (dsl/cli-contracts-dsl.yaml components.schemas). These TypeScript
- * types are derived from the Zod schemas generated from that DSL.
+ * The canonical schema definitions live in the agent-contracts package
+ * (dsl_base/components.yaml). These TypeScript types are derived from
+ * the Zod schemas generated from that DSL.
  */
 
 export { XAgentSchema, HumanReviewSchema, RollbackSchema } from "./schema.js";

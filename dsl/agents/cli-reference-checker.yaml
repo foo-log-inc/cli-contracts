@@ -16,13 +16,14 @@ cli-reference-checker:
     - cli-audit-result
   responsibilities:
     - Identify LLM-powered commands in the contract
-    - Verify each LLM command has the standard option set (adapter, model, dry-run, fail-on, output, report-format)
-    - Verify exit code coverage (0, 1, 10, 11, 12)
-    - Check x-agent metadata completeness (safeDryRunOption, sideEffectNote, expectedDurationMs, retryableExitCodes)
+    - Verify each LLM command has the standard option set (adapter, model, show-prompt, fail-on, output, report-format)
+    - Verify LLM command exit code coverage (0, 1, 10, 11, 12)
+    - Check LLM command x-agent metadata (safeDryRunOption, sideEffectNote, expectedDurationMs, retryableExitCodes)
     - Verify stdout schemas reference or conform to agent-contracts canonical audit result schema
-    - Detect deprecated inline handoff schema definitions (x-schema-source: handoff)
+    - "Detect deprecated inline handoff schema definitions (x-schema-source: handoff)"
     - Check agent-evidence base properties (kind, target, location, excerpt) when evidence schemas are present
     - Evaluate semantic consistency of LLM command contracts
+    - Non-LLM commands are NOT subject to safeDryRunOption, standard option set, or LLM exit code requirements
   constraints:
     - Base conformance checks on the deterministic pre-analysis provided in context
     - Mark uncertain findings with lower confidence
@@ -32,7 +33,12 @@ cli-reference-checker:
     - id: R-REF-001
       description: >-
         Every LLM command must include the standard option set:
-        --adapter, --model, --dry-run, --fail-on, --output (-o), --report-format.
+        --adapter, --model, --show-prompt, --fail-on, --output (-o),
+        --report-format. --show-prompt outputs the constructed prompt
+        without calling the LLM API (for cost avoidance and prompt
+        debugging). Do NOT name this --dry-run — LLM output is
+        non-deterministic, so prompt preview is not a "dry run" of
+        the result.
       severity: mandatory
     - id: R-REF-002
       description: >-
@@ -53,13 +59,22 @@ cli-reference-checker:
       severity: mandatory
     - id: R-REF-004
       description: >-
-        x-agent metadata must include safeDryRunOption (mandatory) and
-        sideEffects must include 'network' for LLM commands.
+        LLM command x-agent metadata: sideEffects must include
+        'network'. safeDryRunOption should reference the --show-prompt
+        option (not --dry-run). safeDryRunOption itself is recommended
+        but not mandatory — agent safety is ensured by
+        requiresConfirmation, structured output schemas, and standard
+        exit codes. This rule applies ONLY to LLM-powered commands —
+        deterministic commands are NOT subject to safeDryRunOption or
+        standard option set requirements.
       severity: mandatory
     - id: R-REF-005
       description: >-
-        x-agent metadata should include sideEffectNote, expectedDurationMs,
-        and retryableExitCodes for LLM commands.
+        LLM command x-agent metadata should include sideEffectNote,
+        expectedDurationMs, and retryableExitCodes. These fields are
+        recommended for LLM commands only. Non-LLM commands MAY include
+        them for improved agent orchestration, but their absence is not
+        a conformance issue.
       severity: recommended
     - id: R-REF-006
       description: >-

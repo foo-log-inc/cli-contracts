@@ -17,6 +17,6 @@ cli-audit-result:
   version: 1
   description: >-
     Result of a CLI contract audit task.
-    Schema references agent-contracts canonical AgentAuditResult.
+    Schema references agent-contracts canonical agent-audit-result.
   schema:
-    $ref: '#/components/schemas/AgentAuditResult'
+    $ref: './components.yaml#/schemas/agent-audit-result'

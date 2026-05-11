@@ -2,7 +2,7 @@ cliContracts: 0.1.0
 
 info:
   title: CLI Contracts CLI
-  version: 0.2.1
+  version: 0.6.0
   description: >-
     Contract definition for the cli-contracts command line tool itself.
     This is a self-referential contract: cli-contracts defines its own interface
@@ -690,7 +690,7 @@ commandSets:
           review, this command for focused policy generation.
         usage:
           - cli-contracts propose-agent-policy cli-contract.yaml
-          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --dry-run
+          - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter mock --show-prompt
           - cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --format json
 
         arguments:
@@ -737,8 +737,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -778,7 +778,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -788,7 +788,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -816,7 +816,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).
@@ -843,7 +843,7 @@ commandSets:
         usage:
           - cli-contracts audit cli-contract.yaml
           - cli-contracts audit --file cli-contract.yaml --checks agent-policy
-          - cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
+          - cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 
         arguments:
           - name: contract
@@ -897,8 +897,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -938,7 +938,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -948,7 +948,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -976,7 +976,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).
@@ -1099,7 +1099,7 @@ commandSets:
         usage:
           - cli-contracts propose-tests cli-contract.yaml
           - cli-contracts propose-tests --file cli-contract.yaml --adapter gemini
-          - cli-contracts propose-tests --file cli-contract.yaml --dry-run
+          - cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 
         arguments:
           - name: contract
@@ -1145,8 +1145,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -1186,7 +1186,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -1196,7 +1196,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -1224,7 +1224,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).
@@ -1252,7 +1252,7 @@ commandSets:
         usage:
           - cli-contracts explain-diff old.yaml new.yaml
           - cli-contracts explain-diff --base main --head HEAD --adapter gemini
-          - cli-contracts explain-diff old.yaml new.yaml --dry-run
+          - cli-contracts explain-diff old.yaml new.yaml --show-prompt
 
         arguments:
           - name: old
@@ -1313,8 +1313,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -1354,7 +1354,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -1364,7 +1364,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -1392,7 +1392,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).
@@ -1422,7 +1422,7 @@ commandSets:
         usage:
           - cli-contracts check-reference path/to/cli-contract.yaml
           - cli-contracts check-reference --file path/to/cli-contract.yaml --adapter openai
-          - cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
+          - cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 
         arguments:
           - name: contract
@@ -1468,8 +1468,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -1509,7 +1509,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -1519,7 +1519,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -1547,7 +1547,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).
@@ -1624,8 +1624,8 @@ commandSets:
             schema:
               type: string
 
-          - name: dry-run
-            description: Output the prompt context without making an LLM call.
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
             schema:
               type: boolean
               default: false
@@ -1665,7 +1665,7 @@ commandSets:
           sideEffectNote: >-
             Network calls to LLM provider when adapter is not mock.
             Filesystem write only when --output is specified.
-          safeDryRunOption: dry-run
+          safeDryRunOption: show-prompt
           expectedDurationMs: 120000
           retryableExitCodes: [1, 12]
 
@@ -1675,7 +1675,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '1':
             description: Unexpected error.
@@ -1703,7 +1703,7 @@ commandSets:
             stdout:
               format: '{options.report-format}'
               schema:
-                $ref: './dsl/cli-contracts-dsl.yaml#/components/schemas/AgentAuditResult'
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
 
           '11':
             description: Runtime dependency missing (agent-contracts-runtime).

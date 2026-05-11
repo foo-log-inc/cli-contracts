@@ -491,7 +491,7 @@ contractTests:
 | `--file <file>` | `-f` | Contract file to analyze (alternative to positional argument) |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
@@ -508,7 +508,7 @@ contractTests:
 | `--checks <check...>` | all | Audit dimension(s) to run (`agent-policy`, `responsibility`, `exit-code`, `output-schema`, `breaking-risk`) |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
@@ -524,7 +524,7 @@ contractTests:
 | `--file <file>` | `-f` | Contract file to analyze (alternative to positional argument) |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
@@ -543,7 +543,7 @@ contractTests:
 | `--contract-path <path>` | `cli-contract.yaml` | Contract file path within the repository (used with `--base`/`--head`) |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
@@ -559,7 +559,7 @@ At least one `--from-*` option is required.
 | `--from-source <file>` | | Path to CLI source code file |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
@@ -577,14 +577,14 @@ Verifies whether LLM-powered commands in a target `cli-contract.yaml` conform to
 | `--file <file>` / `-f` | | Contract file to check (alternative to positional argument) |
 | `--adapter <name>` | | LLM adapter (`mock`, `cursor`, `claude`, `openai`, `gemini`) |
 | `--model <name>` | | Model name to pass to the adapter |
-| `--dry-run` | `false` | Output prompt context without making an LLM call |
+| `--show-prompt` | `false` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | `error` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | | Write result to a file instead of stdout |
 | `--report-format <fmt>` | `json` | Output format (`json`, `text`, or `yaml`) |
 
 Conformance checks include:
 
-- Standard LLM option set (`--adapter`, `--model`, `--dry-run`, `--fail-on`, `--output`, `--report-format`)
+- Standard LLM option set (`--adapter`, `--model`, `--show-prompt`, `--fail-on`, `--output`, `--report-format`)
 - Exit code coverage (0, 1, 10, 11, 12)
 - `x-agent` metadata (`safeDryRunOption`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
 - Stdout schema conformance to the agent-contracts canonical `agent-audit-result` / `agent-finding` schema (via `$ref` or compatible inline definition)
@@ -904,7 +904,7 @@ cli-contracts check-reference path/to/cli-contract.yaml --adapter openai
 cli-contracts suggest --from-readme README.md --adapter cursor
 
 # Inspect the prompt without making an LLM call
-cli-contracts propose-agent-policy cli-contract.yaml --dry-run
+cli-contracts propose-agent-policy cli-contract.yaml --show-prompt
 ```
 
 These commands share a common option interface:
@@ -913,7 +913,7 @@ These commands share a common option interface:
 |---|---|
 | `--adapter <name>` | LLM adapter: `mock`, `cursor`, `claude`, `openai`, `gemini` |
 | `--model <name>` | Model name to pass to the adapter |
-| `--dry-run` | Output the prompt context without making an LLM call |
+| `--show-prompt` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | Write result to a file instead of stdout |
 | `--report-format <fmt>` | Output format: `json`, `text`, or `yaml` |
@@ -926,7 +926,7 @@ Install the optional runtime dependency to enable LLM calls:
 npm install agent-contracts-runtime
 ```
 
-Without it, use `--dry-run` to inspect the prompt context that would be sent to the LLM.
+Without it, use `--show-prompt` to inspect the prompt context that would be sent to the LLM.
 
 Required environment variables depend on the chosen adapter:
 

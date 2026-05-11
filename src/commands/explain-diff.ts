@@ -12,7 +12,7 @@ export interface ExplainDiffOptions {
   contractPath?: string;
   adapter?: string;
   model?: string;
-  dryRun?: boolean;
+  showPrompt?: boolean;
   failOn?: string;
   output?: string;
   reportFormat?: string;
@@ -49,7 +49,7 @@ export async function runExplainDiff(
   const auditOptions: AuditOptions = {
     taskId: "explain-contract-diff",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    dryRun: options.dryRun ?? false,
+    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -61,9 +61,9 @@ export async function runExplainDiff(
     auditOptions,
   );
 
-  if (auditResult.dryRun) {
+  if (auditResult.showPrompt) {
     return {
-      result: { dryRun: true, prompt: auditResult.prompt },
+      result: { showPrompt: true, prompt: auditResult.prompt },
       exitCode: 0,
     };
   }

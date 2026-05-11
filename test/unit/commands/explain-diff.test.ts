@@ -5,24 +5,24 @@ import { runExplainDiff } from "../../../src/commands/explain-diff.js";
 const FIXTURES = resolve(import.meta.dirname, "../../fixtures");
 
 describe("explain-diff command", () => {
-  it("returns dry-run result with diff explanation context", async () => {
+  it("returns show-prompt result with diff explanation context", async () => {
     const { result, exitCode } = await runExplainDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(0);
-    const r = result as { dryRun: boolean; prompt: string };
-    expect(r.dryRun).toBe(true);
+    const r = result as { showPrompt: boolean; prompt: string };
+    expect(r.showPrompt).toBe(true);
     expect(r.prompt).toContain("Diff Explanation Request");
   });
 
-  it("dry-run context includes diff summary and changes", async () => {
+  it("show-prompt context includes diff summary and changes", async () => {
     const { result } = await runExplainDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     const r = result as { prompt: string };
@@ -31,11 +31,11 @@ describe("explain-diff command", () => {
     expect(r.prompt).toContain("Versions");
   });
 
-  it("dry-run context includes diff data", async () => {
+  it("show-prompt context includes diff data", async () => {
     const { result } = await runExplainDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     const r = result as { prompt: string };
@@ -48,7 +48,7 @@ describe("explain-diff command", () => {
     const { exitCode } = await runExplainDiff(
       undefined,
       resolve(FIXTURES, "valid-contract.yaml"),
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(2);
@@ -58,7 +58,7 @@ describe("explain-diff command", () => {
     const { exitCode } = await runExplainDiff(
       resolve(FIXTURES, "valid-contract.yaml"),
       undefined,
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(2);

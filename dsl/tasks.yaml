@@ -130,12 +130,14 @@ check-reference-conformance:
   responsibilities:
     - Identify which commands are LLM-powered by inspecting the project source code
     - Validate conformance of LLM commands against the reference specification
+    - Do NOT apply LLM-specific rules (R-REF-001 through R-REF-005) to non-LLM commands
     - Perform semantic evaluation of overall conformance quality
     - Produce recommended actions to achieve full conformance
     - Assess overall risk level
   completion_criteria:
     - LLM commands identified from source code (agent-contracts-runtime usage)
     - Every LLM command checked against reference specification rules
+    - Non-LLM commands are NOT flagged for missing safeDryRunOption, standard options, or LLM exit codes
     - Each finding includes severity, category, target, message, and recommendation
     - RecommendedActions are prioritized by impact
     - Overall riskLevel reflects the worst conformance gap

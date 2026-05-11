@@ -5,22 +5,22 @@ import { runProposeTests } from "../../../src/commands/propose-tests.js";
 const FIXTURES = resolve(import.meta.dirname, "../../fixtures");
 
 describe("propose-tests command", () => {
-  it("returns dry-run result with test proposal context", async () => {
+  it("returns show-prompt result with test proposal context", async () => {
     const { result, exitCode } = await runProposeTests(
       [resolve(FIXTURES, "valid-contract.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(0);
-    const r = result as { dryRun: boolean; prompt: string };
-    expect(r.dryRun).toBe(true);
+    const r = result as { showPrompt: boolean; prompt: string };
+    expect(r.showPrompt).toBe(true);
     expect(r.prompt).toContain("Test Case Proposal Request");
   });
 
-  it("dry-run context includes command details", async () => {
+  it("show-prompt context includes command details", async () => {
     const { result } = await runProposeTests(
       [resolve(FIXTURES, "valid-contract.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     const r = result as { prompt: string };
@@ -29,10 +29,10 @@ describe("propose-tests command", () => {
     expect(r.prompt).toContain("Exit codes:");
   });
 
-  it("dry-run context includes x-agent and file contract details", async () => {
+  it("show-prompt context includes x-agent and file contract details", async () => {
     const { result } = await runProposeTests(
       [resolve(FIXTURES, "valid-contract-with-xagent.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     const r = result as { prompt: string };
@@ -44,7 +44,7 @@ describe("propose-tests command", () => {
   it("returns exit code 2 for invalid contract", async () => {
     const { exitCode } = await runProposeTests(
       [resolve(FIXTURES, "invalid-contract.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(2);
@@ -55,12 +55,12 @@ describe("propose-tests command", () => {
       ["nonexistent.yaml"],
       {
         file: resolve(FIXTURES, "valid-contract.yaml"),
-        dryRun: true,
+        showPrompt: true,
       },
     );
 
     expect(exitCode).toBe(0);
-    const r = result as { dryRun: boolean };
-    expect(r.dryRun).toBe(true);
+    const r = result as { showPrompt: boolean };
+    expect(r.showPrompt).toBe(true);
   });
 });

@@ -11,7 +11,7 @@ export interface AuditCommandOptions {
   checks?: string | string[];
   adapter?: string;
   model?: string;
-  dryRun?: boolean;
+  showPrompt?: boolean;
   failOn?: string;
   output?: string;
   reportFormat?: string;
@@ -43,7 +43,7 @@ export async function runAuditCommand(
   const auditOptions: AuditOptions = {
     taskId: "audit-contract-design",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    dryRun: options.dryRun ?? false,
+    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -55,9 +55,9 @@ export async function runAuditCommand(
     auditOptions,
   );
 
-  if (auditResult.dryRun) {
+  if (auditResult.showPrompt) {
     return {
-      result: { dryRun: true, prompt: auditResult.prompt },
+      result: { showPrompt: true, prompt: auditResult.prompt },
       exitCode: 0,
     };
   }
