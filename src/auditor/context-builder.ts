@@ -1,5 +1,3 @@
-import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { resolve, dirname, basename, relative, join } from "node:path";
 import * as yaml from "yaml";
 import type { CliContractsDocument } from "../types.js";
 import type { DiffResult, DiffChange } from "../types.js";
@@ -202,107 +200,6 @@ function isAuditResultRef(ref: string): boolean {
   return AUDIT_RESULT_REF_PATTERNS.some((p) => ref.includes(p));
 }
 
-// ─── Source-code-based LLM command detection ────────────────────
-
-function findProjectRoot(startPath: string): string | null {
-  let dir = resolve(startPath);
-  for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, "package.json"))) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return null;
-}
-
-function walkSourceFiles(dir: string): string[] {
-  const results: string[] = [];
-  if (!existsSync(dir)) return results;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "node_modules" || entry.name === "dist") continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...walkSourceFiles(full));
-    } else if (entry.name.endsWith(".ts") || entry.name.endsWith(".js")) {
-      results.push(full);
-    }
-  }
-  return results;
-}
-
-/**
- * Detect LLM-powered commands by scanning the project source code.
- *
- * 1. Check package.json for agent-contracts-runtime dependency
- * 2. Find source files that call runTask (runtime bridge modules)
- * 3. Find command handlers that import from those bridge modules
- * 4. Extract Commander command names from the handlers
- */
-export function detectLlmCommandIds(projectRoot?: string): Set<string> {
-  projectRoot ??= findProjectRoot(process.cwd()) ?? process.cwd();
-  if (!projectRoot) return new Set();
-
-  const pkgPath = join(projectRoot, "package.json");
-  if (!existsSync(pkgPath)) return new Set();
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-  const allDeps: Record<string, string> = {
-    ...pkg.dependencies,
-    ...pkg.devDependencies,
-    ...pkg.peerDependencies,
-  };
-  if (!allDeps["agent-contracts-runtime"]) return new Set();
-
-  const srcDir = join(projectRoot, "src");
-  const sourceFiles = walkSourceFiles(srcDir);
-
-  // Find modules that call runTask (bridge to agent-contracts-runtime)
-  const bridgeFiles = new Set<string>();
-  for (const file of sourceFiles) {
-    const content = readFileSync(file, "utf8");
-    if (content.includes("runTask")) {
-      bridgeFiles.add(file);
-    }
-  }
-  if (bridgeFiles.size === 0) return new Set();
-
-  // Build import patterns from bridge files so we can detect transitive usage
-  const bridgeImportPatterns: string[] = [];
-  for (const bridge of bridgeFiles) {
-    const rel = relative(srcDir, bridge).replace(/\.(ts|js)$/, "");
-    bridgeImportPatterns.push(rel);
-    if (basename(bridge).replace(/\.(ts|js)$/, "") === "index") {
-      bridgeImportPatterns.push(dirname(rel));
-    }
-  }
-
-  // Find command handler files that import a bridge module
-  const llmHandlerFiles = new Set<string>();
-  for (const file of sourceFiles) {
-    const content = readFileSync(file, "utf8");
-    const importsBridge = bridgeImportPatterns.some((p) => {
-      const segments = p.split("/");
-      const leaf = segments[segments.length - 1];
-      return content.includes(`/${leaf}`) || content.includes(`"${leaf}`);
-    });
-    if (!importsBridge) continue;
-
-    // Extract Commander command name: new Command("name") or .command("name")
-    const m = content.match(/new Command\(["']([^"']+)["']\)/) ??
-              content.match(/\.command\(["']([^"']+)["']\)/);
-    if (m) {
-      llmHandlerFiles.add(m[1]);
-    } else {
-      // Fallback: derive command ID from file name (e.g. check-reference.ts → check-reference)
-      const name = basename(file).replace(/\.(ts|js)$/, "");
-      if (name !== "index" && name !== "types" && !name.startsWith("context")) {
-        llmHandlerFiles.add(name);
-      }
-    }
-  }
-
-  return llmHandlerFiles;
-}
-
 function analyzeCommand(
   cmdId: string, setId: string, cmd: Record<string, unknown>,
 ): CommandPreAnalysis {
@@ -363,27 +260,16 @@ export function buildReferenceCheckContext(
   sections.push("# CLI Contract: Reference Conformance Check");
   sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
 
-  // Reference rules and task instructions are defined in the DSL
-  // (dsl/agents/cli-reference-checker.yaml, dsl/tasks.yaml)
-  // and injected by agent-contracts-runtime via runTask().
-
-  const llmIds = detectLlmCommandIds();
   const analyses: CommandPreAnalysis[] = [];
 
   for (const [setId, cs] of Object.entries(doc.commandSets)) {
     for (const [cmdId, cmd] of Object.entries(cs.commands)) {
-      if (!llmIds.has(cmdId)) continue;
       const cmdRecord = cmd as unknown as Record<string, unknown>;
       analyses.push(analyzeCommand(cmdId, setId, cmdRecord));
     }
   }
 
-  if (analyses.length === 0) {
-    sections.push("## Pre-Analysis\nNo LLM-powered commands detected in this contract.");
-    return sections.join("\n\n");
-  }
-
-  sections.push(`## LLM Commands Detected: ${analyses.length}`);
+  sections.push(`## Total Commands: ${analyses.length}`);
 
   sections.push("## Deterministic Pre-Analysis");
   for (const a of analyses) {

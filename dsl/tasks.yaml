@@ -128,28 +128,42 @@ check-reference-conformance:
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
-    - Validate each conformance gap identified in the deterministic pre-analysis
-    - Perform semantic evaluation of overall conformance quality beyond structural checks
+    - Identify which commands are LLM-powered by inspecting the project source code
+    - Validate conformance of LLM commands against the reference specification
+    - Perform semantic evaluation of overall conformance quality
     - Produce recommended actions to achieve full conformance
     - Assess overall risk level
   completion_criteria:
-    - Every finding from pre-analysis has a corresponding structured finding
-    - Semantic evaluation covers consistency between command descriptions and metadata
+    - LLM commands identified from source code (agent-contracts-runtime usage)
+    - Every LLM command checked against reference specification rules
     - Each finding includes severity, category, target, message, and recommendation
     - RecommendedActions are prioritized by impact
     - Overall riskLevel reflects the worst conformance gap
   execution_steps:
-    - id: review-pre-analysis
-      action: Review the deterministic pre-analysis results provided in context
+    - id: identify-llm-commands
+      action: >-
+        Inspect the project source code to determine which commands are
+        LLM-powered. A command is LLM-powered if its handler (directly
+        or transitively via imports, barrel re-exports, or orchestrator
+        modules) calls agent-contracts-runtime functions such as runTask.
+        Read package.json for dependencies, then trace the import graph
+        from command handlers through any barrel/index re-exports to
+        modules that invoke the runtime.
       required: true
+    - id: review-pre-analysis
+      action: >-
+        Review the structural pre-analysis provided in context for
+        each identified LLM command (options, exit codes, x-agent,
+        output schema).
     - id: semantic-evaluation
-      action: Evaluate semantic consistency beyond structural checks (e.g. description vs sideEffects mismatch)
+      action: >-
+        Evaluate semantic consistency beyond structural checks
+        (e.g. description vs sideEffects mismatch, idempotent
+        semantics for non-deterministic commands).
     - id: produce-findings
       action: Produce AgentAuditResult with findings, recommendedActions, and overall riskLevel
   escalation_criteria:
     - condition: Contract cannot be parsed or is structurally invalid
-      action: stop_and_report
-    - condition: No LLM-powered commands detected
       action: stop_and_report
 
 suggest-contract:
