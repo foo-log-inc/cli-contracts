@@ -588,7 +588,8 @@ Conformance checks include:
 - Exit code coverage (0, 1, 10, 11, 12)
 - `x-agent` metadata (`safeDryRunOption`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
 - Stdout schema conformance to the agent-contracts canonical `agent-audit-result` / `agent-finding` schema (via `$ref` or compatible inline definition)
-- `agent-evidence` base property alignment
+- `agent-evidence` base property alignment (`kind`, `target`, `location`, `excerpt`)
+- `agent-recommended-action` property alignment (`kind`, `title`, `command`, `target`, `rationale`)
 - Deprecated inline handoff schema detection (`x-schema-source: handoff`)
 
 For full details on every command, option, exit code, and output schema, see the [CLI Reference](docs/cli-reference.md).
@@ -828,6 +829,45 @@ interface AgentAuditResult {
   findings: AgentFinding[];
   recommendedActions?: AgentRecommendedAction[];
   metadata?: { tool?: string; command?: string; version?: string; ... };
+}
+```
+
+`AgentFinding` (canonical: `agent-contracts:components.schemas.agent-finding`):
+
+```typescript
+interface AgentFinding {
+  severity: "info" | "warning" | "error" | "critical";
+  category: string;
+  message: string;
+  id?: string;
+  target?: string;
+  location?: string;
+  recommendation?: string;
+  confidence?: number;  // 0–1
+  evidence?: AgentEvidence[];
+}
+```
+
+`AgentEvidence` (canonical: `agent-contracts:components.schemas.agent-evidence`):
+
+```typescript
+interface AgentEvidence {
+  kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text";
+  target?: string;    // source identifier (file path, command ID, schema name)
+  location?: string;  // location within the target (line number, JSON pointer)
+  excerpt?: string;   // relevant content excerpt
+}
+```
+
+`AgentRecommendedAction` (canonical: `agent-contracts:components.schemas.agent-recommended-action`):
+
+```typescript
+interface AgentRecommendedAction {
+  kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore";
+  title: string;
+  command?: string;
+  target?: string;
+  rationale?: string;
 }
 ```
 
