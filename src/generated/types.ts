@@ -361,39 +361,3 @@ export interface DiffChange {
   breaking: boolean;
   description: string;
 }
-
-export interface AgentEvidence {
-  kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text";
-  target?: string;
-  location?: string;
-  excerpt?: string;
-}
-
-export interface AgentFinding {
-  id?: string;
-  severity: "info" | "warning" | "error" | "critical";
-  category: string;
-  target?: string;
-  location?: string;
-  message: string;
-  recommendation?: string;
-  confidence?: number;
-  evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[];
-  details?: Record<string, unknown>;
-}
-
-export interface AgentRecommendedAction {
-  kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore";
-  title: string;
-  command?: string;
-  target?: string;
-  rationale?: string;
-}
-
-export interface AgentAuditResult {
-  summary: string;
-  riskLevel: "low" | "medium" | "high" | "critical";
-  findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[];
-  recommendedActions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[];
-  metadata?: { tool?: string; command?: string; version?: string; generatedAt?: string; adapter?: string; model?: string };
-}

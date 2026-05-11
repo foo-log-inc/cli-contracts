@@ -2116,25 +2116,25 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -2150,7 +2150,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -2173,7 +2173,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -2181,8 +2181,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -2194,16 +2193,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -2214,14 +2210,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -2239,16 +2234,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -2264,7 +2256,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -2285,12 +2277,10 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -2447,25 +2437,25 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -2481,7 +2471,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -2504,7 +2494,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -2512,8 +2502,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -2525,16 +2514,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -2545,14 +2531,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -2570,16 +2555,13 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -2595,7 +2577,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -2616,12 +2598,10 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -2799,25 +2779,25 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -2833,7 +2813,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -2856,7 +2836,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -2864,8 +2844,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -2877,16 +2856,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -2897,14 +2873,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -2922,16 +2897,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -2947,7 +2919,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -2968,12 +2940,10 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -3130,25 +3100,25 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -3164,7 +3134,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -3187,7 +3157,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -3195,8 +3165,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -3208,16 +3177,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -3228,14 +3194,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -3253,16 +3218,13 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -3278,7 +3240,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -3299,12 +3261,10 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -3924,25 +3884,25 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -3958,7 +3918,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -3981,7 +3941,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -3989,8 +3949,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -4002,16 +3961,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -4022,14 +3978,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -4047,16 +4002,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -4072,7 +4024,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -4093,12 +4045,10 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -4255,25 +4205,25 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -4289,7 +4239,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -4312,7 +4262,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -4320,8 +4270,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -4333,16 +4282,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -4353,14 +4299,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -4378,16 +4323,13 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -4403,7 +4345,7 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -4424,12 +4366,10 @@ cli-contracts propose-tests --file cli-contract.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -4609,25 +4549,25 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -4643,7 +4583,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -4666,7 +4606,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -4674,8 +4614,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -4687,16 +4626,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -4707,14 +4643,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -4732,16 +4667,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -4757,7 +4689,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -4778,12 +4710,10 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -4940,25 +4870,25 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -4974,7 +4904,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -4997,7 +4927,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -5005,8 +4935,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -5018,16 +4947,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -5038,14 +4964,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -5063,16 +4988,13 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -5088,7 +5010,7 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -5109,12 +5031,10 @@ cli-contracts explain-diff old.yaml new.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -5248,7 +5168,7 @@ x-agent:
 
 Check LLM command conformance against the reference specification.
 
-Verifies whether LLM-powered commands in a target cli-contract.yaml conform to the cli-contracts reference specification. Checks standard option sets, exit codes, x-agent metadata, output schema conformance (AgentAuditResult / AgentFinding), and AgentEvidence base properties. Performs deterministic pre-analysis and uses LLM for semantic evaluation of overall conformance quality.
+Verifies whether LLM-powered commands in a target cli-contract.yaml conform to the cli-contracts reference specification. Checks standard option sets, exit codes, x-agent metadata, output schema conformance to the agent-contracts canonical audit result schema (via $ref or compatible inline definition), and agent-evidence base properties. Performs deterministic pre-analysis and uses LLM for semantic evaluation of overall conformance quality.
 
 **Usage:**
 
@@ -5291,25 +5211,25 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -5325,7 +5245,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -5348,7 +5268,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -5356,8 +5276,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -5369,16 +5288,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -5389,14 +5305,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -5414,16 +5329,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -5439,7 +5351,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -5460,12 +5372,10 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -5622,25 +5532,25 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -5656,7 +5566,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -5679,7 +5589,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -5687,8 +5597,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -5700,16 +5609,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -5720,14 +5626,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -5745,16 +5650,13 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -5770,7 +5672,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -5791,12 +5693,10 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --dry-run
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -5972,25 +5872,25 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -6006,7 +5906,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -6029,7 +5929,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -6037,8 +5937,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -6050,16 +5949,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -6070,14 +5966,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -6095,16 +5990,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -6120,7 +6012,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -6141,12 +6033,10 @@ cli-contracts suggest --from-readme README.md --adapter gemini
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -6303,25 +6193,25 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | `summary` | `string` | Yes |  |
   | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
-  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].id` | `string` | No |  |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].category` | `string` | Yes |  |
+  | `findings[].target` | `string` | No |  |
+  | `findings[].location` | `string` | No |  |
   | `findings[].message` | `string` | Yes |  |
   | `findings[].recommendation` | `string` | No |  |
-  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No |  |
   | `findings[].evidence` | `object[]` | No |  |
   | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].evidence[].target` | `string` | No |  |
+  | `findings[].evidence[].location` | `string` | No |  |
+  | `findings[].evidence[].excerpt` | `string` | No |  |
   | `findings[].details` | `Record<string, any>` | No |  |
   | `recommendedActions` | `object[]` | No |  |
   | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
   | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
+  | `recommendedActions[].command` | `string` | No |  |
+  | `recommendedActions[].target` | `string` | No |  |
   | `recommendedActions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
@@ -6337,7 +6227,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   ```json
   {
     "type": "object",
-    "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
+    "description": "Top-level result from an agent audit. Canonical schema: agent-contracts components.schemas.agent-audit-result",
     "required": [
       "summary",
       "riskLevel",
@@ -6360,7 +6250,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A single finding from an agent audit. Canonical schema: agent-contracts components.schemas.agent-finding",
           "required": [
             "severity",
             "category",
@@ -6368,8 +6258,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           ],
           "properties": {
             "id": {
-              "type": "string",
-              "description": "Unique finding identifier."
+              "type": "string"
             },
             "severity": {
               "type": "string",
@@ -6381,16 +6270,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
               ]
             },
             "category": {
-              "type": "string",
-              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target of the finding (command ID, schema path)."
+              "type": "string"
             },
             "location": {
-              "type": "string",
-              "description": "Location within the target."
+              "type": "string"
             },
             "message": {
               "type": "string"
@@ -6401,14 +6287,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
             "confidence": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1,
-              "description": "Confidence score (0-1) for LLM-generated findings."
+              "maximum": 1
             },
             "evidence": {
               "type": "array",
               "items": {
                 "type": "object",
-                "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
+                "description": "Evidence supporting an agent finding. Canonical schema: agent-contracts components.schemas.agent-evidence",
                 "required": [
                   "kind"
                 ],
@@ -6426,16 +6311,13 @@ cli-contracts suggest --from-readme README.md --adapter gemini
                     ]
                   },
                   "target": {
-                    "type": "string",
-                    "description": "Target identifier (file path, command ID, schema name)."
+                    "type": "string"
                   },
                   "location": {
-                    "type": "string",
-                    "description": "Location within the target (line number, JSON pointer)."
+                    "type": "string"
                   },
                   "excerpt": {
-                    "type": "string",
-                    "description": "Relevant excerpt from the target."
+                    "type": "string"
                   }
                 }
               }
@@ -6451,7 +6333,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
         "type": "array",
         "items": {
           "type": "object",
-          "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
+          "description": "A recommended action from an agent audit. Canonical schema: agent-contracts components.schemas.agent-recommended-action",
           "required": [
             "kind",
             "title"
@@ -6472,12 +6354,10 @@ cli-contracts suggest --from-readme README.md --adapter gemini
               "type": "string"
             },
             "command": {
-              "type": "string",
-              "description": "CLI command to run (for run_command kind)."
+              "type": "string"
             },
             "target": {
-              "type": "string",
-              "description": "Target file or resource."
+              "type": "string"
             },
             "rationale": {
               "type": "string"
@@ -7469,458 +7349,6 @@ Type: `object`
     },
     "description": {
       "type": "string"
-    }
-  }
-}
-```
-
-</details>
-
-### AgentEvidence
-
-Evidence supporting an agent finding. Reference schema for AI agent interoperability.
-
-Type: `object`
-
-| Property | Type | Required | Description |
-|---|---|---|---|
-| `kind` | `enum(7 values)` | Yes |  |
-| `target` | `string` | No | Target identifier (file path, command ID, schema name). |
-| `location` | `string` | No | Location within the target (line number, JSON pointer). |
-| `excerpt` | `string` | No | Relevant excerpt from the target. |
-
-<details>
-<summary>JSON Schema</summary>
-
-```json
-{
-  "type": "object",
-  "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
-  "required": [
-    "kind"
-  ],
-  "properties": {
-    "kind": {
-      "type": "string",
-      "enum": [
-        "file",
-        "command",
-        "schema",
-        "diff",
-        "stdout",
-        "stderr",
-        "text"
-      ]
-    },
-    "target": {
-      "type": "string",
-      "description": "Target identifier (file path, command ID, schema name)."
-    },
-    "location": {
-      "type": "string",
-      "description": "Location within the target (line number, JSON pointer)."
-    },
-    "excerpt": {
-      "type": "string",
-      "description": "Relevant excerpt from the target."
-    }
-  }
-}
-```
-
-</details>
-
-### AgentFinding
-
-A single finding from an agent audit. Reference schema for AI agent interoperability.
-
-Type: `object`
-
-| Property | Type | Required | Description |
-|---|---|---|---|
-| `id` | `string` | No | Unique finding identifier. |
-| `severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-| `category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-| `target` | `string` | No | Target of the finding (command ID, schema path). |
-| `location` | `string` | No | Location within the target. |
-| `message` | `string` | Yes |  |
-| `recommendation` | `string` | No |  |
-| `confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
-| `evidence` | `object[]` | No |  |
-| `evidence[].kind` | `enum(7 values)` | Yes |  |
-| `evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-| `evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-| `evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
-| `details` | `Record<string, any>` | No |  |
-
-<details>
-<summary>JSON Schema</summary>
-
-```json
-{
-  "type": "object",
-  "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
-  "required": [
-    "severity",
-    "category",
-    "message"
-  ],
-  "properties": {
-    "id": {
-      "type": "string",
-      "description": "Unique finding identifier."
-    },
-    "severity": {
-      "type": "string",
-      "enum": [
-        "info",
-        "warning",
-        "error",
-        "critical"
-      ]
-    },
-    "category": {
-      "type": "string",
-      "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
-    },
-    "target": {
-      "type": "string",
-      "description": "Target of the finding (command ID, schema path)."
-    },
-    "location": {
-      "type": "string",
-      "description": "Location within the target."
-    },
-    "message": {
-      "type": "string"
-    },
-    "recommendation": {
-      "type": "string"
-    },
-    "confidence": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1,
-      "description": "Confidence score (0-1) for LLM-generated findings."
-    },
-    "evidence": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
-        "required": [
-          "kind"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "file",
-              "command",
-              "schema",
-              "diff",
-              "stdout",
-              "stderr",
-              "text"
-            ]
-          },
-          "target": {
-            "type": "string",
-            "description": "Target identifier (file path, command ID, schema name)."
-          },
-          "location": {
-            "type": "string",
-            "description": "Location within the target (line number, JSON pointer)."
-          },
-          "excerpt": {
-            "type": "string",
-            "description": "Relevant excerpt from the target."
-          }
-        }
-      }
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": true
-    }
-  }
-}
-```
-
-</details>
-
-### AgentRecommendedAction
-
-A recommended action from an agent audit. Reference schema for AI agent interoperability.
-
-Type: `object`
-
-| Property | Type | Required | Description |
-|---|---|---|---|
-| `kind` | `enum(6 values)` | Yes |  |
-| `title` | `string` | Yes |  |
-| `command` | `string` | No | CLI command to run (for run_command kind). |
-| `target` | `string` | No | Target file or resource. |
-| `rationale` | `string` | No |  |
-
-<details>
-<summary>JSON Schema</summary>
-
-```json
-{
-  "type": "object",
-  "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
-  "required": [
-    "kind",
-    "title"
-  ],
-  "properties": {
-    "kind": {
-      "type": "string",
-      "enum": [
-        "run_command",
-        "edit_file",
-        "review",
-        "confirm",
-        "block",
-        "ignore"
-      ]
-    },
-    "title": {
-      "type": "string"
-    },
-    "command": {
-      "type": "string",
-      "description": "CLI command to run (for run_command kind)."
-    },
-    "target": {
-      "type": "string",
-      "description": "Target file or resource."
-    },
-    "rationale": {
-      "type": "string"
-    }
-  }
-}
-```
-
-</details>
-
-### AgentAuditResult
-
-Top-level result from an agent audit. Reference schema for AI agent interoperability.
-
-Type: `object`
-
-| Property | Type | Required | Description |
-|---|---|---|---|
-| `summary` | `string` | Yes |  |
-| `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
-| `findings` | `object[]` | Yes |  |
-| `findings[].id` | `string` | No | Unique finding identifier. |
-| `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
-| `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
-| `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
-| `findings[].location` | `string` | No | Location within the target. |
-| `findings[].message` | `string` | Yes |  |
-| `findings[].recommendation` | `string` | No |  |
-| `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
-| `findings[].evidence` | `object[]` | No |  |
-| `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
-| `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
-| `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
-| `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
-| `findings[].details` | `Record<string, any>` | No |  |
-| `recommendedActions` | `object[]` | No |  |
-| `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-| `recommendedActions[].title` | `string` | Yes |  |
-| `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-| `recommendedActions[].target` | `string` | No | Target file or resource. |
-| `recommendedActions[].rationale` | `string` | No |  |
-| `metadata` | `object` | No |  |
-| `metadata.tool` | `string` | No |  |
-| `metadata.command` | `string` | No |  |
-| `metadata.version` | `string` | No |  |
-| `metadata.generatedAt` | `string` | No |  |
-| `metadata.adapter` | `string` | No |  |
-| `metadata.model` | `string` | No |  |
-
-<details>
-<summary>JSON Schema</summary>
-
-```json
-{
-  "type": "object",
-  "description": "Top-level result from an agent audit. Reference schema for AI agent interoperability.",
-  "required": [
-    "summary",
-    "riskLevel",
-    "findings"
-  ],
-  "properties": {
-    "summary": {
-      "type": "string"
-    },
-    "riskLevel": {
-      "type": "string",
-      "enum": [
-        "low",
-        "medium",
-        "high",
-        "critical"
-      ]
-    },
-    "findings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "description": "A single finding from an agent audit. Reference schema for AI agent interoperability.",
-        "required": [
-          "severity",
-          "category",
-          "message"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique finding identifier."
-          },
-          "severity": {
-            "type": "string",
-            "enum": [
-              "info",
-              "warning",
-              "error",
-              "critical"
-            ]
-          },
-          "category": {
-            "type": "string",
-            "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
-          },
-          "target": {
-            "type": "string",
-            "description": "Target of the finding (command ID, schema path)."
-          },
-          "location": {
-            "type": "string",
-            "description": "Location within the target."
-          },
-          "message": {
-            "type": "string"
-          },
-          "recommendation": {
-            "type": "string"
-          },
-          "confidence": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Confidence score (0-1) for LLM-generated findings."
-          },
-          "evidence": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "Evidence supporting an agent finding. Reference schema for AI agent interoperability.",
-              "required": [
-                "kind"
-              ],
-              "properties": {
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "file",
-                    "command",
-                    "schema",
-                    "diff",
-                    "stdout",
-                    "stderr",
-                    "text"
-                  ]
-                },
-                "target": {
-                  "type": "string",
-                  "description": "Target identifier (file path, command ID, schema name)."
-                },
-                "location": {
-                  "type": "string",
-                  "description": "Location within the target (line number, JSON pointer)."
-                },
-                "excerpt": {
-                  "type": "string",
-                  "description": "Relevant excerpt from the target."
-                }
-              }
-            }
-          },
-          "details": {
-            "type": "object",
-            "additionalProperties": true
-          }
-        }
-      }
-    },
-    "recommendedActions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "description": "A recommended action from an agent audit. Reference schema for AI agent interoperability.",
-        "required": [
-          "kind",
-          "title"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "run_command",
-              "edit_file",
-              "review",
-              "confirm",
-              "block",
-              "ignore"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "command": {
-            "type": "string",
-            "description": "CLI command to run (for run_command kind)."
-          },
-          "target": {
-            "type": "string",
-            "description": "Target file or resource."
-          },
-          "rationale": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "metadata": {
-      "type": "object",
-      "properties": {
-        "tool": {
-          "type": "string"
-        },
-        "command": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "generatedAt": {
-          "type": "string"
-        },
-        "adapter": {
-          "type": "string"
-        },
-        "model": {
-          "type": "string"
-        }
-      }
     }
   }
 }

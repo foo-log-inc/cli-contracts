@@ -587,8 +587,9 @@ Conformance checks include:
 - Standard LLM option set (`--adapter`, `--model`, `--dry-run`, `--fail-on`, `--output`, `--report-format`)
 - Exit code coverage (0, 1, 10, 11, 12)
 - `x-agent` metadata (`safeDryRunOption`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
-- Stdout schema conformance to `AgentAuditResult` / `AgentFinding` shape
-- `AgentEvidence` base property alignment
+- Stdout schema conformance to the agent-contracts canonical `agent-audit-result` / `agent-finding` schema (via `$ref` or compatible inline definition)
+- `agent-evidence` base property alignment
+- Deprecated inline handoff schema detection (`x-schema-source: handoff`)
 
 For full details on every command, option, exit code, and output schema, see the [CLI Reference](docs/cli-reference.md).
 
@@ -805,16 +806,20 @@ options:
       disablesStructuredOutput: true
 ```
 
-### Agent Response Reference Schemas
+### Handoff Schema Ownership
 
-`AgentFinding`, `AgentAuditResult`, `AgentRecommendedAction`, and `AgentEvidence` are reference schemas for agent-facing diagnostic output, defined in `cli-contract.yaml` `components/schemas` and exported via the `cli-contracts/agent` subpath:
+Handoff schemas for agent-facing diagnostic output are canonically owned by agent-contracts. The canonical schemas are `agent-audit-result`, `agent-finding`, `agent-recommended-action`, and `agent-evidence`, defined in agent-contracts `components.schemas`.
+
+When a CLI command returns a payload intended to be consumed as an agent handoff, cli-contracts should reference the agent-contracts schema via `$ref` instead of redefining the schema in `components.schemas`. cli-contracts remains responsible for the CLI interface contract, including command arguments, options, exit codes, stdout/stderr formats, and any CLI-specific envelope schema.
+
+For backward compatibility, `AgentAuditResult`, `AgentFinding`, `AgentRecommendedAction`, and `AgentEvidence` are still available in `cli-contract.yaml` `components/schemas` and exported via the `cli-contracts/agent` subpath, but they are marked as deprecated (`x-deprecated: true`). New projects should reference agent-contracts schemas directly.
 
 ```typescript
 import type { AgentAuditResult, AgentFinding } from "cli-contracts/agent";
 import { XAgentSchema, validateXAgent } from "cli-contracts/agent";
 ```
 
-`AgentAuditResult` is the standard output format for LLM-backed audit commands across the toolchain:
+`AgentAuditResult` (canonical: `agent-contracts:components.schemas.agent-audit-result`) is the standard output format for LLM-backed audit commands across the toolchain:
 
 ```typescript
 interface AgentAuditResult {

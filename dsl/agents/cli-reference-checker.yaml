@@ -3,8 +3,9 @@ cli-reference-checker:
   purpose: >-
     Check whether LLM-powered commands in a cli-contract.yaml conform to
     the cli-contracts reference specification. Verifies standard option
-    sets, exit codes, AgentAuditResult schema conformance, x-agent
-    metadata completeness, and AgentEvidence base property alignment.
+    sets, exit codes, audit result schema conformance (via agent-contracts
+    canonical schema or compatible $ref), x-agent metadata completeness,
+    and agent-evidence base property alignment.
   mode: read-only
   can_read_artifacts:
     - cli-contract-source
@@ -18,13 +19,15 @@ cli-reference-checker:
     - Verify each LLM command has the standard option set (adapter, model, dry-run, fail-on, output, report-format)
     - Verify exit code coverage (0, 1, 10, 11, 12)
     - Check x-agent metadata completeness (safeDryRunOption, sideEffectNote, expectedDurationMs, retryableExitCodes)
-    - Verify stdout schemas conform to or extend AgentAuditResult / AgentFinding / AgentRecommendedAction
-    - Check AgentEvidence base properties (type, content, source) when evidence schemas are present
+    - Verify stdout schemas reference or conform to agent-contracts canonical audit result schema
+    - Detect deprecated inline handoff schema definitions (x-schema-source: handoff)
+    - Check agent-evidence base properties (kind, target, location, excerpt) when evidence schemas are present
     - Evaluate semantic consistency of LLM command contracts
   constraints:
     - Base conformance checks on the deterministic pre-analysis provided in context
     - Mark uncertain findings with lower confidence
     - Distinguish between missing (error) and suboptimal (warning) conformance
+    - Prefer external $ref to agent-contracts schemas over inline definitions
   rules:
     - id: R-REF-001
       description: >-
@@ -38,8 +41,10 @@ cli-reference-checker:
       severity: mandatory
     - id: R-REF-003
       description: >-
-        Stdout schemas for LLM commands must conform to or extend
-        the AgentAuditResult shape (summary, riskLevel, findings).
+        Stdout schemas for LLM commands must reference or conform to the
+        agent-contracts canonical agent-audit-result schema. References
+        via $ref to agent-contracts YAML (agent-audit-result, audit-result)
+        or local DSL (AgentAuditResult) are accepted.
       severity: mandatory
     - id: R-REF-004
       description: >-
@@ -49,6 +54,12 @@ cli-reference-checker:
       description: >-
         x-agent metadata should include sideEffectNote, expectedDurationMs,
         and retryableExitCodes for LLM commands.
+      severity: recommended
+    - id: R-REF-006
+      description: >-
+        Handoff schemas (x-schema-source: handoff) defined inline in
+        cli-contract.yaml components.schemas are deprecated. They should
+        be referenced from agent-contracts via $ref instead.
       severity: recommended
   escalation_criteria:
     - condition: Contract cannot be parsed or is structurally invalid

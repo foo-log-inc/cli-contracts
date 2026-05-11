@@ -1,4 +1,4 @@
-import { resolve, relative } from "node:path";
+import { dirname, resolve, relative } from "node:path";
 import { stringify as yamlStringify } from "yaml";
 import { parseContractFile } from "../parser.js";
 import { resolveRefs } from "../ref-resolver.js";
@@ -34,7 +34,7 @@ export async function runExtract(
 
   const filePath = resolve(contractFiles[0]);
   let doc = await parseContractFile(filePath);
-  doc = resolveRefs(doc);
+  doc = resolveRefs(doc, { basePath: dirname(filePath) });
 
   const matched = findCommands(doc, commandIds, options.commandSet);
   const subset = buildSubset(doc, matched);

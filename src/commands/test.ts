@@ -1,5 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { parse as parseYaml } from "yaml";
@@ -82,8 +82,9 @@ export async function runContractTests(
 
   let contractDoc: CliContractsDocument | undefined;
   if (contractFiles.length > 0) {
-    contractDoc = await parseContractFile(resolve(contractFiles[0]));
-    contractDoc = resolveRefs(contractDoc);
+    const contractPath = resolve(contractFiles[0]);
+    contractDoc = await parseContractFile(contractPath);
+    contractDoc = resolveRefs(contractDoc, { basePath: dirname(contractPath) });
   }
 
   const results: TestCaseResult[] = [];

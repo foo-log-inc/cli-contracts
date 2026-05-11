@@ -1,6 +1,5 @@
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
 import { resolveRefs } from "../ref-resolver.js";
@@ -23,13 +22,13 @@ export async function runDocs(
   for (const file of contractFiles) {
     const filePath = resolve(file);
     let doc = await parseContractFile(filePath);
-    const validation = validateContract(doc);
+    const validation = validateContract(doc, { basePath: dirname(filePath) });
 
     if (!validation.valid) {
       return { validationFailed: true, result: validation };
     }
 
-    doc = resolveRefs(doc);
+    doc = resolveRefs(doc, { basePath: dirname(filePath) });
     const ctx = normalizeContract(doc);
     const md = generateMarkdown(ctx);
 
