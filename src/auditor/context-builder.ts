@@ -165,7 +165,7 @@ export function buildDiffExplainContext(
 // ─── Reference Conformance Check ────────────────────────────────
 
 const REFERENCE_OPTIONS = [
-  "adapter", "model", "dry-run", "fail-on", "output", "report-format",
+  "adapter", "model", "show-prompt", "fail-on", "output", "report-format",
 ] as const;
 
 const REFERENCE_EXIT_CODES = ["0", "1", "10", "11", "12"] as const;

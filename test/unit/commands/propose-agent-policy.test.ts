@@ -5,24 +5,24 @@ import { runProposeAgentPolicy } from "../../../src/commands/propose-agent-polic
 const FIXTURES = resolve(import.meta.dirname, "../../fixtures");
 
 describe("propose-agent-policy command", () => {
-  it("returns dry-run result with prompt context", async () => {
+  it("returns show-prompt result with prompt context", async () => {
     const { result, exitCode } = await runProposeAgentPolicy(
       [resolve(FIXTURES, "valid-contract-with-xagent.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(0);
-    const r = result as { dryRun: boolean; prompt: string };
-    expect(r.dryRun).toBe(true);
+    const r = result as { showPrompt: boolean; prompt: string };
+    expect(r.showPrompt).toBe(true);
     expect(r.prompt).toContain("Policy Audit Request");
     expect(r.prompt).toContain("safe-read");
     expect(r.prompt).toContain("dangerous-write");
   });
 
-  it("dry-run includes x-agent policy details", async () => {
+  it("show-prompt includes x-agent policy details", async () => {
     const { result } = await runProposeAgentPolicy(
       [resolve(FIXTURES, "valid-contract.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     const r = result as { prompt: string };
@@ -33,7 +33,7 @@ describe("propose-agent-policy command", () => {
   it("returns exit code 2 for invalid contract", async () => {
     const { exitCode } = await runProposeAgentPolicy(
       [resolve(FIXTURES, "invalid-contract.yaml")],
-      { dryRun: true },
+      { showPrompt: true },
     );
 
     expect(exitCode).toBe(2);
@@ -44,12 +44,12 @@ describe("propose-agent-policy command", () => {
       ["nonexistent.yaml"],
       {
         file: resolve(FIXTURES, "valid-contract-with-xagent.yaml"),
-        dryRun: true,
+        showPrompt: true,
       },
     );
 
     expect(exitCode).toBe(0);
-    const r = result as { dryRun: boolean };
-    expect(r.dryRun).toBe(true);
+    const r = result as { showPrompt: boolean };
+    expect(r.showPrompt).toBe(true);
   });
 });

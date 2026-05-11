@@ -10,7 +10,7 @@ export interface CheckReferenceOptions {
   file?: string;
   adapter?: string;
   model?: string;
-  dryRun?: boolean;
+  showPrompt?: boolean;
   failOn?: string;
   output?: string;
   reportFormat?: string;
@@ -41,7 +41,7 @@ export async function runCheckReference(
   const auditOptions: AuditOptions = {
     taskId: "check-reference-conformance",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    dryRun: options.dryRun ?? false,
+    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -53,9 +53,9 @@ export async function runCheckReference(
     auditOptions,
   );
 
-  if (auditResult.dryRun) {
+  if (auditResult.showPrompt) {
     return {
-      result: { dryRun: true, prompt: auditResult.prompt },
+      result: { showPrompt: true, prompt: auditResult.prompt },
       exitCode: 0,
     };
   }
