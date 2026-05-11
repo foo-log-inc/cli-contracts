@@ -1,0 +1,28 @@
+cliContracts: 0.1.0
+
+info:
+  title: External Ref CLI
+  version: 1.0.0
+  description: Contract with external $ref for testing.
+
+commandSets:
+  audit:
+    summary: Audit tool.
+    commands:
+      run:
+        summary: Run audit.
+        options:
+          - name: format
+            schema:
+              type: string
+              enum: [json, text]
+              default: json
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: json
+              schema:
+                $ref: './external-components.yaml#/schemas/AuditResult'
+          '2':
+            description: Invalid argument.

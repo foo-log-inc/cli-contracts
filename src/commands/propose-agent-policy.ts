@@ -2,6 +2,7 @@ import { dirname, resolve } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
+import { resolveRefs } from "../ref-resolver.js";
 import { buildPolicyAuditContext } from "../auditor/context-builder.js";
 import { runAudit } from "../auditor/auditor.js";
 import type { AuditConfig, AuditOptions } from "../auditor/types.js";
@@ -31,7 +32,8 @@ export async function runProposeAgentPolicy(
     };
   }
 
-  const userRequest = buildPolicyAuditContext(doc);
+  const resolved = resolveRefs(doc, { basePath: dirname(filePath) });
+  const userRequest = buildPolicyAuditContext(resolved);
 
   const auditConfig: AuditConfig = {
     adapter: options.adapter,

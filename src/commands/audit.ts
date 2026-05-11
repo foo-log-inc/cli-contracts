@@ -2,6 +2,7 @@ import { dirname, resolve } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
+import { resolveRefs } from "../ref-resolver.js";
 import { buildDesignAuditContext } from "../auditor/context-builder.js";
 import { runAudit } from "../auditor/auditor.js";
 import type { AuditConfig, AuditOptions } from "../auditor/types.js";
@@ -33,7 +34,8 @@ export async function runAuditCommand(
   }
 
   const checks = normalizeChecks(options.checks);
-  const userRequest = buildDesignAuditContext(doc, checks);
+  const resolved = resolveRefs(doc, { basePath: dirname(filePath) });
+  const userRequest = buildDesignAuditContext(resolved, checks);
 
   const auditConfig: AuditConfig = {
     adapter: options.adapter,
