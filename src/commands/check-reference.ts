@@ -2,6 +2,7 @@ import { resolve, dirname } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
+import { resolveRefs } from "../ref-resolver.js";
 import { buildReferenceCheckContext } from "../auditor/context-builder.js";
 import { runAudit } from "../auditor/auditor.js";
 import type { AuditConfig, AuditOptions } from "../auditor/types.js";
@@ -31,7 +32,8 @@ export async function runCheckReference(
     };
   }
 
-  const userRequest = buildReferenceCheckContext(doc);
+  const resolved = resolveRefs(doc, { basePath: dirname(filePath) });
+  const userRequest = buildReferenceCheckContext(resolved);
 
   const auditConfig: AuditConfig = {
     adapter: options.adapter,

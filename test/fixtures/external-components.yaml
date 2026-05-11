@@ -1,0 +1,18 @@
+schemas:
+  AuditResult:
+    type: object
+    required: [summary, findings]
+    properties:
+      summary:
+        type: string
+      findings:
+        type: array
+        items:
+          type: object
+          required: [severity, message]
+          properties:
+            severity:
+              type: string
+              enum: [info, warning, error, critical]
+            message:
+              type: string

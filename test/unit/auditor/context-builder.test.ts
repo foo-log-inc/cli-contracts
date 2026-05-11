@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { resolve } from "node:path";
 import { parseContractFile } from "../../../src/parser.js";
+import { resolveRefs } from "../../../src/ref-resolver.js";
 import { runDiff } from "../../../src/commands/diff.js";
 import {
   buildPolicyAuditContext,
   buildDesignAuditContext,
   buildTestProposalContext,
   buildDiffExplainContext,
+  buildReferenceCheckContext,
   buildSuggestContext,
 } from "../../../src/auditor/context-builder.js";
 
@@ -139,6 +141,63 @@ describe("buildDiffExplainContext", () => {
     expect(context).toContain("Diff Explanation Request");
     expect(context).toContain("Diff Summary");
     expect(context).toContain("Has breaking changes");
+  });
+});
+
+describe("$ref resolution for LLM context", () => {
+  it("buildDesignAuditContext includes resolved external schema", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "contract-with-external-ref.yaml"),
+    );
+    const resolved = resolveRefs(doc, { basePath: FIXTURES });
+    const context = buildDesignAuditContext(resolved);
+
+    expect(context).toContain("severity");
+    expect(context).toContain("findings");
+    expect(context).not.toContain("external-components.yaml");
+  });
+
+  it("unresolved doc leaks $ref path instead of schema", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "contract-with-external-ref.yaml"),
+    );
+    const context = buildDesignAuditContext(doc);
+
+    expect(context).toContain("external-components.yaml");
+    expect(context).not.toContain("severity");
+  });
+
+  it("buildReferenceCheckContext includes resolved external schema", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "contract-with-external-ref.yaml"),
+    );
+    const resolved = resolveRefs(doc, { basePath: FIXTURES });
+    const context = buildReferenceCheckContext(resolved);
+
+    expect(context).toContain("severity");
+    expect(context).not.toContain("external-components.yaml");
+  });
+
+  it("buildPolicyAuditContext works with resolved doc", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "contract-with-external-ref.yaml"),
+    );
+    const resolved = resolveRefs(doc, { basePath: FIXTURES });
+    const context = buildPolicyAuditContext(resolved);
+
+    expect(context).toContain("Policy Audit Request");
+    expect(context).toContain("External Ref CLI");
+  });
+
+  it("buildTestProposalContext works with resolved doc", async () => {
+    const doc = await parseContractFile(
+      resolve(FIXTURES, "contract-with-external-ref.yaml"),
+    );
+    const resolved = resolveRefs(doc, { basePath: FIXTURES });
+    const context = buildTestProposalContext(resolved);
+
+    expect(context).toContain("Test Case Proposal Request");
+    expect(context).toContain("run");
   });
 });
 
