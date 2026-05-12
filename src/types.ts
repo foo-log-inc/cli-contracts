@@ -35,6 +35,12 @@ export type {
   XAgent,
   HumanReview,
   Rollback,
+  RiskLevel,
+  ExecutionMode,
+  EffectWrite,
+  EffectRead,
+  NetworkEffect,
+  Effects,
 } from "./schema.js";
 
 // ─── Normalized Context (for generators) ────────────────────────

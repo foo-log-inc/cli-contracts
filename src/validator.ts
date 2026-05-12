@@ -25,8 +25,10 @@ import type {
   Diagnostic,
   ValidateResult,
 } from "./types.js";
-import { XAgentSchema } from "./schema.js";
+import { XAgentSchema, EffectsSchema } from "./schema.js";
+import type { Effects, RiskLevel } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
+import { derivePolicy, isOptionActive } from "./policy.js";
 
 export function validateContract(
   doc: CliContractsDocument,
@@ -185,6 +187,16 @@ function validateCommand(
   if (xAgent !== undefined) {
     diagnostics.push(...validateXAgent(xAgent, basePath));
   }
+
+  if (cmd.effects || cmd.options?.some((o) => o.effects)) {
+    diagnostics.push(...validateEffectsConsistency(cmd, _cmdId, basePath));
+  }
+
+  if (xAgent !== undefined && (cmd.effects || cmd.options?.some((o) => o.effects))) {
+    diagnostics.push(
+      ...validateXAgentDeprecation(xAgent as Record<string, unknown>, basePath),
+    );
+  }
 }
 
 function validateExits(
@@ -294,6 +306,94 @@ function validateStreams(
       });
     }
   }
+}
+
+const DEPRECATED_XAGENT_FIELDS: Record<string, string> = {
+  riskLevel: "effects.riskLevel + max aggregation",
+  sideEffects: "effects.writes / effects.network + file.mode",
+  sideEffectNote: "effects.writes[].description",
+  requiresConfirmation: "riskLevel >= high (auto-derived from effects)",
+  requiresConfirmationWhen: "option-level effects",
+  dangerousOptions: "option-level effects.riskLevel",
+  safeDryRunOption: "--introspect global option",
+  requiresNetwork: "effects.network",
+  requiresSecrets: "env[].sensitive",
+  reads: "effects.reads / file.mode",
+  writes: "effects.writes / file.mode",
+};
+
+const RISK_ORDER: Record<string, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+  critical: 3,
+};
+
+export function validateXAgentDeprecation(
+  xAgent: Record<string, unknown>,
+  basePath: string,
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const path = `${basePath}/x-agent`;
+
+  for (const [field, replacement] of Object.entries(DEPRECATED_XAGENT_FIELDS)) {
+    if (field in xAgent) {
+      diagnostics.push({
+        path: `${path}/${field}`,
+        message: `x-agent.${field} is deprecated when effects are declared; use ${replacement} instead`,
+        rule: "xagent-deprecated-field",
+        severity: "warning",
+      });
+    }
+  }
+
+  return diagnostics;
+}
+
+export function validateEffectsConsistency(
+  cmd: Command,
+  cmdId: string,
+  basePath: string,
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+
+  const xAgent = (cmd as Record<string, unknown>)["x-agent"] as
+    | Record<string, unknown>
+    | undefined;
+  if (!xAgent) return diagnostics;
+
+  const cmdEffects = cmd.effects;
+  const riskLevels: string[] = [];
+
+  if (cmdEffects?.riskLevel) {
+    riskLevels.push(cmdEffects.riskLevel);
+  }
+  for (const opt of cmd.options ?? []) {
+    if (opt.effects?.riskLevel) {
+      riskLevels.push(opt.effects.riskLevel);
+    }
+  }
+
+  if (riskLevels.length > 0 && typeof xAgent.riskLevel === "string") {
+    const derivedMax = riskLevels.reduce((a, b) =>
+      (RISK_ORDER[a] ?? 0) >= (RISK_ORDER[b] ?? 0) ? a : b,
+    );
+    const xAgentRisk = xAgent.riskLevel as string;
+    if (
+      derivedMax in RISK_ORDER &&
+      xAgentRisk in RISK_ORDER &&
+      (RISK_ORDER[derivedMax] ?? 0) > (RISK_ORDER[xAgentRisk] ?? 0)
+    ) {
+      diagnostics.push({
+        path: `${basePath}/x-agent/riskLevel`,
+        message: `x-agent.riskLevel "${xAgentRisk}" contradicts effects-derived riskLevel "${derivedMax}"`,
+        rule: "xagent-effects-contradiction",
+        severity: "error",
+      });
+    }
+  }
+
+  return diagnostics;
 }
 
 function validateRefsIntegrity(

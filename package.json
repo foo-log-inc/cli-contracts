@@ -16,6 +16,10 @@
     "./agent": {
       "import": "./dist/agent.js",
       "types": "./dist/agent.d.ts"
+    },
+    "./policy": {
+      "import": "./dist/policy.js",
+      "types": "./dist/policy.d.ts"
     }
   },
   "peerDependencies": {

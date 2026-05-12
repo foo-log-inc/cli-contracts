@@ -68,6 +68,52 @@ export const ArgumentSchema = z.object({
   variadic: z.boolean().optional(),
 });
 
+// ─── Effects Schema ─────────────────────────────────────────────
+
+export const RiskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
+
+export const ExecutionModeSchema = z.enum([
+  "normal",
+  "long-running",
+  "watch",
+  "interactive",
+  "background",
+]);
+
+export const EffectWriteSchema = z.object({
+  target: z.string().min(1),
+  description: z.string().optional(),
+  overwrite: z.boolean().optional(),
+  destructive: z.boolean().optional(),
+});
+
+export const EffectReadSchema = z.object({
+  target: z.string().min(1),
+  description: z.string().optional(),
+});
+
+export const NetworkEffectSchema = z.union([
+  z.boolean(),
+  z.object({
+    description: z.string().optional(),
+    domains: z.array(z.string()).optional(),
+    requiresSecrets: z.array(z.string()).optional(),
+  }),
+]);
+
+export const EffectsSchema = z.object({
+  riskLevel: RiskLevelSchema.optional(),
+  reads: z.array(EffectReadSchema).optional(),
+  writes: z.array(EffectWriteSchema).optional(),
+  network: NetworkEffectSchema.optional(),
+  executionMode: ExecutionModeSchema.optional(),
+  requiresConfirmation: z.boolean().optional(),
+  description: z.string().optional(),
+  overwrites: z.boolean().optional(),
+});
+
+// ─── Option / Output Schemas ────────────────────────────────────
+
 export const OptionSchema = z.object({
   name: z.string().min(1, "Option name must not be empty"),
   aliases: z.array(z.string()).optional(),
@@ -76,6 +122,7 @@ export const OptionSchema = z.object({
   description: z.string().optional(),
   schema: JsonSchemaSchema.optional(),
   file: FileContractSchema.optional(),
+  effects: EffectsSchema.optional(),
   repeatable: z.boolean().optional(),
   deprecated: z
     .object({
@@ -189,6 +236,7 @@ export const CommandSchema = z
     usage: z.array(z.string()).optional(),
     arguments: z.array(ArgumentSchema).optional(),
     options: z.array(OptionSchema).optional(),
+    effects: EffectsSchema.optional(),
     streams: StreamsSchema.optional(),
     signals: z.record(z.string(), SignalSchema).optional(),
     exits: z.record(exitCodeKey, ExitSchema),
@@ -201,6 +249,7 @@ export const EnvVarSchema = z.object({
   description: z.string().optional(),
   schema: JsonSchemaSchema.optional(),
   required: z.boolean().optional(),
+  sensitive: z.boolean().optional(),
 });
 
 export const CommandSetSchema = z
@@ -325,6 +374,13 @@ export type EnvVar = z.infer<typeof EnvVarSchema>;
 export type XAgent = z.infer<typeof XAgentSchema>;
 export type HumanReview = z.infer<typeof HumanReviewSchema>;
 export type Rollback = z.infer<typeof RollbackSchema>;
+
+export type RiskLevel = z.infer<typeof RiskLevelSchema>;
+export type ExecutionMode = z.infer<typeof ExecutionModeSchema>;
+export type EffectWrite = z.infer<typeof EffectWriteSchema>;
+export type EffectRead = z.infer<typeof EffectReadSchema>;
+export type NetworkEffect = z.infer<typeof NetworkEffectSchema>;
+export type Effects = z.infer<typeof EffectsSchema>;
 
 export type CliContractsConfig = z.infer<typeof CliContractsConfigSchema>;
 export type InputConfig = z.infer<typeof InputConfigSchema>;
