@@ -1,0 +1,149 @@
+cliContracts: 0.1.0
+
+info:
+  title: Effects Test CLI
+  version: 1.0.0
+  description: CLI for testing option-level effects and policy derivation.
+
+commandSets:
+  effects-cli:
+    summary: Effects test CLI tool.
+    env:
+      OPENAI_API_KEY:
+        required: true
+        sensitive: true
+        description: API key for OpenAI.
+      LOG_LEVEL:
+        required: false
+        description: Log verbosity.
+
+    globalOptions:
+      - name: verbose
+        aliases: [v]
+        schema:
+          type: boolean
+          default: false
+
+    commands:
+      lint:
+        summary: Lint source files.
+        options:
+          - name: config
+            description: Configuration file path.
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+
+          - name: fix
+            description: Auto-fix lint violations.
+            schema:
+              type: boolean
+            effects:
+              riskLevel: medium
+              writes:
+                - target: "source files matching lint rules"
+                  description: "auto-fix lint violations"
+                  overwrite: true
+                  idempotent: true
+                  idempotentNote: "same lint rules + same source → no additional changes on re-run"
+
+          - name: format
+            description: Output format.
+            schema:
+              type: string
+              enum: [text, json, github]
+        exits:
+          '0':
+            description: Lint passed.
+          '1':
+            description: Lint violations found.
+
+      build:
+        summary: Build the project.
+        effects:
+          riskLevel: low
+          writes:
+            - target: "docs/, specs/"
+              description: "files generated from models"
+        options:
+          - name: watch
+            description: Watch for changes.
+            schema:
+              type: boolean
+            effects:
+              riskLevel: medium
+              executionMode: long-running
+              description: "watches for changes indefinitely; unsuitable for non-interactive agents"
+
+          - name: output
+            description: Output directory.
+            schema:
+              type: string
+            file:
+              mode: write
+        exits:
+          '0':
+            description: Build succeeded.
+          '1':
+            description: Build failed.
+
+      init:
+        summary: Initialize project.
+        effects:
+          riskLevel: medium
+          writes:
+            - target: "config file, project directory structure"
+        options:
+          - name: force
+            description: Overwrite existing configuration.
+            schema:
+              type: boolean
+            effects:
+              riskLevel: high
+              overwrites: true
+        exits:
+          '0':
+            description: Initialization complete.
+          '1':
+            description: Initialization failed.
+
+      deploy:
+        summary: Deploy to remote.
+        effects:
+          riskLevel: high
+          network: true
+          writes:
+            - target: "remote server"
+              description: "deploy application artifacts"
+              destructive: true
+        options:
+          - name: dry-run
+            description: Simulate deployment.
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: Deployment succeeded.
+          '1':
+            description: Deployment failed.
+
+      query:
+        summary: Query external API.
+        options:
+          - name: endpoint
+            description: API endpoint URL.
+            schema:
+              type: string
+            effects:
+              network:
+                description: "calls external API"
+                domains: ["api.example.com"]
+                idempotent: true
+                idempotencyKey: "endpoint URL + query params"
+        exits:
+          '0':
+            description: Query succeeded.
+          '1':
+            description: Query failed.

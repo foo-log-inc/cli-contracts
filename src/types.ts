@@ -35,6 +35,12 @@ export type {
   XAgent,
   HumanReview,
   Rollback,
+  RiskLevel,
+  ExecutionMode,
+  EffectWrite,
+  EffectRead,
+  NetworkEffect,
+  Effects,
 } from "./schema.js";
 
 // ─── Normalized Context (for generators) ────────────────────────
@@ -68,6 +74,7 @@ export interface NormalizedCommand {
   arguments: import("./schema.js").Argument[];
   options: import("./schema.js").Option[];
   allOptions: import("./schema.js").Option[];
+  effects?: import("./schema.js").Effects;
   streams?: import("./schema.js").Streams;
   signals?: Record<string, import("./schema.js").Signal>;
   exits: NormalizedExit[];

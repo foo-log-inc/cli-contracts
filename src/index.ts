@@ -39,6 +39,25 @@ export type {
   Rollback,
 } from "./types.js";
 
+export type {
+  RiskLevel,
+  ExecutionMode,
+  EffectWrite,
+  EffectRead,
+  NetworkEffect,
+  Effects,
+} from "./schema.js";
+
+export type {
+  DerivedPolicy,
+  DerivedNetworkEffect,
+  DerivedReadEffect,
+  DerivedWriteEffect,
+  IntrospectionResult,
+  PolicyDerivationInput,
+  OptionInput,
+} from "./policy.js";
+
 export {
   CliContractsDocumentSchema,
   CliContractsConfigSchema,
@@ -56,11 +75,22 @@ export {
   XAgentSchema,
   HumanReviewSchema,
   RollbackSchema,
+  RiskLevelSchema,
+  ExecutionModeSchema,
+  EffectWriteSchema,
+  EffectReadSchema,
+  NetworkEffectSchema,
+  EffectsSchema,
 } from "./schema.js";
 
 export { parseContractFile, parseContractString } from "./parser.js";
 export { validateContract } from "./validator.js";
+export {
+  validateXAgentDeprecation,
+  validateEffectsConsistency,
+} from "./validator.js";
 export { resolveRefs, collectRefs, validateRefs } from "./ref-resolver.js";
 export { normalizeContract } from "./normalizer.js";
 export { generateMarkdown } from "./generators/markdown.js";
 export { generateTypeScript } from "./generators/typescript.js";
+export { derivePolicy, isOptionActive, buildIntrospection } from "./policy.js";
