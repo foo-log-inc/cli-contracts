@@ -46,6 +46,8 @@ commandSets:
                 - target: "source files matching lint rules"
                   description: "auto-fix lint violations"
                   overwrite: true
+                  idempotent: true
+                  idempotentNote: "same lint rules + same source → no additional changes on re-run"
 
           - name: format
             description: Output format.
@@ -138,6 +140,8 @@ commandSets:
               network:
                 description: "calls external API"
                 domains: ["api.example.com"]
+                idempotent: true
+                idempotencyKey: "endpoint URL + query params"
         exits:
           '0':
             description: Query succeeded.

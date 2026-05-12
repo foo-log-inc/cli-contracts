@@ -27,15 +27,29 @@ export type DerivedWriteEffect =
       description?: string;
       overwrite?: boolean;
       destructive?: boolean;
+      idempotent?: boolean;
+      idempotencyKey?: string;
+      idempotentNote?: string;
       source: string;
     };
+
+export interface DerivedNetworkEffect {
+  description?: string;
+  domains?: string[];
+  idempotent?: boolean;
+  idempotencyKey?: string;
+  idempotentNote?: string;
+  source: string;
+}
 
 export interface DerivedPolicy {
   riskLevel: RiskLevel;
   requiresConfirmation: boolean;
+  idempotent: boolean;
   sideEffects: string[];
   reads: DerivedReadEffect[];
   writes: DerivedWriteEffect[];
+  network?: DerivedNetworkEffect[];
   executionMode?: ExecutionMode;
   requiresSecrets?: string[];
 }
@@ -101,6 +115,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
   const sideEffects = new Set<string>();
   const reads: DerivedReadEffect[] = [];
   const writes: DerivedWriteEffect[] = [];
+  const networkEffects: DerivedNetworkEffect[] = [];
   const riskLevels: RiskLevel[] = [];
   let executionMode: ExecutionMode | undefined;
   let explicitConfirmation: boolean | undefined;
@@ -119,6 +134,9 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
           description: w.description,
           overwrite: w.overwrite,
           destructive: w.destructive,
+          ...(w.idempotent !== undefined ? { idempotent: w.idempotent } : {}),
+          ...(w.idempotencyKey ? { idempotencyKey: w.idempotencyKey } : {}),
+          ...(w.idempotentNote ? { idempotentNote: w.idempotentNote } : {}),
           source: `command:${input.commandId}`,
         });
       }
@@ -137,6 +155,16 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
 
     if (ce.network) {
       sideEffects.add("network");
+      if (typeof ce.network === "object") {
+        networkEffects.push({
+          ...(ce.network.description ? { description: ce.network.description } : {}),
+          ...(ce.network.domains ? { domains: ce.network.domains } : {}),
+          ...(ce.network.idempotent !== undefined ? { idempotent: ce.network.idempotent } : {}),
+          ...(ce.network.idempotencyKey ? { idempotencyKey: ce.network.idempotencyKey } : {}),
+          ...(ce.network.idempotentNote ? { idempotentNote: ce.network.idempotentNote } : {}),
+          source: `command:${input.commandId}`,
+        });
+      }
     }
 
     if (ce.executionMode) {
@@ -194,6 +222,9 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
             description: w.description,
             overwrite: w.overwrite,
             destructive: w.destructive,
+            ...(w.idempotent !== undefined ? { idempotent: w.idempotent } : {}),
+            ...(w.idempotencyKey ? { idempotencyKey: w.idempotencyKey } : {}),
+            ...(w.idempotentNote ? { idempotentNote: w.idempotentNote } : {}),
             source: `option:${optName}`,
           });
         }
@@ -212,6 +243,16 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
 
       if (eff.network) {
         sideEffects.add("network");
+        if (typeof eff.network === "object") {
+          networkEffects.push({
+            ...(eff.network.description ? { description: eff.network.description } : {}),
+            ...(eff.network.domains ? { domains: eff.network.domains } : {}),
+            ...(eff.network.idempotent !== undefined ? { idempotent: eff.network.idempotent } : {}),
+            ...(eff.network.idempotencyKey ? { idempotencyKey: eff.network.idempotencyKey } : {}),
+            ...(eff.network.idempotentNote ? { idempotentNote: eff.network.idempotentNote } : {}),
+            source: `option:${optName}`,
+          });
+        }
       }
 
       if (eff.executionMode && !executionMode) {
@@ -247,12 +288,20 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
     }
   }
 
+  // 6. idempotent = all semantic writes idempotent AND all network effects idempotent
+  const semanticWrites = writes.filter((w) => w.kind === "semantic");
+  const idempotent =
+    semanticWrites.every((w) => w.idempotent === true) &&
+    networkEffects.every((n) => n.idempotent === true);
+
   return {
     riskLevel: finalRiskLevel,
     requiresConfirmation,
+    idempotent,
     sideEffects: [...sideEffects],
     reads,
     writes,
+    ...(networkEffects.length > 0 ? { network: networkEffects } : {}),
     ...(executionMode ? { executionMode } : {}),
     ...(requiresSecrets ? { requiresSecrets } : {}),
   };

@@ -320,6 +320,8 @@ const DEPRECATED_XAGENT_FIELDS: Record<string, string> = {
   requiresSecrets: "env[].sensitive",
   reads: "effects.reads / file.mode",
   writes: "effects.writes / file.mode",
+  idempotent: "effects.writes[].idempotent / effects.network.idempotent",
+  idempotentNote: "effects.writes[].idempotentNote / effects.network.idempotentNote",
 };
 
 const RISK_ORDER: Record<string, number> = {

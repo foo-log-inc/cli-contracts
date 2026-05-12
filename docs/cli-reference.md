@@ -224,13 +224,6 @@ cli-contracts init --name foo --multi-command-set
 
   </details>
 
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: false
-```
-
 ---
 
 ### validate
@@ -595,13 +588,6 @@ cli-contracts validate --strict
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -1003,8 +989,6 @@ cli-contracts generate custom-go
 
 ```yaml
 x-agent: 
-  idempotent: true
-  idempotentNote: Idempotent for final state; --clean creates a transient destructive intermediate state (removes output directory).
   recommendedBeforeUse: 
     - Run with --dry-run first to preview generated files
 ```
@@ -1292,13 +1276,6 @@ cli-contracts docs --dry-run
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -1763,13 +1740,6 @@ cli-contracts test --case users.import.success
 
   </details>
 
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: false
-```
-
 ---
 
 ### diff
@@ -2029,13 +1999,6 @@ cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -2701,13 +2664,6 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -3375,13 +3331,6 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 
   </details>
 
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
-
 ---
 
 ### extract
@@ -3813,13 +3762,6 @@ cli-contracts extract --all
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -4485,13 +4427,6 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 
@@ -5161,13 +5096,6 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 
   </details>
 
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
-
 ---
 
 ### check-reference
@@ -5833,13 +5761,6 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 
   </details>
 
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
-
 ---
 
 ### suggest
@@ -6503,13 +6424,6 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   ```
 
   </details>
-
-#### Extensions
-
-```yaml
-x-agent: 
-  idempotent: true
-```
 
 ---
 

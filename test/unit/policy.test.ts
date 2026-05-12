@@ -70,6 +70,7 @@ describe("derivePolicy", () => {
     });
     expect(result.riskLevel).toBe("low");
     expect(result.requiresConfirmation).toBe(false);
+    expect(result.idempotent).toBe(true);
     expect(result.sideEffects).toEqual([]);
     expect(result.reads).toEqual([]);
     expect(result.writes).toEqual([]);
@@ -333,6 +334,254 @@ describe("derivePolicy", () => {
         options: makeInput("endpoint", endpointOpt, "https://api.example.com", true),
       });
       expect(result.sideEffects).toContain("network");
+    });
+
+    it("propagates network idempotent from command-level effects", () => {
+      const result = derivePolicy({
+        commandId: "fetch",
+        commandEffects: {
+          network: {
+            description: "LLM API call",
+            domains: ["api.openai.com"],
+            idempotent: true,
+            idempotencyKey: "prompt hash",
+          },
+        },
+        options: {},
+      });
+      expect(result.network).toEqual([
+        {
+          description: "LLM API call",
+          domains: ["api.openai.com"],
+          idempotent: true,
+          idempotencyKey: "prompt hash",
+          source: "command:fetch",
+        },
+      ]);
+    });
+
+    it("propagates network idempotent from option-level effects", () => {
+      const endpointOpt = makeOption({
+        name: "endpoint",
+        schema: { type: "string" },
+        effects: {
+          network: {
+            description: "calls API",
+            domains: ["api.example.com"],
+            idempotent: false,
+            idempotentNote: "POST creates new resource each time",
+          },
+        },
+      });
+      const result = derivePolicy({
+        commandId: "create",
+        options: makeInput("endpoint", endpointOpt, "https://api.example.com", true),
+      });
+      expect(result.network).toEqual([
+        {
+          description: "calls API",
+          domains: ["api.example.com"],
+          idempotent: false,
+          idempotentNote: "POST creates new resource each time",
+          source: "option:endpoint",
+        },
+      ]);
+    });
+
+    it("network is omitted from policy when only boolean true", () => {
+      const result = derivePolicy({
+        commandId: "deploy",
+        commandEffects: { network: true },
+        options: {},
+      });
+      expect(result.network).toBeUndefined();
+      expect(result.sideEffects).toContain("network");
+    });
+  });
+
+  describe("idempotent on writes", () => {
+    it("propagates idempotent fields from command-level writes", () => {
+      const result = derivePolicy({
+        commandId: "generate",
+        commandEffects: {
+          writes: [
+            {
+              target: "output dir",
+              overwrite: true,
+              idempotent: true,
+              idempotentNote: "same input produces same output",
+            },
+          ],
+        },
+        options: {},
+      });
+      expect(result.writes[0]).toMatchObject({
+        kind: "semantic",
+        target: "output dir",
+        idempotent: true,
+        idempotentNote: "same input produces same output",
+      });
+    });
+
+    it("propagates idempotent fields from option-level writes", () => {
+      const fixOpt = makeOption({
+        name: "fix",
+        schema: { type: "boolean" },
+        effects: {
+          riskLevel: "medium",
+          writes: [
+            {
+              target: "source files",
+              overwrite: true,
+              idempotent: true,
+              idempotencyKey: "lint config + source content",
+            },
+          ],
+        },
+      });
+      const result = derivePolicy({
+        commandId: "lint",
+        options: makeInput("fix", fixOpt, true, true),
+      });
+      expect(result.writes[0]).toMatchObject({
+        kind: "semantic",
+        target: "source files",
+        idempotent: true,
+        idempotencyKey: "lint config + source content",
+        source: "option:fix",
+      });
+    });
+
+    it("idempotent: false is preserved", () => {
+      const result = derivePolicy({
+        commandId: "init",
+        commandEffects: {
+          writes: [{ target: "project files", idempotent: false }],
+        },
+        options: {},
+      });
+      expect(result.writes[0]).toMatchObject({
+        kind: "semantic",
+        target: "project files",
+        idempotent: false,
+      });
+    });
+  });
+
+  describe("overall idempotent derivation", () => {
+    it("true when no side effects (read-only)", () => {
+      const result = derivePolicy({
+        commandId: "validate",
+        options: {},
+      });
+      expect(result.idempotent).toBe(true);
+    });
+
+    it("true when all writes are idempotent", () => {
+      const result = derivePolicy({
+        commandId: "generate",
+        commandEffects: {
+          writes: [
+            { target: "output", idempotent: true },
+            { target: "docs", idempotent: true },
+          ],
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(true);
+    });
+
+    it("false when any write is not idempotent", () => {
+      const result = derivePolicy({
+        commandId: "init",
+        commandEffects: {
+          writes: [
+            { target: "config", idempotent: true },
+            { target: "timestamp log", idempotent: false },
+          ],
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(false);
+    });
+
+    it("false when a write does not declare idempotent", () => {
+      const result = derivePolicy({
+        commandId: "build",
+        commandEffects: {
+          writes: [{ target: "output" }],
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(false);
+    });
+
+    it("considers network effects in idempotent determination", () => {
+      const result = derivePolicy({
+        commandId: "query",
+        commandEffects: {
+          network: {
+            description: "API call",
+            idempotent: true,
+          },
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(true);
+    });
+
+    it("false when network is not idempotent", () => {
+      const result = derivePolicy({
+        commandId: "notify",
+        commandEffects: {
+          network: {
+            description: "send notification",
+            idempotent: false,
+          },
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(false);
+    });
+
+    it("option-file writes do not affect idempotent determination", () => {
+      const outputOpt = makeOption({
+        name: "output",
+        schema: { type: "string" },
+        file: { mode: "write" },
+      });
+      const result = derivePolicy({
+        commandId: "query",
+        commandEffects: {
+          network: { description: "API", idempotent: true },
+        },
+        options: makeInput("output", outputOpt, "out.json", true),
+      });
+      expect(result.idempotent).toBe(true);
+    });
+
+    it("combines writes and network for overall determination", () => {
+      const result = derivePolicy({
+        commandId: "sync",
+        commandEffects: {
+          writes: [{ target: "cache", idempotent: true }],
+          network: { description: "fetch", idempotent: true },
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(true);
+    });
+
+    it("false when writes idempotent but network is not", () => {
+      const result = derivePolicy({
+        commandId: "deploy",
+        commandEffects: {
+          writes: [{ target: "config", idempotent: true }],
+          network: { description: "deploy", idempotent: false },
+        },
+        options: {},
+      });
+      expect(result.idempotent).toBe(false);
     });
   });
 

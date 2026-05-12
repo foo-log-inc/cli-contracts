@@ -112,7 +112,6 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          idempotent: true
           recommendedBeforeUse:
             - "Run without --fix first"
 `);
@@ -121,6 +120,35 @@ commandSets:
       (w) => w.rule === "xagent-deprecated-field",
     );
     expect(deprecationWarnings).toHaveLength(0);
+  });
+
+  it("warns when x-agent.idempotent is used with effects", () => {
+    const doc = parseContractString(`
+cliContracts: 0.1.0
+info:
+  title: Test
+  version: 1.0.0
+commandSets:
+  x:
+    commands:
+      generate:
+        summary: Generate files.
+        effects:
+          writes:
+            - target: "output files"
+              idempotent: true
+        exits:
+          '0':
+            description: OK.
+        x-agent:
+          idempotent: true
+`);
+    const result = validateContract(doc);
+    const deprecationWarnings = result.warnings.filter(
+      (w) => w.rule === "xagent-deprecated-field",
+    );
+    expect(deprecationWarnings).toHaveLength(1);
+    expect(deprecationWarnings[0].path).toContain("idempotent");
   });
 
   it("errors when x-agent.riskLevel contradicts effects derivation", () => {
@@ -192,15 +220,16 @@ describe("validateXAgentDeprecation standalone", () => {
       requiresSecrets: ["API_KEY"],
       reads: ["config"],
       writes: ["output"],
+      idempotent: true,
+      idempotentNote: "same input same output",
     };
     const diags = validateXAgentDeprecation(xAgent, "/test/cmd");
-    expect(diags).toHaveLength(11);
+    expect(diags).toHaveLength(13);
     expect(diags.every((d) => d.rule === "xagent-deprecated-field")).toBe(true);
   });
 
   it("returns empty for non-deprecated fields only", () => {
     const xAgent = {
-      idempotent: true,
       recommendedBeforeUse: ["check first"],
       rollback: { supported: true },
       humanReview: { required: false },

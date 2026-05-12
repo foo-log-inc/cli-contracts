@@ -50,6 +50,7 @@ export type {
 
 export type {
   DerivedPolicy,
+  DerivedNetworkEffect,
   DerivedReadEffect,
   DerivedWriteEffect,
   IntrospectionResult,

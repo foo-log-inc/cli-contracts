@@ -85,6 +85,9 @@ export const EffectWriteSchema = z.object({
   description: z.string().optional(),
   overwrite: z.boolean().optional(),
   destructive: z.boolean().optional(),
+  idempotent: z.boolean().optional(),
+  idempotencyKey: z.string().optional(),
+  idempotentNote: z.string().optional(),
 });
 
 export const EffectReadSchema = z.object({
@@ -98,6 +101,9 @@ export const NetworkEffectSchema = z.union([
     description: z.string().optional(),
     domains: z.array(z.string()).optional(),
     requiresSecrets: z.array(z.string()).optional(),
+    idempotent: z.boolean().optional(),
+    idempotencyKey: z.string().optional(),
+    idempotentNote: z.string().optional(),
   }),
 ]);
 
