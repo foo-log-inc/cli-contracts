@@ -228,11 +228,7 @@ cli-contracts init --name foo --multi-command-set
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: false
-  sideEffects: 
-    - filesystem
 ```
 
 ---
@@ -604,11 +600,7 @@ cli-contracts validate --strict
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-
 ```
 
 ---
@@ -1011,17 +1003,10 @@ cli-contracts generate custom-go
 
 ```yaml
 x-agent: 
-  riskLevel: medium
-  requiresConfirmation: false
-  requiresConfirmationWhen: 
-    - clean
   idempotent: true
   idempotentNote: Idempotent for final state; --clean creates a transient destructive intermediate state (removes output directory).
-  sideEffects: 
-    - filesystem
-  safeDryRunOption: dry-run
-  dangerousOptions: 
-    - clean
+  recommendedBeforeUse: 
+    - Run with --dry-run first to preview generated files
 ```
 
 ---
@@ -1312,13 +1297,7 @@ cli-contracts docs --dry-run
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - filesystem
-  safeDryRunOption: dry-run
-  preferAlternative: generate markdown
 ```
 
 ---
@@ -1788,12 +1767,7 @@ cli-contracts test --case users.import.success
 
 ```yaml
 x-agent: 
-  riskLevel: medium
-  requiresConfirmation: true
   idempotent: false
-  sideEffects: 
-    - process-execution
-  sideEffectNote: Actual side effects depend on the target CLI and test cases being executed. The process-execution declaration is a lower bound; transitive effects may include filesystem, network, or other operations performed by the target CLI.
 ```
 
 ---
@@ -2060,11 +2034,7 @@ cli-contracts diff --base main --head HEAD --contract-path cli-contract.yaml
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-
 ```
 
 ---
@@ -2736,17 +2706,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---
@@ -3419,17 +3379,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---
@@ -3868,11 +3818,7 @@ cli-contracts extract --all
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-
 ```
 
 ---
@@ -4544,17 +4490,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---
@@ -5229,17 +5165,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---
@@ -5911,17 +5837,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---
@@ -6592,17 +6508,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
 ```yaml
 x-agent: 
-  riskLevel: low
-  requiresConfirmation: false
   idempotent: true
-  sideEffects: 
-    - network
-  sideEffectNote: Network calls to LLM provider when adapter is not mock. Filesystem write only when --output is specified.
-  safeDryRunOption: show-prompt
-  expectedDurationMs: 120000
-  retryableExitCodes: 
-    - 1
-    - 12
 ```
 
 ---

@@ -582,7 +582,7 @@ function commanderDefaultValue(
 function contextHasEffects(ctx: NormalizedContext): boolean {
   for (const cs of ctx.commandSets) {
     for (const cmd of cs.commands) {
-      if (cmd.extensions.effects) return true;
+      if (cmd.effects) return true;
       for (const opt of cmd.options) {
         if (opt.effects) return true;
       }
@@ -606,9 +606,8 @@ function generatePolicyModule(ctx: NormalizedContext): string {
       const raw = cmd as unknown as Record<string, unknown>;
       const cmdDef: Record<string, unknown> = {};
 
-      const cmdEffects = cmd.extensions.effects;
-      if (cmdEffects) {
-        cmdDef.effects = cmdEffects;
+      if (cmd.effects) {
+        cmdDef.effects = cmd.effects;
       }
 
       const optionDefs: Record<string, unknown>[] = [];
@@ -653,24 +652,25 @@ function generatePolicyModule(ctx: NormalizedContext): string {
   lines.push("  const def = commandDefinitions[commandId as keyof typeof commandDefinitions];");
   lines.push('  if (!def) throw new Error(`Unknown command: ${commandId}`);');
   lines.push("");
-  lines.push("  const cmdDef = def as { effects?: unknown; options?: readonly { name: string; schema?: { type?: string }; file?: unknown; effects?: unknown; repeatable?: boolean }[]; env?: Record<string, { sensitive?: boolean }> };");
-  lines.push("  const options: Record<string, { value: unknown; specified: boolean; definition: { name: string; schema?: { type?: string }; file?: { mode: string }; effects?: unknown; repeatable?: boolean } }> = {};");
+  lines.push("  // eslint-disable-next-line @typescript-eslint/no-explicit-any");
+  lines.push("  const cmdDef = def as any;");
+  lines.push("  const options: Record<string, { value: unknown; specified: boolean; definition: any }> = {};");
   lines.push("  const activeOptions: string[] = [];");
   lines.push("");
   lines.push("  for (const optDef of cmdDef.options ?? []) {");
   lines.push("    const value = optionValues[optDef.name];");
   lines.push("    const specified = optDef.name in optionValues && value !== undefined;");
-  lines.push("    options[optDef.name] = { value, specified, definition: optDef as never };");
-  lines.push("    if (isOptionActive(optDef as never, value, specified)) {");
+  lines.push("    options[optDef.name] = { value, specified, definition: optDef };");
+  lines.push("    if (isOptionActive(optDef, value, specified)) {");
   lines.push("      activeOptions.push(optDef.name);");
   lines.push("    }");
   lines.push("  }");
   lines.push("");
   lines.push("  const policy = derivePolicy({");
   lines.push("    commandId,");
-  lines.push("    commandEffects: cmdDef.effects as never,");
+  lines.push("    commandEffects: cmdDef.effects,");
   lines.push("    options,");
-  lines.push("    env: cmdDef.env as never,");
+  lines.push("    env: cmdDef.env,");
   lines.push("  });");
   lines.push("");
   lines.push("  return { command: commandId, activeOptions, policy };");

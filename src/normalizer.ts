@@ -56,6 +56,7 @@ export function normalizeContract(
         arguments: cmd.arguments ?? [],
         options: cmd.options ?? [],
         allOptions: [...globalOptions, ...(cmd.options ?? [])],
+        effects: cmd.effects,
         streams: cmd.streams,
         signals: cmd.signals,
         exits,
