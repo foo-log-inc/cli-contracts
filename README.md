@@ -19,7 +19,7 @@ But unlike HTTP APIs, most CLIs do not have a contract-first workflow. Documenta
 
 CLI Contracts brings an OpenAPI-like workflow to command line tools: define the contract once, then use it to generate types, docs, wrappers, tests, and breaking-change reports.
 
-CLI Contracts can also provide AI-agent execution policies — side effects, risk levels, confirmation requirements, idempotency, and safe dry-run options — through the `x-agent` extension, so that agents can make informed safety decisions.
+CLI Contracts can also provide AI-agent execution policies through **option-level effect declarations** and runtime introspection (`--introspect`). Effects declare what a command does to the outside world (file writes, network calls, risk levels, idempotency) at both command and option granularity, enabling deterministic policy derivation without hand-written metadata. The `x-agent` extension remains available for non-derivable supplementary information (rollback, human review, recommendations).
 
 ## What it does
 
@@ -30,7 +30,8 @@ Use the same contract to:
 - **Generate** TypeScript types, CLI wrappers, Markdown documentation, and custom output via Handlebars templates
 - **Test** real CLI implementations against the contract
 - **Diff** contract versions to detect breaking changes before release
-- **Declare AI-agent execution policies** — risk level, side effects, idempotency, confirmation, and safe dry-run options via `x-agent`
+- **Declare execution effects** — option-level and command-level effect declarations (writes, network, risk level, idempotency) with runtime introspection via `--introspect`
+- **Declare AI-agent execution policies** — supplementary agent-facing metadata (rollback, human review, recommendations) via `x-agent`
 - **Audit** contract design quality, propose `x-agent` policies, generate test cases, explain diffs, check LLM command conformance against the reference specification, and draft contracts from existing sources — all via LLM-backed commands
 
 Key contract features:
@@ -69,6 +70,9 @@ npx cli-contracts test
 # Detect breaking changes
 npx cli-contracts diff old.yaml new.yaml
 
+# Introspect derived execution policy without running
+npx cli-contracts generate --introspect
+
 # Audit contract design quality (requires agent-contracts-runtime)
 npx cli-contracts audit cli-contract.yaml --adapter gemini
 
@@ -86,7 +90,8 @@ src/generated/
   types.ts       # argument/option interfaces, exit code unions, result types
   commands.ts    # typed CLI execution wrappers
   schemas.ts     # JSON Schema constants and exit code arrays
-  program.ts     # Commander program definition (createProgram + CommandHandlers)
+  program.ts     # Commander program definition (createProgram + CommandHandlers + --introspect)
+  policy.ts      # deterministic policy derivation engine (when effects are declared)
 docs/
   cli-reference.md  # human-readable CLI reference documentation
 ```
@@ -145,13 +150,17 @@ commandSets:
               format: json
               schema:
                 $ref: '#/components/schemas/Error'
-        x-agent:
+        effects:
           riskLevel: high
           requiresConfirmation: true
-          idempotent: false
-          sideEffects:
-            - database_write
-          safeDryRunOption: dry-run
+          writes:
+            - target: "user database"
+              description: "Writes imported users to the database"
+              idempotent: false
+        x-agent:
+          recommendedBeforeUse:
+            - Validate the CSV schema.
+            - Run with --dry-run before actual import.
 
 components:
   schemas:
@@ -204,12 +213,13 @@ components:
 | `usage` | No | Human-readable usage examples |
 | `arguments` | No | Positional arguments |
 | `options` | No | Named options and flags |
+| `effects` | No | Base execution effects (always active regardless of options) |
 | `constraints` | No | Input constraints (`mutuallyExclusive`, `requiredOneOf`) |
 | `streams` | No | stdin/stdout/stderr contracts during execution |
 | `signals` | No | OS signals the command handles |
 | `exits` | Yes | Exit-code keyed output contracts |
 | `examples` | No | Usage examples |
-| `x-agent` | No | AI agent execution policy |
+| `x-agent` | No | AI agent supplementary metadata (non-derivable info only) |
 
 ### Path derivation
 
@@ -246,6 +256,7 @@ An explicit `path` field can override this when the CLI syntax differs from the 
 | `description` | No | Description |
 | `schema` | No | JSON Schema for the value |
 | `file` | No | File contract if the value is a file path |
+| `effects` | No | Execution effects triggered when the option is active |
 | `repeatable` | No | Can be specified multiple times |
 
 ### Exit codes
@@ -326,23 +337,38 @@ signals:
     description: Immediately terminates.
 ```
 
+### Effects
+
+Commands and options can declare execution effects:
+
+```yaml
+effects:
+  riskLevel: high
+  requiresConfirmation: true
+  writes:
+    - target: "user database"
+      description: "Writes imported users to the database"
+      idempotent: false
+  network:
+    description: "Calls external LLM API"
+    domains: ["api.openai.com"]
+    idempotent: true
+    idempotencyKey: "request hash"
+```
+
 ### Extensions (`x-*`)
 
-Properties prefixed with `x-` carry domain-specific metadata. The `x-agent` extension describes AI agent execution policy:
+Properties prefixed with `x-` carry domain-specific metadata. The `x-agent` extension provides non-derivable agent-facing supplementary information:
 
 ```yaml
 x-agent:
-  riskLevel: high
-  requiresConfirmation: true
-  idempotent: false
-  sideEffects: [database_write]
-  safeDryRunOption: dry-run
-  sideEffectNote: Writes to the user database.
-  dangerousOptions: [force]
   expectedDurationMs: 60000
+  retryableExitCodes: [1, 12]
   recommendedBeforeUse:
     - Validate the CSV schema.
     - Run with --dry-run before actual import.
+  rollback:
+    strategy: "git checkout"
 ```
 
 ## Config File
@@ -415,6 +441,7 @@ contractTests:
 | `--verbose` | `-v` | Enable verbose output |
 | `--format <format>` | `-F` | Output format for core commands (`yaml` or `json`). Does not apply to LLM commands which use `--report-format` |
 | `--quiet` | `-q` | Suppress informational/verbose output only. Does not suppress primary structured stdout |
+| `--introspect` | | Output derived execution policy as JSON without executing the command (generated when effects are declared) |
 | `--version` | `-V` | Print version |
 | `--help` | `-h` | Show help |
 
@@ -600,7 +627,7 @@ Generated code is intended to keep the CLI interface aligned with the contract. 
 
 ### TypeScript (`builtin:typescript`)
 
-Generates typed interfaces, command wrappers, and a Commander program definition from the contract.
+Generates typed interfaces, command wrappers, a Commander program definition, and a policy derivation engine from the contract.
 
 ```
 src/generated/
@@ -608,7 +635,8 @@ src/generated/
   types.ts       # argument/option interfaces, exit code unions, result types
   commands.ts    # typed CLI execution wrappers
   schemas.ts     # JSON Schema constants and exit code arrays
-  program.ts     # Commander program definition (createProgram + CommandHandlers)
+  program.ts     # Commander program definition (createProgram + CommandHandlers + --introspect)
+  policy.ts      # deterministic policy derivation engine (when effects are declared)
 ```
 
 Example generated types:
@@ -749,54 +777,145 @@ const result = CliContractsDocumentSchema.safeParse(rawYamlObject);
 
 ## AI Agent Interoperability Reference
 
-CLI Contracts provides two sets of reference specifications for AI agent interoperability. These are not mandatory standards, but shared conventions that toolchains can adopt for uniform agent integration.
+CLI Contracts provides a layered approach to AI agent interoperability: **effect declarations** for deterministic policy derivation, **runtime introspection** for pre-execution queries, and **`x-agent`** for non-derivable supplementary metadata.
 
-### `x-agent`: Pre-Execution Policy
+### Effect Declarations
 
-The `x-agent` extension on commands declares execution policies that AI agents can read before running a command. It is formalized with a typed Zod schema (`XAgentSchema`) and validated during `cli-contracts validate`:
+Effects declare what a command does to the outside world. They can be placed at command level (always active) or option level (active only when the option is specified):
 
 ```yaml
-x-agent:
-  riskLevel: high             # low | medium | high | critical
-  requiresConfirmation: true
-  requiresConfirmationWhen: [clean]
-  idempotent: true
-  idempotentNote: >-
-    Idempotent for final state; --clean creates a transient
-    destructive intermediate state.
-  sideEffects: [filesystem, network]
-  sideEffectNote: >-
-    Network calls to LLM provider when adapter is not mock.
-    Filesystem write only when --output is specified.
-  safeDryRunOption: dry-run
-  dangerousOptions: [clean]
-  expectedDurationMs: 120000
-  retryableExitCodes: [1, 12]
-  recommendedBeforeUse:
-    - Run with --dry-run before actual import.
+lint:
+  options:
+    - name: fix
+      schema: { type: boolean }
+      effects:
+        riskLevel: medium
+        writes:
+          - target: "source files matching lint rules"
+            description: "auto-fix lint violations"
+            overwrite: true
+            idempotent: true
+            idempotentNote: "same lint rules + same input = no additional changes on re-run"
+
+build:
+  effects:
+    riskLevel: low
+    writes:
+      - target: "docs/, specs/"
+        description: "files generated from models"
+        idempotent: true
 ```
 
 | Field | Type | Description |
 |---|---|---|
-| `riskLevel` | `low` \| `medium` \| `high` \| `critical` | Risk classification for the command |
-| `requiresConfirmation` | `boolean` | Whether agent should ask for user confirmation |
-| `requiresConfirmationWhen` | `string[]` | Options that trigger confirmation even if `requiresConfirmation` is `false` |
-| `idempotent` | `boolean` | Whether repeated execution produces the same result |
-| `idempotentNote` | `string` | Clarifications or caveats about idempotency |
-| `sideEffects` | `string[]` | Categories of side effects (e.g. `filesystem`, `network`, `process-execution`) |
-| `sideEffectNote` | `string` | Details about when/how side effects occur |
-| `safeDryRunOption` | `string` | Option that enables a safe dry-run mode |
-| `dangerousOptions` | `string[]` | Options that significantly increase risk |
-| `expectedDurationMs` | `number` | Expected wall-clock time for the command |
-| `retryableExitCodes` | `number[]` | Exit codes that are safe to retry |
-| `preferAlternative` | `string` | Suggested alternative command when applicable |
+| `riskLevel` | `low` \| `medium` \| `high` \| `critical` | Risk level contributed by this command/option |
+| `writes` | `EffectWrite[]` | File write side effects |
+| `reads` | `EffectRead[]` | Semantic read side effects |
+| `network` | `boolean` \| `NetworkEffect` | Network call side effects |
+| `executionMode` | `normal` \| `long-running` \| `watch` \| `interactive` \| `background` | Execution mode |
+| `requiresConfirmation` | `boolean` | Explicit override for confirmation requirement |
+
+`EffectWrite` fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `target` | `string` | Description of what is written |
+| `description` | `string` | Details about the write operation |
+| `overwrite` | `boolean` | Whether existing files may be overwritten |
+| `destructive` | `boolean` | Whether the write is destructive |
+| `idempotent` | `boolean` | Whether this write is idempotent |
+| `idempotencyKey` | `string` | Key that determines idempotency |
+| `idempotentNote` | `string` | Clarification about idempotency |
+
+`NetworkEffect` fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `description` | `string` | Description of the network call |
+| `domains` | `string[]` | Target domains |
+| `requiresSecrets` | `string[]` | Required secret environment variables |
+| `idempotent` | `boolean` | Whether this network call is idempotent |
+| `idempotencyKey` | `string` | Key that determines idempotency |
+| `idempotentNote` | `string` | Clarification about idempotency |
+
+### Runtime Introspection (`--introspect`)
+
+When a contract declares effects, the code generator adds a `--introspect` global option. It returns derived policy as JSON without executing the command:
+
+```bash
+$ tool lint --fix --introspect
+{
+  "command": "lint",
+  "activeOptions": ["fix"],
+  "policy": {
+    "riskLevel": "medium",
+    "requiresConfirmation": false,
+    "sideEffects": ["file_write"],
+    "reads": [],
+    "writes": [
+      {
+        "kind": "semantic",
+        "target": "source files matching lint rules",
+        "description": "auto-fix lint violations",
+        "idempotent": true,
+        "source": "option:fix"
+      }
+    ],
+    "idempotent": true
+  }
+}
+```
+
+Policy derivation rules:
+- `riskLevel` = `max(command.riskLevel, ...activeOptions.riskLevel)`
+- `requiresConfirmation` = `true` when `riskLevel >= high` (with explicit override)
+- `sideEffects` = union of `file_write` (from writes/file.mode) and `network` (from network effects)
+- `idempotent` = `true` only if all semantic writes AND all network effects are explicitly `idempotent: true`; implicitly `true` for read-only commands
+
+### `x-agent`: Supplementary Agent Metadata
+
+The `x-agent` extension carries non-derivable, agent-facing metadata. Fields that overlap with `effects` are deprecated:
+
+```yaml
+x-agent:
+  recommendedBeforeUse:
+    - Run without --fix first to review issues
+  rollback:
+    strategy: "git checkout"
+  humanReview:
+    required: true
+    reason: "destructive operation"
+  expectedDurationMs: 120000
+  retryableExitCodes: [1, 12]
+```
+
+| Field | Type | Description |
+|---|---|---|
 | `recommendedBeforeUse` | `string[]` | Steps an agent should take before executing |
+| `rollback` | `object` | Rollback instructions |
+| `humanReview` | `object` | Human review requirements |
+| `expectedDurationMs` | `number` | Expected wall-clock time |
+| `retryableExitCodes` | `number[]` | Exit codes safe to retry |
+| `preferAlternative` | `string` | Suggested alternative command |
 
-Validation rules:
+**Deprecated `x-agent` fields** (use `effects` instead):
 
-- `riskLevel` of `high` or `critical` without `requiresConfirmation: true` produces a warning
-- `sideEffects` present without `idempotent` declared produces a warning
-- Extended fields (`executionMode`, `reads`, `writes`, `requiresNetwork`, `requiresSecrets`, `humanReview`, `rollback`) are accepted via passthrough
+| Deprecated Field | Replacement |
+|---|---|
+| `riskLevel` | `effects.riskLevel` + max aggregation |
+| `sideEffects` | `effects.writes` / `effects.network` + `file.mode` |
+| `sideEffectNote` | `effects.writes[].description` |
+| `requiresConfirmation` | `effects.requiresConfirmation` or derived from `riskLevel >= high` |
+| `requiresConfirmationWhen` | Option-level `effects.riskLevel` |
+| `dangerousOptions` | Option-level `effects.riskLevel` |
+| `safeDryRunOption` | Replaced by `--introspect` |
+| `requiresNetwork` | `effects.network` |
+| `requiresSecrets` | `env[].sensitive` |
+| `reads` / `writes` | `effects.reads` / `effects.writes` + `file.mode` |
+| `idempotent` | `effects.writes[].idempotent` / `effects.network.idempotent` |
+| `idempotentNote` | `effects.writes[].idempotentNote` / `effects.network.idempotentNote` |
+
+Validation produces warnings when deprecated fields are used alongside `effects` declarations.
 
 Options can also carry `x-agent` metadata:
 
@@ -918,7 +1037,7 @@ These commands share a common option interface:
 | `--output <file>` | Write result to a file instead of stdout |
 | `--report-format <fmt>` | Output format: `json`, `text`, or `yaml` |
 
-All LLM commands declare `sideEffects: [network]` in their `x-agent` policy, with `expectedDurationMs: 120000` and `retryableExitCodes: [1, 12]`.
+All LLM commands declare `effects.network` for their API calls, with `expectedDurationMs: 120000` and `retryableExitCodes: [1, 12]` in `x-agent`.
 
 Install the optional runtime dependency to enable LLM calls:
 
