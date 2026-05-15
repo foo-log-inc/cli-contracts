@@ -1,6 +1,7 @@
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { parseContractFile } from "../parser.js";
+import { resolveRefs } from "../ref-resolver.js";
 import { runDiff } from "./diff.js";
 import { buildDiffExplainContext } from "../auditor/context-builder.js";
 import { runAudit } from "../auditor/auditor.js";
@@ -30,8 +31,10 @@ export async function runExplainDiff(
     };
   }
 
-  const oldDoc = await parseContractFile(resolve(oldPath));
-  const newDoc = await parseContractFile(resolve(newPath));
+  const absOld = resolve(oldPath);
+  const absNew = resolve(newPath);
+  const oldDoc = resolveRefs(await parseContractFile(absOld), { basePath: dirname(absOld) });
+  const newDoc = resolveRefs(await parseContractFile(absNew), { basePath: dirname(absNew) });
 
   const diffResult = await runDiff(oldPath, newPath);
 

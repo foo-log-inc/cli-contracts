@@ -1,5 +1,6 @@
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import { parseContractFile } from "../parser.js";
+import { resolveRefs } from "../ref-resolver.js";
 import type { CliContractsDocument, DiffResult, DiffChange } from "../types.js";
 
 export interface DiffOptions {
@@ -11,8 +12,10 @@ export async function runDiff(
   newFile: string,
   options: DiffOptions = {},
 ): Promise<DiffResult> {
-  const oldDoc = await parseContractFile(resolve(oldFile));
-  const newDoc = await parseContractFile(resolve(newFile));
+  const oldPath = resolve(oldFile);
+  const newPath = resolve(newFile);
+  const oldDoc = resolveRefs(await parseContractFile(oldPath), { basePath: dirname(oldPath) });
+  const newDoc = resolveRefs(await parseContractFile(newPath), { basePath: dirname(newPath) });
 
   const changes = diffContracts(oldDoc, newDoc);
   const filtered = options.breakingOnly
