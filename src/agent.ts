@@ -49,3 +49,22 @@ export type AgentRecommendedAction = {
   target?: string;
   rationale?: string;
 };
+
+export type TargetUri = {
+  kind: string;
+  id: string;
+};
+
+/**
+ * Parse a target URI string into its kind and id components.
+ * Supports formats like "artifact:api-contracts", "file:src/index.ts", "tool:linter".
+ * Returns undefined if the target is not in URI format.
+ */
+export function parseTargetUri(target: string): TargetUri | undefined {
+  const colonIdx = target.indexOf(":");
+  if (colonIdx <= 0) return undefined;
+  return {
+    kind: target.slice(0, colonIdx),
+    id: target.slice(colonIdx + 1),
+  };
+}
