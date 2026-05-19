@@ -3,6 +3,9 @@ audit-agent-policy:
   target_agent: cli-policy-auditor
   allowed_from_agents:
     - cli-policy-auditor
+  workflow: cli-audit
+  input_artifacts:
+    - cli-contract-source
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
@@ -30,6 +33,9 @@ audit-contract-design:
   target_agent: cli-contract-auditor
   allowed_from_agents:
     - cli-contract-auditor
+  workflow: cli-audit
+  input_artifacts:
+    - cli-contract-source
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
@@ -58,6 +64,9 @@ propose-test-cases:
   target_agent: cli-test-proposer
   allowed_from_agents:
     - cli-test-proposer
+  workflow: cli-audit
+  input_artifacts:
+    - cli-contract-source
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
@@ -95,6 +104,9 @@ explain-contract-diff:
   target_agent: cli-diff-explainer
   allowed_from_agents:
     - cli-diff-explainer
+  workflow: cli-audit
+  input_artifacts:
+    - cli-contract-source
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
@@ -125,6 +137,9 @@ check-reference-conformance:
   target_agent: cli-reference-checker
   allowed_from_agents:
     - cli-reference-checker
+  workflow: reference-conformance-check
+  input_artifacts:
+    - cli-contract-source
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:
@@ -173,6 +188,11 @@ suggest-contract:
   target_agent: cli-contract-suggester
   allowed_from_agents:
     - cli-contract-suggester
+  workflow: cli-audit
+  input_artifacts:
+    - cli-source-readme
+    - cli-source-help
+    - cli-source-code
   invocation_handoff: cli-audit-request
   result_handoff: cli-audit-result
   responsibilities:

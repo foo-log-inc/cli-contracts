@@ -1,0 +1,9 @@
+# Physical artifacts: imported from artifact-contracts.yaml (shared registry)
+# Ephemeral artifacts: defined inline (dynamic inputs with no fixed path)
+
+$refs:
+  - "./physical-artifacts.yaml"
+
+cli-source-help:
+  type: document
+  description: "CLI help output passed via --from-help (ephemeral input, no fixed path)"
