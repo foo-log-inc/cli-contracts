@@ -1,0 +1,81 @@
+artifactContracts: "2026A"
+
+system:
+  id: cli-contracts
+  name: CLI Contracts
+
+artifacts:
+  cli-contract-source:
+    type: config
+    description: "CLI contract definition document"
+    authority: canonical
+    change_control: approval-required
+    path_patterns: ["cli-contract.yaml"]
+
+  cli-contracts-config:
+    type: config
+    description: "Tooling configuration for generators and validation"
+    authority: control
+    path_patterns: ["cli-contracts.config.yaml"]
+
+  cli-source-code:
+    type: source
+    description: "Core library and command handler source"
+    authority: canonical
+    path_patterns:
+      - "src/**/*.ts"
+    exclude_patterns:
+      - "src/generated/**"
+
+  generated-typescript:
+    type: generated-code
+    description: "Auto-generated TypeScript from cli-contract.yaml"
+    authority: generated
+    path_patterns: ["src/generated/**/*.ts"]
+    exclude_patterns: ["src/generated/dsl/**"]
+
+  generated-dsl-runtime:
+    type: generated-code
+    description: "Auto-generated agent DSL registries from agent-contracts-runtime"
+    authority: generated
+    path_patterns: ["src/generated/dsl/**/*.ts"]
+
+  generated-documentation:
+    type: generated-doc
+    description: "Generated CLI reference documentation"
+    authority: derived
+    path_patterns: ["docs/**/*.md"]
+
+  json-schemas:
+    type: schema
+    description: "Published JSON Schema definitions"
+    authority: canonical
+    change_control: approval-required
+    path_patterns: ["schemas/**/*.json"]
+
+  agent-dsl:
+    type: config
+    description: "Agent-contracts DSL definitions for LLM commands"
+    authority: canonical
+    change_control: approval-required
+    path_patterns: ["dsl/**/*.yaml"]
+
+  cli-source-readme:
+    type: document
+    description: "Project README"
+    authority: canonical
+    path_patterns: ["README.md"]
+
+  test-suite:
+    type: source
+    description: "Unit and integration tests"
+    authority: canonical
+    path_patterns:
+      - "test/**/*.ts"
+
+  test-fixtures:
+    type: config
+    description: "YAML contract fixtures for testing"
+    authority: canonical
+    path_patterns:
+      - "test/fixtures/**/*.yaml"
