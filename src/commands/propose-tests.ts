@@ -20,7 +20,7 @@ export interface ProposeTestsOptions {
 export async function runProposeTests(
   contractFiles: string[],
   options: ProposeTestsOptions,
-): Promise<{ result: unknown; exitCode: number }> {
+): Promise<string | { result: unknown; exitCode: number }> {
   const filePath = resolve(options.file ?? contractFiles[0]);
   const doc = await parseContractFile(filePath);
 
@@ -35,6 +35,10 @@ export async function runProposeTests(
   const resolved = resolveRefs(doc, { basePath: dirname(filePath) });
   const userRequest = buildTestProposalContext(resolved);
 
+  if (options.showPrompt) {
+    return userRequest;
+  }
+
   const auditConfig: AuditConfig = {
     adapter: options.adapter,
     model: options.model,
@@ -43,7 +47,6 @@ export async function runProposeTests(
   const auditOptions: AuditOptions = {
     taskId: "propose-test-cases",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -54,13 +57,6 @@ export async function runProposeTests(
     auditConfig,
     auditOptions,
   );
-
-  if (auditResult.showPrompt) {
-    return {
-      result: { showPrompt: true, prompt: auditResult.prompt },
-      exitCode: 0,
-    };
-  }
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Test proposal completed",

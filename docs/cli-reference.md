@@ -2033,7 +2033,6 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 | `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -2699,7 +2698,6 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 | `--checks` |  | No |  | Audit dimension(s) to run. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -3796,7 +3794,6 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 | `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -4464,7 +4461,6 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 | `--contract-path` | -p | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -5129,7 +5125,6 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--file` | -f | No |  | Contract file to check (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the conformance report. |
@@ -5793,7 +5788,6 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--from-source` |  | No |  | Path to CLI source code file. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
-| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the suggestion report. |

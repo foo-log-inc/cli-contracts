@@ -749,12 +749,6 @@ command_sets:
             schema:
               type: string
 
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
-
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -906,12 +900,6 @@ command_sets:
             value_name: name
             schema:
               type: string
-
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
 
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
@@ -1147,12 +1135,6 @@ command_sets:
             schema:
               type: string
 
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
-
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1313,12 +1295,6 @@ command_sets:
             schema:
               type: string
 
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
-
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1465,12 +1441,6 @@ command_sets:
             value_name: name
             schema:
               type: string
-
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
 
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
@@ -1619,12 +1589,6 @@ command_sets:
             value_name: name
             schema:
               type: string
-
-          - name: show-prompt
-            description: Output the constructed prompt without calling the LLM API.
-            schema:
-              type: boolean
-              default: false
 
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.

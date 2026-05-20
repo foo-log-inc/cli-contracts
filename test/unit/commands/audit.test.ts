@@ -6,41 +6,41 @@ const FIXTURES = resolve(import.meta.dirname, "../../fixtures");
 
 describe("audit command", () => {
   it("returns show-prompt result with prompt context", async () => {
-    const { result, exitCode } = await runAuditCommand(
+    const result = await runAuditCommand(
       [resolve(FIXTURES, "valid-contract.yaml")],
       { showPrompt: true },
     );
 
-    expect(exitCode).toBe(0);
-    const r = result as { showPrompt: boolean; prompt: string };
-    expect(r.showPrompt).toBe(true);
-    expect(r.prompt).toContain("Design Audit Request");
-    expect(r.prompt).toContain("Full Contract");
+    expect(typeof result).toBe("string");
+    expect(result as string).toContain("Design Audit Request");
+    expect(result as string).toContain("Full Contract");
   });
 
   it("show-prompt includes checks when specified", async () => {
-    const { result } = await runAuditCommand(
+    const result = await runAuditCommand(
       [resolve(FIXTURES, "valid-contract.yaml")],
       { showPrompt: true, checks: ["agent-policy", "exit-code"] },
     );
 
-    const r = result as { prompt: string };
-    expect(r.prompt).toContain("Requested Checks");
-    expect(r.prompt).toContain("agent-policy");
-    expect(r.prompt).toContain("exit-code");
+    expect(typeof result).toBe("string");
+    expect(result as string).toContain("Requested Checks");
+    expect(result as string).toContain("agent-policy");
+    expect(result as string).toContain("exit-code");
   });
 
   it("returns exit code 2 for invalid contract", async () => {
-    const { exitCode } = await runAuditCommand(
+    const result = await runAuditCommand(
       [resolve(FIXTURES, "invalid-contract.yaml")],
       { showPrompt: true },
     );
 
+    expect(typeof result).not.toBe("string");
+    const { exitCode } = result as { result: unknown; exitCode: number };
     expect(exitCode).toBe(2);
   });
 
   it("accepts --file option override", async () => {
-    const { result, exitCode } = await runAuditCommand(
+    const result = await runAuditCommand(
       ["nonexistent.yaml"],
       {
         file: resolve(FIXTURES, "valid-contract.yaml"),
@@ -48,19 +48,16 @@ describe("audit command", () => {
       },
     );
 
-    expect(exitCode).toBe(0);
-    const r = result as { showPrompt: boolean };
-    expect(r.showPrompt).toBe(true);
+    expect(typeof result).toBe("string");
   });
 
   it("handles single check string", async () => {
-    const { result, exitCode } = await runAuditCommand(
+    const result = await runAuditCommand(
       [resolve(FIXTURES, "valid-contract.yaml")],
       { showPrompt: true, checks: "agent-policy" },
     );
 
-    expect(exitCode).toBe(0);
-    const r = result as { prompt: string };
-    expect(r.prompt).toContain("agent-policy");
+    expect(typeof result).toBe("string");
+    expect(result as string).toContain("agent-policy");
   });
 });
