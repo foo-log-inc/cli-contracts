@@ -1,11 +1,11 @@
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 
 info:
   title: Effects Test CLI
   version: 1.0.0
   description: CLI for testing option-level effects and policy derivation.
 
-commandSets:
+command_sets:
   effects-cli:
     summary: Effects test CLI tool.
     env:
@@ -17,7 +17,7 @@ commandSets:
         required: false
         description: Log verbosity.
 
-    globalOptions:
+    global_options:
       - name: verbose
         aliases: [v]
         schema:
@@ -41,13 +41,13 @@ commandSets:
             schema:
               type: boolean
             effects:
-              riskLevel: medium
+              risk_level: medium
               writes:
                 - target: "source files matching lint rules"
                   description: "auto-fix lint violations"
                   overwrite: true
                   idempotent: true
-                  idempotentNote: "same lint rules + same source → no additional changes on re-run"
+                  idempotent_note: "same lint rules + same source → no additional changes on re-run"
 
           - name: format
             description: Output format.
@@ -63,7 +63,7 @@ commandSets:
       build:
         summary: Build the project.
         effects:
-          riskLevel: low
+          risk_level: low
           writes:
             - target: "docs/, specs/"
               description: "files generated from models"
@@ -73,8 +73,8 @@ commandSets:
             schema:
               type: boolean
             effects:
-              riskLevel: medium
-              executionMode: long-running
+              risk_level: medium
+              execution_mode: long-running
               description: "watches for changes indefinitely; unsuitable for non-interactive agents"
 
           - name: output
@@ -92,7 +92,7 @@ commandSets:
       init:
         summary: Initialize project.
         effects:
-          riskLevel: medium
+          risk_level: medium
           writes:
             - target: "config file, project directory structure"
         options:
@@ -101,7 +101,7 @@ commandSets:
             schema:
               type: boolean
             effects:
-              riskLevel: high
+              risk_level: high
               overwrites: true
         exits:
           '0':
@@ -112,7 +112,7 @@ commandSets:
       deploy:
         summary: Deploy to remote.
         effects:
-          riskLevel: high
+          risk_level: high
           network: true
           writes:
             - target: "remote server"
@@ -141,7 +141,7 @@ commandSets:
                 description: "calls external API"
                 domains: ["api.example.com"]
                 idempotent: true
-                idempotencyKey: "endpoint URL + query params"
+                idempotency_key: "endpoint URL + query params"
         exits:
           '0':
             description: Query succeeded.

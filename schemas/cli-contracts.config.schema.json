@@ -30,16 +30,16 @@
         "strict": {
           "type": "boolean"
         },
-        "resolveExternalRefs": {
+        "resolve_external_refs": {
           "type": "boolean"
         },
-        "allowUnknownExtensions": {
+        "allow_unknown_extensions": {
           "type": "boolean"
         }
       },
       "additionalProperties": false
     },
-    "executionProfiles": {
+    "execution_profiles": {
       "type": "object",
       "propertyNames": {
         "type": "string"
@@ -50,7 +50,7 @@
           "default": {
             "type": "boolean"
           },
-          "commandSets": {
+          "command_sets": {
             "type": "object",
             "propertyNames": {
               "type": "string"
@@ -70,7 +70,7 @@
           }
         },
         "required": [
-          "commandSets"
+          "command_sets"
         ],
         "additionalProperties": false
       }
@@ -108,7 +108,7 @@
         "additionalProperties": false
       }
     },
-    "contractTests": {
+    "contract_tests": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -117,21 +117,21 @@
         "profile": {
           "type": "string"
         },
-        "casesDir": {
+        "cases_dir": {
           "type": "string"
         },
-        "timeoutMs": {
+        "timeout_ms": {
           "type": "integer",
           "exclusiveMinimum": 0,
           "maximum": 9007199254740991
         },
-        "validateStdout": {
+        "validate_stdout": {
           "type": "boolean"
         },
-        "validateStderr": {
+        "validate_stderr": {
           "type": "boolean"
         },
-        "validateFiles": {
+        "validate_files": {
           "type": "boolean"
         },
         "env": {
@@ -149,7 +149,7 @@
     "diff": {
       "type": "object",
       "properties": {
-        "breakingChangePolicy": {
+        "breaking_change_policy": {
           "type": "string"
         },
         "ignore": {

@@ -115,7 +115,7 @@ describe("generateMarkdown", () => {
     const md = generateMarkdown(ctx, { includeExtensions: true });
 
     expect(md).toContain("#### Extensions");
-    expect(md).toContain("riskLevel: high");
+    expect(md).toContain("risk_level: high");
   });
 
   it("renders schemas section when enabled", async () => {
@@ -143,11 +143,11 @@ describe("generateMarkdown", () => {
 
   it("auto-generates usage when not explicit", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       bar:
@@ -174,11 +174,11 @@ commandSets:
   // ── Schema table rendering ─────────────────────────────
   it("renders inline schema as property table instead of raw JSON", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -210,11 +210,11 @@ commandSets:
 
   it("renders nested object properties with dot notation", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -248,11 +248,11 @@ commandSets:
 
   it("renders array of objects with [] notation", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       list:
@@ -288,11 +288,11 @@ commandSets:
 
   it("wraps full JSON Schema in <details> tag", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -320,11 +320,11 @@ commandSets:
 
   it("renders $ref schemas as links to schema section", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -363,11 +363,11 @@ components:
 
   it("renders enum types in property table", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:

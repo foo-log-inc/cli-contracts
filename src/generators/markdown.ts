@@ -45,10 +45,10 @@ export function generateMarkdown(
   if (includeToc) {
     push("## Table of Contents");
     push("");
-    for (const cs of ctx.commandSets) {
+    for (const cs of ctx.command_sets) {
       push(`- [${cs.executable}](#${anchor(cs.executable)})`);
       for (const cmd of cs.commands) {
-        push(`  - [${cmd.id}](#${anchor(cmd.fullId)})`);
+        push(`  - [${cmd.id}](#${anchor(cmd.full_id)})`);
       }
     }
     push("");
@@ -57,7 +57,7 @@ export function generateMarkdown(
   push("---");
   push("");
 
-  for (const cs of ctx.commandSets) {
+  for (const cs of ctx.command_sets) {
     renderCommandSet(cs, lines, {
       includeExamples,
       includeSchemas,
@@ -96,10 +96,10 @@ function renderCommandSet(
     lines.push("");
   }
 
-  if (cs.globalOptions.length > 0) {
+  if (cs.global_options.length > 0) {
     lines.push("### Global Options");
     lines.push("");
-    renderOptionsTable(cs.globalOptions, lines);
+    renderOptionsTable(cs.global_options, lines);
     lines.push("");
   }
 
@@ -277,7 +277,7 @@ function renderExit(
   lines: string[],
   opts: MarkdownGeneratorOptions,
 ): void {
-  lines.push(`**Exit ${exit.exitCode}:** ${exit.description}`);
+  lines.push(`**Exit ${exit.exit_code}:** ${exit.description}`);
   lines.push("");
 
   if (exit.stdout) {
@@ -318,7 +318,7 @@ function renderGeneratedFiles(files: GeneratedFile[], lines: string[]): void {
   lines.push("- **Generated files:**");
   for (const f of files) {
     const parts = [`  - \`${f.path}\``];
-    if (f.mediaType) parts.push(`(${f.mediaType})`);
+    if (f.media_type) parts.push(`(${f.media_type})`);
     if (f.required === false) parts.push("*(optional)*");
     lines.push(parts.join(" "));
   }

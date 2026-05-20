@@ -73,7 +73,7 @@ export async function runSuggest(
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Suggestion completed",
-    riskLevel: "low",
+    risk_level: "low",
     findings: [],
   };
 

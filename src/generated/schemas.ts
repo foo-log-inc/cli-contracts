@@ -451,7 +451,7 @@ export const schemas = {
           }
         }
       },
-      "cliContracts": {
+      "cli_contracts": {
         "type": "string",
         "description": "Spec version from the source contract."
       },
@@ -459,7 +459,7 @@ export const schemas = {
         "type": "object",
         "description": "Info block from the source contract."
       },
-      "commandSets": {
+      "command_sets": {
         "type": "object",
         "description": "Subset of command sets containing only the requested commands."
       },

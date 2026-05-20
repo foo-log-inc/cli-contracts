@@ -10,16 +10,16 @@ import type {
 /**
  * Converts a parsed contract document into a normalized generator context.
  * Maps are converted to arrays for template iteration. Derived fields
- * (path, invocation, fullId) are computed.
+ * (path, invocation, full_id) are computed.
  */
 export function normalizeContract(
   doc: CliContractsDocument,
 ): NormalizedContext {
-  const commandSets: NormalizedCommandSet[] = [];
+  const command_sets: NormalizedCommandSet[] = [];
 
-  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+  for (const [setId, cs] of Object.entries(doc.command_sets)) {
     const executable = cs.executable ?? setId;
-    const globalOptions: Option[] = cs.globalOptions ?? [];
+    const global_options: Option[] = cs.global_options ?? [];
 
     const commands: NormalizedCommand[] = [];
     for (const [cmdId, cmd] of Object.entries(cs.commands)) {
@@ -29,14 +29,14 @@ export function normalizeContract(
       const exits: NormalizedExit[] = [];
       for (const [code, exit] of Object.entries(cmd.exits)) {
         exits.push({
-          exitCode: Number(code),
+          exit_code: Number(code),
           description: exit.description,
           stdout: exit.stdout,
           stderr: exit.stderr,
           files: exit.files,
         });
       }
-      exits.sort((a, b) => a.exitCode - b.exitCode);
+      exits.sort((a, b) => a.exit_code - b.exit_code);
 
       const extensions: Record<string, unknown> = {};
       for (const [key, val] of Object.entries(cmd)) {
@@ -47,7 +47,7 @@ export function normalizeContract(
 
       commands.push({
         id: cmdId,
-        fullId: `${setId}.${cmdId}`,
+        full_id: `${setId}.${cmdId}`,
         path: pathSegments,
         invocation,
         summary: cmd.summary,
@@ -55,7 +55,7 @@ export function normalizeContract(
         usage: cmd.usage,
         arguments: cmd.arguments ?? [],
         options: cmd.options ?? [],
-        allOptions: [...globalOptions, ...(cmd.options ?? [])],
+        all_options: [...global_options, ...(cmd.options ?? [])],
         effects: cmd.effects,
         streams: cmd.streams,
         signals: cmd.signals,
@@ -73,12 +73,12 @@ export function normalizeContract(
       }
     }
 
-    commandSets.push({
+    command_sets.push({
       id: setId,
       executable,
       summary: cs.summary,
       description: cs.description,
-      globalOptions,
+      global_options,
       env: cs.env ?? {},
       commands,
       extensions: setExtensions,
@@ -86,9 +86,9 @@ export function normalizeContract(
   }
 
   return {
-    specVersion: doc.cliContracts,
+    spec_version: doc.cli_contracts,
     info: doc.info,
-    commandSets,
+    command_sets,
     components: doc.components ?? {},
   };
 }

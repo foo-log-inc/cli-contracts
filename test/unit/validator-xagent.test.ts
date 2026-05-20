@@ -13,16 +13,16 @@ describe("x-agent validation", () => {
     );
     const result = validateContract(doc);
     expect(result.valid).toBe(true);
-    expect(result.errorCount).toBe(0);
+    expect(result.error_count).toBe(0);
   });
 
   it("warns when high riskLevel lacks requiresConfirmation", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       danger:
@@ -31,7 +31,7 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: high
+          risk_level: high
           idempotent: false
 `);
     const result = validateContract(doc);
@@ -39,16 +39,16 @@ commandSets:
       (w) => w.rule === "xagent-high-risk-no-confirmation",
     );
     expect(warn.length).toBe(1);
-    expect(warn[0].message).toContain("requiresConfirmation");
+    expect(warn[0].message).toContain("requires_confirmation");
   });
 
   it("warns when critical riskLevel lacks requiresConfirmation", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       critical-op:
@@ -57,7 +57,7 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: critical
+          risk_level: critical
 `);
     const result = validateContract(doc);
     const warn = result.warnings.filter(
@@ -66,13 +66,13 @@ commandSets:
     expect(warn.length).toBe(1);
   });
 
-  it("does not warn when high riskLevel has requiresConfirmation: true", () => {
+  it("does not warn when high riskLevel has requires_confirmation: true", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       safe-danger:
@@ -81,8 +81,8 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: high
-          requiresConfirmation: true
+          risk_level: high
+          requires_confirmation: true
 `);
     const result = validateContract(doc);
     const warn = result.warnings.filter(
@@ -93,11 +93,11 @@ commandSets:
 
   it("warns when sideEffects present but idempotent not declared", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       side-effect-cmd:
@@ -106,8 +106,8 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: medium
-          sideEffects:
+          risk_level: medium
+          side_effects:
             - database_write
 `);
     const result = validateContract(doc);
@@ -119,11 +119,11 @@ commandSets:
 
   it("does not warn when sideEffects has idempotent declared", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       side-effect-cmd:
@@ -132,8 +132,8 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: medium
-          sideEffects:
+          risk_level: medium
+          side_effects:
             - database_write
           idempotent: false
 `);
@@ -162,7 +162,7 @@ describe("validateXAgent standalone", () => {
 
   it("returns empty for valid x-agent", () => {
     const diags = validateXAgent(
-      { riskLevel: "low", idempotent: true, sideEffects: [] },
+      { risk_level: "low", idempotent: true, side_effects: [] },
       "/test",
     );
     expect(diags.length).toBe(0);
@@ -170,7 +170,7 @@ describe("validateXAgent standalone", () => {
 
   it("allows passthrough of unknown fields", () => {
     const diags = validateXAgent(
-      { riskLevel: "low", customField: "allowed" },
+      { risk_level: "low", customField: "allowed" },
       "/test",
     );
     expect(diags.length).toBe(0);

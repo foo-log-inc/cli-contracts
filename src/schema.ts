@@ -44,15 +44,15 @@ export const JsonSchemaSchema: z.ZodType<JsonSchema> = z
 
 export const CsvMetadataSchema = z.object({
   delimiter: z.string().optional(),
-  quoteChar: z.string().optional(),
-  headerRows: z.number().int().optional(),
-  footerRows: z.number().int().optional(),
+  quote_char: z.string().optional(),
+  header_rows: z.number().int().optional(),
+  footer_rows: z.number().int().optional(),
 });
 
 export const FileContractSchema = z.object({
   mode: z.enum(["read", "write", "append", "readWrite"]),
   exists: z.boolean().optional(),
-  mediaType: z.string().optional(),
+  media_type: z.string().optional(),
   encoding: z.string().optional(),
   schema: JsonSchemaSchema.optional(),
   csv: CsvMetadataSchema.optional(),
@@ -86,8 +86,8 @@ export const EffectWriteSchema = z.object({
   overwrite: z.boolean().optional(),
   destructive: z.boolean().optional(),
   idempotent: z.boolean().optional(),
-  idempotencyKey: z.string().optional(),
-  idempotentNote: z.string().optional(),
+  idempotency_key: z.string().optional(),
+  idempotent_note: z.string().optional(),
 });
 
 export const EffectReadSchema = z.object({
@@ -107,15 +107,15 @@ export const NetworkEffectSchema = z.union([
   z.object({
     description: z.string().optional(),
     domains: z.array(z.string()).optional(),
-    requiresSecrets: z.array(z.string()).optional(),
+    requires_secrets: z.array(z.string()).optional(),
     idempotent: z.boolean().optional(),
-    idempotencyKey: z.string().optional(),
-    idempotentNote: z.string().optional(),
+    idempotency_key: z.string().optional(),
+    idempotent_note: z.string().optional(),
   }),
 ]);
 
 export const EffectsSchema = z.object({
-  riskLevel: RiskLevelSchema.optional(),
+  risk_level: RiskLevelSchema.optional(),
   reads: z
     .union([z.array(z.string()), z.array(EffectReadSchema)])
     .optional(),
@@ -123,8 +123,8 @@ export const EffectsSchema = z.object({
     .union([z.array(z.string()), z.array(EffectWriteSchema)])
     .optional(),
   network: NetworkEffectSchema.optional(),
-  executionMode: ExecutionModeSchema.optional(),
-  requiresConfirmation: z.boolean().optional(),
+  execution_mode: ExecutionModeSchema.optional(),
+  requires_confirmation: z.boolean().optional(),
   description: z.string().optional(),
   overwrites: z.boolean().optional(),
 });
@@ -135,7 +135,7 @@ export const OptionSchema = z.object({
   name: z.string().min(1, "Option name must not be empty"),
   aliases: z.array(z.string()).optional(),
   required: z.boolean().optional(),
-  valueName: z.string().optional(),
+  value_name: z.string().optional(),
   description: z.string().optional(),
   schema: JsonSchemaSchema.optional(),
   file: FileContractSchema.optional(),
@@ -160,7 +160,7 @@ export const OutputContractSchema = z.object({
 export const GeneratedFileSchema = z.object({
   path: z.string().min(1),
   required: z.boolean().optional(),
-  mediaType: z.string().optional(),
+  media_type: z.string().optional(),
   encoding: z.string().optional(),
   schema: JsonSchemaSchema.optional(),
   description: z.string().optional(),
@@ -186,7 +186,7 @@ export const StreamContractSchema = z.object({
   encoding: z.string().optional(),
   framing: FramingSchema.optional(),
   schema: JsonSchemaSchema.optional(),
-  itemSchema: JsonSchemaSchema.optional(),
+  item_schema: JsonSchemaSchema.optional(),
   flush: z.object({ policy: z.string() }).optional(),
 });
 
@@ -206,7 +206,7 @@ export const ExampleSchema = z.object({
   command: z.string().optional(),
   args: z.record(z.string(), z.unknown()).optional(),
   options: z.record(z.string(), z.unknown()).optional(),
-  expectedExitCode: z.number().int().optional(),
+  expected_exit_code: z.number().int().optional(),
 });
 
 export const DeprecationInfoSchema = z.object({
@@ -228,18 +228,18 @@ export const RollbackSchema = z.object({
 });
 
 export const XAgentSchema = z.object({
-  riskLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
-  requiresConfirmation: z.boolean().optional(),
+  risk_level: z.enum(["low", "medium", "high", "critical"]).optional(),
+  requires_confirmation: z.boolean().optional(),
   idempotent: z.boolean().optional(),
-  sideEffects: z.array(z.string()).optional(),
-  safeDryRunOption: z.string().optional(),
-  recommendedBeforeUse: z.array(z.string()).optional(),
-  executionMode: z.string().optional(),
+  side_effects: z.array(z.string()).optional(),
+  safe_dry_run_option: z.string().optional(),
+  recommended_before_use: z.array(z.string()).optional(),
+  execution_mode: z.string().optional(),
   reads: z.array(z.string()).optional(),
   writes: z.array(z.string()).optional(),
-  requiresNetwork: z.boolean().optional(),
-  requiresSecrets: z.array(z.string()).optional(),
-  humanReview: HumanReviewSchema.optional(),
+  requires_network: z.boolean().optional(),
+  requires_secrets: z.array(z.string()).optional(),
+  human_review: HumanReviewSchema.optional(),
   rollback: RollbackSchema.optional(),
 }).passthrough();
 
@@ -275,7 +275,7 @@ export const CommandSetSchema = z
     summary: z.string().optional(),
     description: z.string().optional(),
     commands: z.record(z.string(), CommandSchema),
-    globalOptions: z.array(OptionSchema).optional(),
+    global_options: z.array(OptionSchema).optional(),
     env: z.record(z.string(), EnvVarSchema).optional(),
   })
   .passthrough(); // allow x-* extensions
@@ -297,15 +297,15 @@ export const ComponentsSchema = z.object({
   schemas: z.record(z.string(), JsonSchemaSchema).optional(),
   examples: z.record(z.string(), z.unknown()).optional(),
   exits: z.record(z.string(), ExitSchema).optional(),
-  streamItems: z.record(z.string(), z.unknown()).optional(),
-  fileSchemas: z.record(z.string(), z.unknown()).optional(),
+  stream_items: z.record(z.string(), z.unknown()).optional(),
+  file_schemas: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const CliContractsDocumentSchema = z.object({
-  cliContracts: z.string().min(1, "Spec version (cliContracts) is required"),
+  cli_contracts: z.string().min(1, "Spec version (cli_contracts) is required"),
   info: InfoSchema,
-  artifactSlots: z.record(z.string(), ArtifactSlotSchema).optional(),
-  commandSets: z
+  artifact_slots: z.record(z.string(), ArtifactSlotSchema).optional(),
+  command_sets: z
     .record(z.string(), CommandSetSchema)
     .refine((cs) => Object.keys(cs).length > 0, {
       message: "At least one command set is required",
@@ -322,8 +322,8 @@ export const InputConfigSchema = z.object({
 export const ValidationConfigSchema = z.object({
   schema: z.string().optional(),
   strict: z.boolean().optional(),
-  resolveExternalRefs: z.boolean().optional(),
-  allowUnknownExtensions: z.boolean().optional(),
+  resolve_external_refs: z.boolean().optional(),
+  allow_unknown_extensions: z.boolean().optional(),
 });
 
 export const ExecutionProfileCommandSetSchema = z.object({
@@ -332,7 +332,7 @@ export const ExecutionProfileCommandSetSchema = z.object({
 
 export const ExecutionProfileSchema = z.object({
   default: z.boolean().optional(),
-  commandSets: z.record(z.string(), ExecutionProfileCommandSetSchema),
+  command_sets: z.record(z.string(), ExecutionProfileCommandSetSchema),
 });
 
 export const GeneratorConfigSchema = z.object({
@@ -345,16 +345,16 @@ export const GeneratorConfigSchema = z.object({
 export const ContractTestsConfigSchema = z.object({
   enabled: z.boolean().optional(),
   profile: z.string().optional(),
-  casesDir: z.string().optional(),
-  timeoutMs: z.number().int().positive().optional(),
-  validateStdout: z.boolean().optional(),
-  validateStderr: z.boolean().optional(),
-  validateFiles: z.boolean().optional(),
+  cases_dir: z.string().optional(),
+  timeout_ms: z.number().int().positive().optional(),
+  validate_stdout: z.boolean().optional(),
+  validate_stderr: z.boolean().optional(),
+  validate_files: z.boolean().optional(),
   env: z.record(z.string(), z.string()).optional(),
 });
 
 export const DiffConfigSchema = z.object({
-  breakingChangePolicy: z.string().optional(),
+  breaking_change_policy: z.string().optional(),
   ignore: z.array(z.string()).optional(),
 });
 
@@ -362,9 +362,9 @@ export const CliContractsConfigSchema = z.object({
   version: z.string(),
   input: InputConfigSchema.optional(),
   validation: ValidationConfigSchema.optional(),
-  executionProfiles: z.record(z.string(), ExecutionProfileSchema).optional(),
+  execution_profiles: z.record(z.string(), ExecutionProfileSchema).optional(),
   generators: z.record(z.string(), GeneratorConfigSchema).optional(),
-  contractTests: ContractTestsConfigSchema.optional(),
+  contract_tests: ContractTestsConfigSchema.optional(),
   diff: DiffConfigSchema.optional(),
 });
 

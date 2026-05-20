@@ -25,7 +25,7 @@ describe("buildPolicyAuditContext", () => {
     expect(context).toContain("X-Agent Test CLI");
     expect(context).toContain("safe-read");
     expect(context).toContain("dangerous-write");
-    expect(context).toContain("riskLevel: high");
+    expect(context).toContain("risk_level: high");
   });
 
   it("marks commands without x-agent as missing", async () => {
@@ -37,7 +37,7 @@ describe("buildPolicyAuditContext", () => {
     expect(context).toContain("users.list");
     expect(context).toContain("policy missing");
     expect(context).toContain("users.import");
-    expect(context).toContain("riskLevel: high");
+    expect(context).toContain("risk_level: high");
   });
 
   it("includes command arguments and options", async () => {
@@ -113,7 +113,7 @@ describe("buildTestProposalContext", () => {
     const context = buildTestProposalContext(doc);
 
     expect(context).toContain("x-agent:");
-    expect(context).toContain("riskLevel");
+    expect(context).toContain("risk_level");
   });
 });
 

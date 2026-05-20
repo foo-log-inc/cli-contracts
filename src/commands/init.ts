@@ -55,13 +55,13 @@ function buildContractTemplate(
   multiCommandSet?: boolean,
 ): string {
   const doc: Record<string, unknown> = {
-    cliContracts: "0.1.0",
+    cli_contracts: "0.1.0",
     info: {
       title: `${name} CLI Contracts`,
       version: "0.1.0",
       description: `Contract definitions for ${name}.`,
     },
-    commandSets: {
+    command_sets: {
       [name]: {
         summary: `${name} command line tool.`,
         commands: {
@@ -90,7 +90,7 @@ function buildContractTemplate(
   };
 
   if (multiCommandSet) {
-    (doc.commandSets as Record<string, unknown>)[`${name}-admin`] = {
+    (doc.command_sets as Record<string, unknown>)[`${name}-admin`] = {
       summary: `${name} admin CLI.`,
       commands: {
         status: {

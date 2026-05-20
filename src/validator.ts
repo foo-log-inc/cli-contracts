@@ -44,8 +44,8 @@ export function validateContract(
 
   return {
     valid: errors.length === 0,
-    errorCount: errors.length,
-    warningCount: warnings.length,
+    error_count: errors.length,
+    warning_count: warnings.length,
     errors,
     warnings,
   };
@@ -84,25 +84,25 @@ export function validateXAgent(
   const data = parsed.data;
 
   if (
-    (data.riskLevel === "high" || data.riskLevel === "critical") &&
-    data.requiresConfirmation !== true
+    (data.risk_level === "high" || data.risk_level === "critical") &&
+    data.requires_confirmation !== true
   ) {
     diagnostics.push({
       path,
-      message: `riskLevel is "${data.riskLevel}" but requiresConfirmation is not true`,
+      message: `risk_level is "${data.risk_level}" but requires_confirmation is not true`,
       rule: "xagent-high-risk-no-confirmation",
       severity: "warning",
     });
   }
 
   if (
-    data.sideEffects &&
-    data.sideEffects.length > 0 &&
+    data.side_effects &&
+    data.side_effects.length > 0 &&
     data.idempotent === undefined
   ) {
     diagnostics.push({
       path,
-      message: "Command has sideEffects but idempotent is not declared",
+      message: "Command has side_effects but idempotent is not declared",
       rule: "xagent-side-effects-no-idempotent",
       severity: "warning",
     });
@@ -115,12 +115,12 @@ function validateCommandSets(
   doc: CliContractsDocument,
   diagnostics: Diagnostic[],
 ): void {
-  for (const setId of Object.keys(doc.commandSets)) {
-    const basePath = `/commandSets/${setId}`;
-    const cs = doc.commandSets[setId];
+  for (const setId of Object.keys(doc.command_sets)) {
+    const basePath = `/command_sets/${setId}`;
+    const cs = doc.command_sets[setId];
 
-    if (cs.globalOptions) {
-      validateOptions(cs.globalOptions, `${basePath}/globalOptions`, diagnostics);
+    if (cs.global_options) {
+      validateOptions(cs.global_options, `${basePath}/global_options`, diagnostics);
     }
 
     validateCommands(doc, cs, setId, basePath, diagnostics);
@@ -228,12 +228,12 @@ function validateSlotReferences(
   const effects = cmd.effects;
   if (!effects) return;
 
-  if (!doc.artifactSlots) {
+  if (!doc.artifact_slots) {
     if (effectsUseSlotReferences(effects)) {
       diagnostics.push({
         path: `${basePath}/effects`,
         message:
-          "Effects use slot references but artifactSlots is not declared on the document",
+          "Effects use slot references but artifact_slots is not declared on the document",
         rule: "slot-reference-without-artifact-slots",
         severity: "warning",
       });
@@ -241,7 +241,7 @@ function validateSlotReferences(
     return;
   }
 
-  const slotNames = new Set(Object.keys(doc.artifactSlots));
+  const slotNames = new Set(Object.keys(doc.artifact_slots));
 
   if (
     effects.reads &&
@@ -252,7 +252,7 @@ function validateSlotReferences(
       if (!slotNames.has(slot)) {
         diagnostics.push({
           path: `${basePath}/effects/reads`,
-          message: `Slot reference "${slot}" not found in artifactSlots`,
+          message: `Slot reference "${slot}" not found in artifact_slots`,
           rule: "undefined-slot-reference",
           severity: "error",
         });
@@ -269,7 +269,7 @@ function validateSlotReferences(
       if (!slotNames.has(slot)) {
         diagnostics.push({
           path: `${basePath}/effects/writes`,
-          message: `Slot reference "${slot}" not found in artifactSlots`,
+          message: `Slot reference "${slot}" not found in artifact_slots`,
           rule: "undefined-slot-reference",
           severity: "error",
         });
@@ -379,7 +379,7 @@ function validateStreams(
     if (stream.framing && stream.schema) {
       diagnostics.push({
         path: streamPath,
-        message: `Stream "${key}" has both "framing" and "schema"; use "itemSchema" with framing`,
+        message: `Stream "${key}" has both "framing" and "schema"; use "item_schema" with framing`,
         rule: "stream-schema-conflict",
         severity: "warning",
       });
@@ -388,19 +388,19 @@ function validateStreams(
 }
 
 const DEPRECATED_XAGENT_FIELDS: Record<string, string> = {
-  riskLevel: "effects.riskLevel + max aggregation",
-  sideEffects: "effects.writes / effects.network + file.mode",
+  risk_level: "effects.risk_level + max aggregation",
+  side_effects: "effects.writes / effects.network + file.mode",
   sideEffectNote: "effects.writes[].description",
-  requiresConfirmation: "riskLevel >= high (auto-derived from effects)",
+  requires_confirmation: "risk_level >= high (auto-derived from effects)",
   requiresConfirmationWhen: "option-level effects",
-  dangerousOptions: "option-level effects.riskLevel",
-  safeDryRunOption: "--introspect global option",
-  requiresNetwork: "effects.network",
-  requiresSecrets: "env[].sensitive",
+  dangerousOptions: "option-level effects.risk_level",
+  safe_dry_run_option: "--introspect global option",
+  requires_network: "effects.network",
+  requires_secrets: "env[].sensitive",
   reads: "effects.reads / file.mode",
   writes: "effects.writes / file.mode",
   idempotent: "effects.writes[].idempotent / effects.network.idempotent",
-  idempotentNote: "effects.writes[].idempotentNote / effects.network.idempotentNote",
+  idempotent_note: "effects.writes[].idempotent_note / effects.network.idempotent_note",
 };
 
 const RISK_ORDER: Record<string, number> = {
@@ -446,28 +446,28 @@ export function validateEffectsConsistency(
   const cmdEffects = cmd.effects;
   const riskLevels: string[] = [];
 
-  if (cmdEffects?.riskLevel) {
-    riskLevels.push(cmdEffects.riskLevel);
+  if (cmdEffects?.risk_level) {
+    riskLevels.push(cmdEffects.risk_level);
   }
   for (const opt of cmd.options ?? []) {
-    if (opt.effects?.riskLevel) {
-      riskLevels.push(opt.effects.riskLevel);
+    if (opt.effects?.risk_level) {
+      riskLevels.push(opt.effects.risk_level);
     }
   }
 
-  if (riskLevels.length > 0 && typeof xAgent.riskLevel === "string") {
+  if (riskLevels.length > 0 && typeof xAgent.risk_level === "string") {
     const derivedMax = riskLevels.reduce((a, b) =>
       (RISK_ORDER[a] ?? 0) >= (RISK_ORDER[b] ?? 0) ? a : b,
     );
-    const xAgentRisk = xAgent.riskLevel as string;
+    const xAgentRisk = xAgent.risk_level as string;
     if (
       derivedMax in RISK_ORDER &&
       xAgentRisk in RISK_ORDER &&
       (RISK_ORDER[derivedMax] ?? 0) > (RISK_ORDER[xAgentRisk] ?? 0)
     ) {
       diagnostics.push({
-        path: `${basePath}/x-agent/riskLevel`,
-        message: `x-agent.riskLevel "${xAgentRisk}" contradicts effects-derived riskLevel "${derivedMax}"`,
+        path: `${basePath}/x-agent/risk_level`,
+        message: `x-agent.risk_level "${xAgentRisk}" contradicts effects-derived risk_level "${derivedMax}"`,
         rule: "xagent-effects-contradiction",
         severity: "error",
       });

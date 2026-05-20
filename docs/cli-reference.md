@@ -989,7 +989,7 @@ cli-contracts generate custom-go
 
 ```yaml
 x-agent: 
-  recommendedBeforeUse: 
+  recommended_before_use: 
     - Run with --dry-run first to preview generated files
 ```
 
@@ -3379,9 +3379,9 @@ cli-contracts extract --all
   | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
   | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
   | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-  | `cliContracts` | `string` | Yes | Spec version from the source contract. |
+  | `cli_contracts` | `string` | No | Spec version from the source contract. |
   | `info` | `object` | Yes | Info block from the source contract. |
-  | `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+  | `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
   | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
   <details>
@@ -3432,7 +3432,7 @@ cli-contracts extract --all
           }
         }
       },
-      "cliContracts": {
+      "cli_contracts": {
         "type": "string",
         "description": "Spec version from the source contract."
       },
@@ -3440,7 +3440,7 @@ cli-contracts extract --all
         "type": "object",
         "description": "Info block from the source contract."
       },
-      "commandSets": {
+      "command_sets": {
         "type": "object",
         "description": "Subset of command sets containing only the requested commands."
       },
@@ -3653,9 +3653,9 @@ cli-contracts extract --all
   | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
   | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
   | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-  | `cliContracts` | `string` | Yes | Spec version from the source contract. |
+  | `cli_contracts` | `string` | No | Spec version from the source contract. |
   | `info` | `object` | Yes | Info block from the source contract. |
-  | `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+  | `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
   | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
   <details>
@@ -3706,7 +3706,7 @@ cli-contracts extract --all
           }
         }
       },
-      "cliContracts": {
+      "cli_contracts": {
         "type": "string",
         "description": "Spec version from the source contract."
       },
@@ -3714,7 +3714,7 @@ cli-contracts extract --all
         "type": "object",
         "description": "Info block from the source contract."
       },
-      "commandSets": {
+      "command_sets": {
         "type": "object",
         "description": "Subset of command sets containing only the requested commands."
       },
@@ -7043,9 +7043,9 @@ Type: `object`
 | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
 | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
 | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-| `cliContracts` | `string` | Yes | Spec version from the source contract. |
+| `cli_contracts` | `string` | No | Spec version from the source contract. |
 | `info` | `object` | Yes | Info block from the source contract. |
-| `commandSets` | `object` | Yes | Subset of command sets containing only the requested commands. |
+| `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
 | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
 <details>
@@ -7096,7 +7096,7 @@ Type: `object`
         }
       }
     },
-    "cliContracts": {
+    "cli_contracts": {
       "type": "string",
       "description": "Spec version from the source contract."
     },
@@ -7104,7 +7104,7 @@ Type: `object`
       "type": "object",
       "description": "Info block from the source contract."
     },
-    "commandSets": {
+    "command_sets": {
       "type": "object",
       "description": "Subset of command sets containing only the requested commands."
     },

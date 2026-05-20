@@ -165,11 +165,11 @@ export interface ExtractOptions {
 export type ExtractExitCode = 0 | 1 | 2 | 3 | 8;
 
 export type ExtractExitResult =
-  { exitCode: 0; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> } }
+  { exitCode: 0; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cli_contracts?: string; info: Record<string, unknown>; command_sets?: Record<string, unknown>; components?: Record<string, unknown> } }
   | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 3; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] } }
-  | { exitCode: 8; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cliContracts: string; info: Record<string, unknown>; commandSets: Record<string, unknown>; components?: Record<string, unknown> }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+  | { exitCode: 8; stdout: { _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] }; cli_contracts?: string; info: Record<string, unknown>; command_sets?: Record<string, unknown>; components?: Record<string, unknown> }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface ProposeTestsArgs {
   contract?: string;
@@ -334,9 +334,9 @@ export interface ContractViolation {
 
 export interface ExtractResult {
   _meta?: { source: string; type: string; extractedAt: string; specVersion?: string; commands: string[] };
-  cliContracts: string;
+  cli_contracts?: string;
   info: Record<string, unknown>;
-  commandSets: Record<string, unknown>;
+  command_sets?: Record<string, unknown>;
   components?: Record<string, unknown>;
 }
 

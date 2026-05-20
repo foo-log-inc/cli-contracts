@@ -35,11 +35,11 @@ describe("generateTypeScript", () => {
 
   it("generates argument interfaces", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       users.import:
@@ -67,11 +67,11 @@ commandSets:
 
   it("generates option interfaces", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       users.list:
@@ -99,11 +99,11 @@ commandSets:
 
   it("generates exit code union types", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       users.import:
@@ -124,11 +124,11 @@ commandSets:
 
   it("generates discriminated union result types", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       users.import:
@@ -176,11 +176,11 @@ components:
 
   it("generates command execution functions", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       users.list:
@@ -216,11 +216,11 @@ commandSets:
 
   it("generates auto-generated header in all files", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -239,11 +239,11 @@ commandSets:
 
   it("handles variadic arguments", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       concat:
@@ -266,11 +266,11 @@ commandSets:
 
   it("respects emitTypes=false option", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:

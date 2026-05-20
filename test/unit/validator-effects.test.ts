@@ -16,17 +16,17 @@ describe("effects validation", () => {
     );
     const result = validateContract(doc);
     expect(result.valid).toBe(true);
-    expect(result.errorCount).toBe(0);
+    expect(result.error_count).toBe(0);
   });
 
   it("parses option-level effects correctly", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "valid-contract-with-effects.yaml"),
     );
-    const lintCmd = doc.commandSets["effects-cli"].commands.lint;
+    const lintCmd = doc.command_sets["effects-cli"].commands.lint;
     const fixOpt = lintCmd.options?.find((o) => o.name === "fix");
     expect(fixOpt?.effects).toBeDefined();
-    expect(fixOpt?.effects?.riskLevel).toBe("medium");
+    expect(fixOpt?.effects?.risk_level).toBe("medium");
     expect(fixOpt?.effects?.writes).toHaveLength(1);
   });
 
@@ -34,9 +34,9 @@ describe("effects validation", () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "valid-contract-with-effects.yaml"),
     );
-    const buildCmd = doc.commandSets["effects-cli"].commands.build;
+    const buildCmd = doc.command_sets["effects-cli"].commands.build;
     expect(buildCmd.effects).toBeDefined();
-    expect(buildCmd.effects?.riskLevel).toBe("low");
+    expect(buildCmd.effects?.risk_level).toBe("low");
     expect(buildCmd.effects?.writes).toHaveLength(1);
   });
 
@@ -44,7 +44,7 @@ describe("effects validation", () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "valid-contract-with-effects.yaml"),
     );
-    const env = doc.commandSets["effects-cli"].env!;
+    const env = doc.command_sets["effects-cli"].env!;
     expect(env.OPENAI_API_KEY.sensitive).toBe(true);
     expect(env.LOG_LEVEL.sensitive).toBeUndefined();
   });
@@ -53,11 +53,11 @@ describe("effects validation", () => {
 describe("x-agent deprecation warnings", () => {
   it("warns when deprecated x-agent fields co-exist with effects", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       lint:
@@ -66,7 +66,7 @@ commandSets:
           - name: fix
             schema: { type: boolean }
             effects:
-              riskLevel: medium
+              risk_level: medium
               writes:
                 - target: "source files"
                   overwrite: true
@@ -74,8 +74,8 @@ commandSets:
           '0':
             description: OK.
         x-agent:
-          riskLevel: low
-          sideEffects: [file_write]
+          risk_level: low
+          side_effects: [file_write]
           sideEffectNote: "only when --fix"
           idempotent: true
 `);
@@ -88,17 +88,17 @@ commandSets:
       const match = w.path.match(/x-agent\/(.+)$/);
       return match?.[1];
     });
-    expect(fields).toContain("riskLevel");
-    expect(fields).toContain("sideEffects");
+    expect(fields).toContain("risk_level");
+    expect(fields).toContain("side_effects");
   });
 
   it("does not warn for non-derivable x-agent fields", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       lint:
@@ -107,12 +107,12 @@ commandSets:
           - name: fix
             schema: { type: boolean }
             effects:
-              riskLevel: medium
+              risk_level: medium
         exits:
           '0':
             description: OK.
         x-agent:
-          recommendedBeforeUse:
+          recommended_before_use:
             - "Run without --fix first"
 `);
     const result = validateContract(doc);
@@ -124,11 +124,11 @@ commandSets:
 
   it("warns when x-agent.idempotent is used with effects", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       generate:
@@ -151,24 +151,24 @@ commandSets:
     expect(deprecationWarnings[0].path).toContain("idempotent");
   });
 
-  it("errors when x-agent.riskLevel contradicts effects derivation", () => {
+  it("errors when x-agent.risk_level contradicts effects derivation", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       deploy:
         summary: Deploy app.
         effects:
-          riskLevel: high
+          risk_level: high
         exits:
           '0':
             description: OK.
         x-agent:
-          riskLevel: low
+          risk_level: low
 `);
     const result = validateContract(doc);
     const contradictions = result.errors.filter(
@@ -179,24 +179,24 @@ commandSets:
     expect(contradictions[0].message).toContain('"high"');
   });
 
-  it("no contradiction error when x-agent.riskLevel matches", () => {
+  it("no contradiction error when x-agent.risk_level matches", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       build:
         summary: Build project.
         effects:
-          riskLevel: low
+          risk_level: low
         exits:
           '0':
             description: OK.
         x-agent:
-          riskLevel: medium
+          risk_level: medium
 `);
     const result = validateContract(doc);
     const contradictions = result.errors.filter(
@@ -209,19 +209,19 @@ commandSets:
 describe("validateXAgentDeprecation standalone", () => {
   it("flags all known deprecated fields", () => {
     const xAgent = {
-      riskLevel: "low",
-      sideEffects: ["file_write"],
+      risk_level: "low",
+      side_effects: ["file_write"],
       sideEffectNote: "only with --fix",
-      requiresConfirmation: false,
+      requires_confirmation: false,
       requiresConfirmationWhen: "always",
       dangerousOptions: ["force"],
-      safeDryRunOption: "--dry-run",
-      requiresNetwork: true,
-      requiresSecrets: ["API_KEY"],
+      safe_dry_run_option: "--dry-run",
+      requires_network: true,
+      requires_secrets: ["API_KEY"],
       reads: ["config"],
       writes: ["output"],
       idempotent: true,
-      idempotentNote: "same input same output",
+      idempotent_note: "same input same output",
     };
     const diags = validateXAgentDeprecation(xAgent, "/test/cmd");
     expect(diags).toHaveLength(13);
@@ -230,9 +230,9 @@ describe("validateXAgentDeprecation standalone", () => {
 
   it("returns empty for non-deprecated fields only", () => {
     const xAgent = {
-      recommendedBeforeUse: ["check first"],
+      recommended_before_use: ["check first"],
       rollback: { supported: true },
-      humanReview: { required: false },
+      human_review: { required: false },
     };
     const diags = validateXAgentDeprecation(xAgent, "/test/cmd");
     expect(diags).toHaveLength(0);
@@ -248,10 +248,10 @@ describe("validateEffectsConsistency standalone", () => {
         {
           name: "force",
           schema: { type: "boolean" } as Record<string, unknown>,
-          effects: { riskLevel: "high" as const },
+          effects: { risk_level: "high" as const },
         },
       ],
-      "x-agent": { riskLevel: "low" },
+      "x-agent": { risk_level: "low" },
     };
     const diags = validateEffectsConsistency(
       cmd as never,

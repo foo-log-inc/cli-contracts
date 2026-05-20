@@ -31,8 +31,8 @@ export async function runValidate(
 
   return {
     valid: allErrors.length === 0,
-    errorCount: allErrors.length,
-    warningCount: allWarnings.length,
+    error_count: allErrors.length,
+    warning_count: allWarnings.length,
     errors: allErrors,
     warnings: allWarnings,
   };

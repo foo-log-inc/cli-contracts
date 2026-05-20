@@ -1,11 +1,11 @@
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 
 info:
   title: X-Agent Test CLI
   version: 1.0.0
   description: Fixture with complete x-agent policies.
 
-commandSets:
+command_sets:
   xagent-test:
     summary: Test CLI with x-agent policies.
 
@@ -16,10 +16,10 @@ commandSets:
           '0':
             description: Success.
         x-agent:
-          riskLevel: low
-          requiresConfirmation: false
+          risk_level: low
+          requires_confirmation: false
           idempotent: true
-          sideEffects: []
+          side_effects: []
 
       dangerous-write:
         summary: Write data to database.
@@ -31,7 +31,7 @@ commandSets:
             file:
               mode: read
               exists: true
-              mediaType: text/csv
+              media_type: text/csv
               encoding: utf-8
         options:
           - name: dry-run
@@ -46,13 +46,13 @@ commandSets:
           '1':
             description: Unexpected error.
         x-agent:
-          riskLevel: high
-          requiresConfirmation: true
+          risk_level: high
+          requires_confirmation: true
           idempotent: false
-          sideEffects:
+          side_effects:
             - database_write
-          safeDryRunOption: dry-run
-          recommendedBeforeUse:
+          safe_dry_run_option: dry-run
+          recommended_before_use:
             - Run with --dry-run first.
             - Validate input file.
 
@@ -64,11 +64,11 @@ commandSets:
           '1':
             description: Error.
         x-agent:
-          riskLevel: medium
-          requiresConfirmation: false
+          risk_level: medium
+          requires_confirmation: false
           idempotent: true
-          sideEffects:
+          side_effects:
             - api_call
-          requiresNetwork: true
-          requiresSecrets:
+          requires_network: true
+          requires_secrets:
             - API_KEY

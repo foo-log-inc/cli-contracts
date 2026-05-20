@@ -226,7 +226,7 @@ export const cliPolicyAuditor: AgentContract = {
   },
   {
     "id": "R-POLICY-002",
-    "description": "High or critical riskLevel requires requiresConfirmation: true.",
+    "description": "High or critical riskLevel requires requires_confirmation: true.",
     "severity": "mandatory"
   },
   {

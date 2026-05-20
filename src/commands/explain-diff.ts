@@ -73,7 +73,7 @@ export async function runExplainDiff(
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Diff explanation completed",
-    riskLevel: diffResult.hasBreakingChanges ? "high" : "low",
+    risk_level: diffResult.has_breaking_changes ? "high" : "low",
     findings: [],
   };
 
@@ -108,7 +108,7 @@ function determineExitCode(
 function formatTextOutput(result: Record<string, unknown>): string {
   const lines: string[] = [];
   lines.push(`Summary: ${result.summary}`);
-  lines.push(`Risk Level: ${result.riskLevel}`);
+  lines.push(`Risk Level: ${result.risk_level}`);
   const findings = result.findings as Array<Record<string, unknown>> | undefined;
   if (findings && findings.length > 0) {
     lines.push(`\nFindings (${findings.length}):`);

@@ -15,7 +15,7 @@ export function buildPolicyAuditContext(
   sections.push("# CLI Contract: Policy Audit Request");
   sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
 
-  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+  for (const [setId, cs] of Object.entries(doc.command_sets)) {
     sections.push(`## Command Set: ${setId}`);
     if (cs.summary) sections.push(`Summary: ${cs.summary}`);
 
@@ -74,7 +74,7 @@ export function buildTestProposalContext(
   sections.push("# CLI Contract: Test Case Proposal Request");
   sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
 
-  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+  for (const [setId, cs] of Object.entries(doc.command_sets)) {
     sections.push(`## Command Set: ${setId}`);
 
     for (const [cmdId, cmd] of Object.entries(cs.commands)) {
@@ -142,9 +142,9 @@ export function buildDiffExplainContext(
 
   sections.push(
     `## Diff Summary\n` +
-    `- Has breaking changes: ${diffResult.hasBreakingChanges}\n` +
-    `- Breaking count: ${diffResult.breakingCount ?? 0}\n` +
-    `- Non-breaking count: ${diffResult.nonBreakingCount ?? 0}`,
+    `- Has breaking changes: ${diffResult.has_breaking_changes}\n` +
+    `- Breaking count: ${diffResult.breaking_count ?? 0}\n` +
+    `- Non-breaking count: ${diffResult.non_breaking_count ?? 0}`,
   );
 
   if (diffResult.changes.length > 0) {
@@ -176,7 +176,7 @@ const REFERENCE_XAGENT_RECOMMENDED = [
 ] as const;
 
 interface CommandPreAnalysis {
-  commandId: string;
+  command_id: string;
   commandSetId: string;
   presentOptions: string[];
   missingOptions: string[];
@@ -244,7 +244,7 @@ function analyzeCommand(
   }
 
   return {
-    commandId: cmdId, commandSetId: setId,
+    command_id: cmdId, commandSetId: setId,
     presentOptions, missingOptions,
     presentExitCodes, missingExitCodes,
     xAgentPresent, xAgentMissingRequired, xAgentMissingRecommended,
@@ -262,7 +262,7 @@ export function buildReferenceCheckContext(
 
   const analyses: CommandPreAnalysis[] = [];
 
-  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+  for (const [setId, cs] of Object.entries(doc.command_sets)) {
     for (const [cmdId, cmd] of Object.entries(cs.commands)) {
       const cmdRecord = cmd as unknown as Record<string, unknown>;
       analyses.push(analyzeCommand(cmdId, setId, cmdRecord));
@@ -273,7 +273,7 @@ export function buildReferenceCheckContext(
 
   sections.push("## Deterministic Pre-Analysis");
   for (const a of analyses) {
-    const lines: string[] = [`### Command: ${a.commandSetId}/${a.commandId}`];
+    const lines: string[] = [`### Command: ${a.commandSetId}/${a.command_id}`];
 
     lines.push(`**Options** (${a.presentOptions.length}/${REFERENCE_OPTIONS.length})`);
     if (a.missingOptions.length > 0) {

@@ -101,16 +101,16 @@ docs/
 The primary artifact is `cli-contract.yaml`. It describes one or more CLI executables, their commands, inputs, outputs, and behavior.
 
 ```yaml
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 
 info:
   title: My CLI Contracts
   version: 1.0.0
 
-commandSets:
+command_sets:
   my-tool:
     summary: My command line tool.
-    globalOptions:
+    global_options:
       - name: verbose
         aliases: [v]
         schema:
@@ -129,7 +129,7 @@ commandSets:
             file:
               mode: read
               exists: true
-              mediaType: text/csv
+              media_type: text/csv
         options:
           - name: dry-run
             aliases: [n]
@@ -151,14 +151,14 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
         effects:
-          riskLevel: high
-          requiresConfirmation: true
+          risk_level: high
+          requires_confirmation: true
           writes:
             - target: "user database"
               description: "Writes imported users to the database"
               idempotent: false
         x-agent:
-          recommendedBeforeUse:
+          recommended_before_use:
             - Validate the CSV schema.
             - Run with --dry-run before actual import.
 
@@ -187,10 +187,10 @@ components:
 
 | Field | Required | Description |
 |---|:---:|---|
-| `cliContracts` | Yes | Specification version (`0.1.0`) |
+| `cli_contracts` | Yes | Specification version (`0.1.0`) |
 | `info` | Yes | Title, version, description, license, contact |
-| `artifactSlots` | No | Named artifact slots declaring what the tool reads/writes at an abstract level |
-| `commandSets` | Yes | One or more CLI executables or command groups |
+| `artifact_slots` | No | Named artifact slots declaring what the tool reads/writes at an abstract level |
+| `command_sets` | Yes | One or more CLI executables or command groups |
 | `components` | No | Shared schemas, examples, and reusable definitions |
 
 ### Command set fields
@@ -200,7 +200,7 @@ components:
 | `executable` | No | User-facing executable name. Defaults to the command set key |
 | `summary` | No | Short description |
 | `commands` | Yes | Map of commands keyed by stable command ID |
-| `globalOptions` | No | Options accepted by all commands in this set |
+| `global_options` | No | Options accepted by all commands in this set |
 | `env` | No | Public environment variables (part of the interface) |
 | `x-stdin` | No | Declares stdin policy for the command set (e.g. no command reads from stdin) |
 
@@ -253,7 +253,7 @@ An explicit `path` field can override this when the CLI syntax differs from the 
 | `name` | Yes | Long option name without `--` |
 | `aliases` | No | Short aliases without `-` |
 | `required` | No | Whether the option is required |
-| `valueName` | No | Display name for the value |
+| `value_name` | No | Display name for the value |
 | `description` | No | Description |
 | `schema` | No | JSON Schema for the value |
 | `file` | No | File contract if the value is a file path |
@@ -298,7 +298,7 @@ Arguments or options whose values point to files can declare file contracts:
 file:
   mode: read          # read, write, append, readWrite
   exists: true        # must exist before execution
-  mediaType: text/csv
+  media_type: text/csv
   encoding: utf-8
   schema:
     $ref: ./schemas/input.schema.json
@@ -316,13 +316,13 @@ streams:
     framing:
       type: line-delimited
       delimiter: '\n'
-    itemSchema:
+    item_schema:
       $ref: '#/components/schemas/LogEvent'
   stdout:
     format: ndjson
     framing:
       type: line-delimited
-    itemSchema:
+    item_schema:
       $ref: '#/components/schemas/FilteredEvent'
     flush:
       policy: perItem
@@ -340,10 +340,10 @@ signals:
 
 ### Artifact Slots
 
-`artifactSlots` declares what a tool reads and writes at an abstract level, without referencing any specific project artifact. Each slot has a name, optional description, and a direction (`read`, `write`, or `readwrite`).
+`artifact_slots` declares what a tool reads and writes at an abstract level, without referencing any specific project artifact. Each slot has a name, optional description, and a direction (`read`, `write`, or `readwrite`).
 
 ```yaml
-artifactSlots:
+artifact_slots:
   spec-source:
     description: "Specification files to lint/verify"
     direction: read
@@ -365,7 +365,7 @@ artifactSlots:
 
 Slots are domain-agnostic. The binding of slots to concrete project artifacts is handled by `artifact_bindings` in agent-contracts, not in cli-contracts.
 
-When `artifactSlots` is declared, command effects can reference slot names instead of free-text targets:
+When `artifact_slots` is declared, command effects can reference slot names instead of free-text targets:
 
 ```yaml
 commands:
@@ -379,13 +379,13 @@ commands:
       writes: [generated-output]
 ```
 
-The validator checks that slot references in `effects.reads` / `effects.writes` exist in the document-level `artifactSlots`. Referencing an undefined slot produces a validation error.
+The validator checks that slot references in `effects.reads` / `effects.writes` exist in the document-level `artifact_slots`. Referencing an undefined slot produces a validation error.
 
 ### Effects
 
 Commands and options can declare execution effects. Effects support two formats for `reads` and `writes`:
 
-- **Slot references** (string array) — references to `artifactSlots` entries, used when slots are declared
+- **Slot references** (string array) — references to `artifact_slots` entries, used when slots are declared
 - **Descriptive objects** (object array) — free-text targets with metadata, used when slots are not declared
 
 Slot reference format:
@@ -400,8 +400,8 @@ Descriptive object format:
 
 ```yaml
 effects:
-  riskLevel: high
-  requiresConfirmation: true
+  risk_level: high
+  requires_confirmation: true
   writes:
     - target: "user database"
       description: "Writes imported users to the database"
@@ -410,7 +410,7 @@ effects:
     description: "Calls external LLM API"
     domains: ["api.openai.com"]
     idempotent: true
-    idempotencyKey: "request hash"
+    idempotency_key: "request hash"
 ```
 
 ### Extensions (`x-*`)
@@ -421,7 +421,7 @@ Properties prefixed with `x-` carry domain-specific metadata. The `x-agent` exte
 x-agent:
   expectedDurationMs: 60000
   retryableExitCodes: [1, 12]
-  recommendedBeforeUse:
+  recommended_before_use:
     - Validate the CSV schema.
     - Run with --dry-run before actual import.
   rollback:
@@ -458,18 +458,18 @@ generators:
       includeSchemas: true
       includeExtensions: true
 
-executionProfiles:
+execution_profiles:
   local:
     default: true
-    commandSets:
+    command_sets:
       my-tool:
         command: my-tool
 
-contractTests:
+contract_tests:
   enabled: true
   profile: local
-  casesDir: ./tests/cli-contracts
-  timeoutMs: 30000
+  cases_dir: ./tests/cli-contracts
+  timeout_ms: 30000
 ```
 
 ## CLI Commands
@@ -670,7 +670,7 @@ Conformance checks include:
 
 - Standard LLM option set (`--adapter`, `--model`, `--show-prompt`, `--fail-on`, `--output`, `--report-format`)
 - Exit code coverage (0, 1, 10, 11, 12)
-- `x-agent` metadata (`safeDryRunOption`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
+- `x-agent` metadata (`safe_dry_run_option`, `sideEffectNote`, `expectedDurationMs`, `retryableExitCodes`)
 - Stdout schema conformance to the agent-contracts canonical `agent-audit-result` / `agent-finding` schema (via `$ref` or compatible inline definition)
 - `agent-evidence` base property alignment (`kind`, `target`, `location`, `excerpt`)
 - `agent-recommended-action` property alignment (`kind`, `title`, `command`, `target`, `rationale`)
@@ -744,7 +744,7 @@ entrypoints:
     output: '{{options.packageName}}/types.go'
   - template: command.go.hbs
     output: '{{options.packageName}}/{{commandSet.id}}_commands.go'
-    each: commandSets
+    each: command_sets
 ```
 
 ## Contract Tests
@@ -846,17 +846,17 @@ lint:
     - name: fix
       schema: { type: boolean }
       effects:
-        riskLevel: medium
+        risk_level: medium
         writes:
           - target: "source files matching lint rules"
             description: "auto-fix lint violations"
             overwrite: true
             idempotent: true
-            idempotentNote: "same lint rules + same input = no additional changes on re-run"
+            idempotent_note: "same lint rules + same input = no additional changes on re-run"
 
 build:
   effects:
-    riskLevel: low
+    risk_level: low
     writes:
       - target: "docs/, specs/"
         description: "files generated from models"
@@ -865,12 +865,12 @@ build:
 
 | Field | Type | Description |
 |---|---|---|
-| `riskLevel` | `low` \| `medium` \| `high` \| `critical` | Risk level contributed by this command/option |
+| `risk_level` | `low` \| `medium` \| `high` \| `critical` | Risk level contributed by this command/option |
 | `writes` | `string[]` \| `EffectWrite[]` | Slot references or descriptive write side effects |
 | `reads` | `string[]` \| `EffectRead[]` | Slot references or descriptive read side effects |
 | `network` | `boolean` \| `NetworkEffect` | Network call side effects |
-| `executionMode` | `normal` \| `long-running` \| `watch` \| `interactive` \| `background` | Execution mode |
-| `requiresConfirmation` | `boolean` | Explicit override for confirmation requirement |
+| `execution_mode` | `normal` \| `long-running` \| `watch` \| `interactive` \| `background` | Execution mode |
+| `requires_confirmation` | `boolean` | Explicit override for confirmation requirement |
 
 `EffectWrite` fields:
 
@@ -881,8 +881,8 @@ build:
 | `overwrite` | `boolean` | Whether existing files may be overwritten |
 | `destructive` | `boolean` | Whether the write is destructive |
 | `idempotent` | `boolean` | Whether this write is idempotent |
-| `idempotencyKey` | `string` | Key that determines idempotency |
-| `idempotentNote` | `string` | Clarification about idempotency |
+| `idempotency_key` | `string` | Key that determines idempotency |
+| `idempotent_note` | `string` | Clarification about idempotency |
 
 `NetworkEffect` fields:
 
@@ -890,10 +890,10 @@ build:
 |---|---|---|
 | `description` | `string` | Description of the network call |
 | `domains` | `string[]` | Target domains |
-| `requiresSecrets` | `string[]` | Required secret environment variables |
+| `requires_secrets` | `string[]` | Required secret environment variables |
 | `idempotent` | `boolean` | Whether this network call is idempotent |
-| `idempotencyKey` | `string` | Key that determines idempotency |
-| `idempotentNote` | `string` | Clarification about idempotency |
+| `idempotency_key` | `string` | Key that determines idempotency |
+| `idempotent_note` | `string` | Clarification about idempotency |
 
 ### Runtime Introspection (`--introspect`)
 
@@ -903,11 +903,11 @@ When a contract declares effects, the code generator adds a `--introspect` globa
 $ tool lint --fix --introspect
 {
   "command": "lint",
-  "activeOptions": ["fix"],
+  "active_options": ["fix"],
   "policy": {
-    "riskLevel": "medium",
-    "requiresConfirmation": false,
-    "sideEffects": ["file_write"],
+    "risk_level": "medium",
+    "requires_confirmation": false,
+    "side_effects": ["file_write"],
     "reads": [],
     "writes": [
       {
@@ -924,9 +924,9 @@ $ tool lint --fix --introspect
 ```
 
 Policy derivation rules:
-- `riskLevel` = `max(command.riskLevel, ...activeOptions.riskLevel)`
-- `requiresConfirmation` = `true` when `riskLevel >= high` (with explicit override)
-- `sideEffects` = union of `file_write` (from writes/file.mode) and `network` (from network effects)
+- `risk_level` = `max(command.risk_level, ...active_options.risk_level)`
+- `requires_confirmation` = `true` when `risk_level >= high` (with explicit override)
+- `side_effects` = union of `file_write` (from writes/file.mode) and `network` (from network effects)
 - `idempotent` = `true` only if all semantic writes AND all network effects are explicitly `idempotent: true`; implicitly `true` for read-only commands
 
 ### `x-agent`: Supplementary Agent Metadata
@@ -935,11 +935,11 @@ The `x-agent` extension carries non-derivable, agent-facing metadata. Fields tha
 
 ```yaml
 x-agent:
-  recommendedBeforeUse:
+  recommended_before_use:
     - Run without --fix first to review issues
   rollback:
     strategy: "git checkout"
-  humanReview:
+  human_review:
     required: true
     reason: "destructive operation"
   expectedDurationMs: 120000
@@ -948,9 +948,9 @@ x-agent:
 
 | Field | Type | Description |
 |---|---|---|
-| `recommendedBeforeUse` | `string[]` | Steps an agent should take before executing |
+| `recommended_before_use` | `string[]` | Steps an agent should take before executing |
 | `rollback` | `object` | Rollback instructions |
-| `humanReview` | `object` | Human review requirements |
+| `human_review` | `object` | Human review requirements |
 | `expectedDurationMs` | `number` | Expected wall-clock time |
 | `retryableExitCodes` | `number[]` | Exit codes safe to retry |
 | `preferAlternative` | `string` | Suggested alternative command |
@@ -959,18 +959,18 @@ x-agent:
 
 | Deprecated Field | Replacement |
 |---|---|
-| `riskLevel` | `effects.riskLevel` + max aggregation |
-| `sideEffects` | `effects.writes` / `effects.network` + `file.mode` |
+| `risk_level` | `effects.risk_level` + max aggregation |
+| `side_effects` | `effects.writes` / `effects.network` + `file.mode` |
 | `sideEffectNote` | `effects.writes[].description` |
-| `requiresConfirmation` | `effects.requiresConfirmation` or derived from `riskLevel >= high` |
-| `requiresConfirmationWhen` | Option-level `effects.riskLevel` |
-| `dangerousOptions` | Option-level `effects.riskLevel` |
-| `safeDryRunOption` | Replaced by `--introspect` |
-| `requiresNetwork` | `effects.network` |
-| `requiresSecrets` | `env[].sensitive` |
+| `requires_confirmation` | `effects.requires_confirmation` or derived from `risk_level >= high` |
+| `requires_confirmation_when` | Option-level `effects.risk_level` |
+| `dangerous_options` | Option-level `effects.risk_level` |
+| `safe_dry_run_option` | Replaced by `--introspect` |
+| `requires_network` | `effects.network` |
+| `requires_secrets` | `env[].sensitive` |
 | `reads` / `writes` | `effects.reads` / `effects.writes` + `file.mode` |
 | `idempotent` | `effects.writes[].idempotent` / `effects.network.idempotent` |
-| `idempotentNote` | `effects.writes[].idempotentNote` / `effects.network.idempotentNote` |
+| `idempotent_note` | `effects.writes[].idempotent_note` / `effects.network.idempotent_note` |
 
 Validation produces warnings when deprecated fields are used alongside `effects` declarations.
 
@@ -1001,7 +1001,7 @@ import { XAgentSchema, validateXAgent } from "cli-contracts/agent";
 ```typescript
 interface AgentAuditResult {
   summary: string;
-  riskLevel: "low" | "medium" | "high" | "critical";
+  risk_level: "low" | "medium" | "high" | "critical";
   findings: AgentFinding[];
   recommendedActions?: AgentRecommendedAction[];
   metadata?: { tool?: string; command?: string; version?: string; ... };
@@ -1207,7 +1207,7 @@ These can be used for IDE autocompletion:
 
 ```yaml
 # yaml-language-server: $schema=./node_modules/cli-contracts/schemas/cli-contract.schema.json
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 ```
 
 ## Recommended Project Layout

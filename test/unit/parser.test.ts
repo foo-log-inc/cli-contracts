@@ -14,20 +14,20 @@ describe("parseContractFile", () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "valid-contract.yaml"),
     );
-    expect(doc.cliContracts).toBe("0.1.0");
+    expect(doc.cli_contracts).toBe("0.1.0");
     expect(doc.info.title).toBe("Test CLI");
     expect(doc.info.version).toBe("1.0.0");
-    expect(doc.commandSets).toHaveProperty("test-cli");
-    expect(doc.commandSets["test-cli"].commands).toHaveProperty("users.list");
-    expect(doc.commandSets["test-cli"].commands).toHaveProperty("users.import");
+    expect(doc.command_sets).toHaveProperty("test-cli");
+    expect(doc.command_sets["test-cli"].commands).toHaveProperty("users.list");
+    expect(doc.command_sets["test-cli"].commands).toHaveProperty("users.import");
   });
 
   it("parses a minimal contract file", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "minimal-contract.yaml"),
     );
-    expect(doc.cliContracts).toBe("0.1.0");
-    expect(doc.commandSets.minimal.commands.hello.summary).toBe("Say hello.");
+    expect(doc.cli_contracts).toBe("0.1.0");
+    expect(doc.command_sets.minimal.commands.hello.summary).toBe("Say hello.");
   });
 
   it("throws ParseError for non-existent file", async () => {
@@ -40,11 +40,11 @@ describe("parseContractFile", () => {
 describe("parseContractString", () => {
   it("parses valid YAML string", () => {
     const yaml = `
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Inline CLI
   version: 0.1.0
-commandSets:
+command_sets:
   inline:
     commands:
       hello:
@@ -54,9 +54,9 @@ commandSets:
             description: Success.
 `;
     const doc = parseContractString(yaml);
-    expect(doc.cliContracts).toBe("0.1.0");
+    expect(doc.cli_contracts).toBe("0.1.0");
     expect(doc.info.title).toBe("Inline CLI");
-    expect(doc.commandSets.inline.commands.hello.summary).toBe("Say hello.");
+    expect(doc.command_sets.inline.commands.hello.summary).toBe("Say hello.");
   });
 
   it("throws on missing cliContracts field", () => {
@@ -64,27 +64,27 @@ commandSets:
 info:
   title: Bad
   version: 0.1.0
-commandSets: {}
+command_sets: {}
 `;
-    expect(() => parseContractString(yaml)).toThrow("cliContracts");
+    expect(() => parseContractString(yaml)).toThrow("cli_contracts");
   });
 
   it("throws on missing info field", () => {
     const yaml = `
-cliContracts: 0.1.0
-commandSets: {}
+cli_contracts: 0.1.0
+command_sets: {}
 `;
     expect(() => parseContractString(yaml)).toThrow("info");
   });
 
   it("throws on missing commandSets", () => {
     const yaml = `
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: X
   version: 0.1.0
 `;
-    expect(() => parseContractString(yaml)).toThrow("commandSets");
+    expect(() => parseContractString(yaml)).toThrow("command_sets");
   });
 
   it("throws on invalid YAML", () => {

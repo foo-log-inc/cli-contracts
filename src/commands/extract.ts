@@ -46,14 +46,14 @@ export async function runExtract(
   return {
     output,
     commandCount: matched.length,
-    commandIds: matched.map((m) => m.fullId),
+    commandIds: matched.map((m) => m.full_id),
   };
 }
 
 interface MatchedCommand {
   setId: string;
   cmdId: string;
-  fullId: string;
+  full_id: string;
   command: Command;
   commandSet: CommandSet;
 }
@@ -65,7 +65,7 @@ function findCommands(
 ): MatchedCommand[] {
   const results: MatchedCommand[] = [];
 
-  for (const [setId, cs] of Object.entries(doc.commandSets)) {
+  for (const [setId, cs] of Object.entries(doc.command_sets)) {
     if (commandSetFilter && setId !== commandSetFilter) continue;
 
     for (const [cmdId, cmd] of Object.entries(cs.commands)) {
@@ -76,7 +76,7 @@ function findCommands(
           (id) => id === cmdId || id === fullId || cmdId.startsWith(id + "."),
         );
       if (matches) {
-        results.push({ setId, cmdId, fullId, command: cmd, commandSet: cs });
+        results.push({ setId, cmdId, full_id: fullId, command: cmd, commandSet: cs });
       }
     }
   }
@@ -105,16 +105,16 @@ function buildSubset(
     };
     if (original.executable) cs.executable = original.executable;
     if (original.summary) cs.summary = original.summary;
-    if (original.globalOptions && original.globalOptions.length > 0) {
-      cs.globalOptions = original.globalOptions;
+    if (original.global_options && original.global_options.length > 0) {
+      cs.global_options = original.global_options;
     }
     subsetCommandSets[setId] = cs;
   }
 
   const subset: Record<string, unknown> = {
-    cliContracts: doc.cliContracts,
+    cli_contracts: doc.cli_contracts,
     info: doc.info,
-    commandSets: subsetCommandSets,
+    command_sets: subsetCommandSets,
   };
 
   const usedSchemas = collectUsedSchemas(matched, doc.components);
@@ -174,7 +174,7 @@ interface ExtractMeta {
   source: string;
   type: string;
   extractedAt: string;
-  specVersion: string;
+  spec_version: string;
   commands: string[];
 }
 
@@ -187,8 +187,8 @@ function buildMeta(
     source: relative(process.cwd(), filePath) || filePath,
     type: "cli-contracts/command-extract",
     extractedAt: new Date().toISOString(),
-    specVersion: "0.1.0",
-    commands: matched.map((m) => m.fullId),
+    spec_version: "0.1.0",
+    commands: matched.map((m) => m.full_id),
   };
 }
 

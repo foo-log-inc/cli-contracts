@@ -1,14 +1,14 @@
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 
 info:
   title: Test CLI
   version: 1.0.0
   description: Test CLI for unit tests.
 
-commandSets:
+command_sets:
   test-cli:
     summary: Test CLI tool.
-    globalOptions:
+    global_options:
       - name: verbose
         aliases: [v]
         schema:
@@ -61,10 +61,10 @@ commandSets:
             file:
               mode: read
               exists: true
-              mediaType: text/csv
+              media_type: text/csv
               encoding: utf-8
               csv:
-                headerRows: 1
+                header_rows: 1
         options:
           - name: dry-run
             aliases: [n]
@@ -97,10 +97,10 @@ commandSets:
               schema:
                 $ref: '#/components/schemas/Error'
         x-agent:
-          riskLevel: high
-          requiresConfirmation: true
+          risk_level: high
+          requires_confirmation: true
           idempotent: false
-          sideEffects:
+          side_effects:
             - database_write
 
       logs.filter:
@@ -113,7 +113,7 @@ commandSets:
             framing:
               type: line-delimited
               delimiter: '\n'
-            itemSchema:
+            item_schema:
               $ref: '#/components/schemas/LogEvent'
           stdout:
             format: ndjson
@@ -121,7 +121,7 @@ commandSets:
             framing:
               type: line-delimited
               delimiter: '\n'
-            itemSchema:
+            item_schema:
               $ref: '#/components/schemas/LogEvent'
             flush:
               policy: perItem

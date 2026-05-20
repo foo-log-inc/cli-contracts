@@ -116,11 +116,11 @@ describe("generateTypeScript program.ts", () => {
 
   it("uses safe identifiers for reserved words", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       compare:
@@ -150,11 +150,11 @@ commandSets:
 
   it("handler signature and action arity match for command with no options", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       check:
@@ -177,11 +177,11 @@ commandSets:
 
   it("handler signature and action arity match for command with args but no options", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       deploy:
@@ -209,11 +209,11 @@ commandSets:
 
   it("handler signature includes typed options for command with options", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   foo:
     commands:
       build:
@@ -258,11 +258,11 @@ commandSets:
 
   it("description comes from contract summary", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: T
   version: 0.1.0
-commandSets:
+command_sets:
   my-tool:
     summary: My awesome tool.
     commands:

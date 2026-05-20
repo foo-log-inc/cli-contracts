@@ -63,7 +63,7 @@ describe("CLI integration", () => {
       const contractPath = join(tmpDir, "cli-contract.yaml");
       await access(contractPath);
       const content = await readFile(contractPath, "utf-8");
-      expect(content).toContain("cliContracts");
+      expect(content).toContain("cli_contracts");
       expect(content).toContain("foo");
     });
 
@@ -126,7 +126,7 @@ describe("CLI integration", () => {
       expect(exitCode).toBe(0);
       const result = JSON.parse(stdout);
       expect(result.valid).toBe(true);
-      expect(result.errorCount).toBe(0);
+      expect(result.error_count).toBe(0);
     });
 
     it("detects errors in invalid contract (exit 9)", async () => {
@@ -138,7 +138,7 @@ describe("CLI integration", () => {
       expect(exitCode).toBe(9);
       const result = JSON.parse(stdout);
       expect(result.valid).toBe(false);
-      expect(result.errorCount).toBeGreaterThan(0);
+      expect(result.error_count).toBeGreaterThan(0);
     });
   });
 
@@ -180,7 +180,7 @@ describe("CLI integration", () => {
       const { exitCode, stdout } = await runCli(["diff", f, f]);
       expect(exitCode).toBe(0);
       const result = JSON.parse(stdout);
-      expect(result.hasBreakingChanges).toBe(false);
+      expect(result.has_breaking_changes).toBe(false);
     });
 
     it("reports breaking changes when commands are removed (exit 7)", async () => {
@@ -191,8 +191,8 @@ describe("CLI integration", () => {
       ]);
       expect(exitCode).toBe(7);
       const result = JSON.parse(stdout);
-      expect(result.hasBreakingChanges).toBe(true);
-      expect(result.breakingCount).toBeGreaterThan(0);
+      expect(result.has_breaking_changes).toBe(true);
+      expect(result.breaking_count).toBeGreaterThan(0);
     });
   });
 });

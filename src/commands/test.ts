@@ -161,7 +161,7 @@ async function executeTestCase(
     };
   }
 
-  const csProfile = profile.commandSets[testCase.commandSet];
+  const csProfile = profile.command_sets[testCase.commandSet];
   if (!csProfile) {
     return {
       id: testCase.id,

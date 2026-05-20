@@ -1,8 +1,8 @@
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: ""
   version: 1.0.0
-commandSets:
+command_sets:
   broken:
     commands:
       missing-summary:

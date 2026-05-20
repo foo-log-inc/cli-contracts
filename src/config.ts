@@ -33,11 +33,11 @@ export function getContractFiles(config?: CliContractsConfig): string[] {
 export function getDefaultProfile(
   config?: CliContractsConfig,
 ): string | undefined {
-  if (!config?.executionProfiles) return undefined;
-  for (const [name, profile] of Object.entries(config.executionProfiles)) {
+  if (!config?.execution_profiles) return undefined;
+  for (const [name, profile] of Object.entries(config.execution_profiles)) {
     if (profile.default) return name;
   }
-  return Object.keys(config.executionProfiles)[0];
+  return Object.keys(config.execution_profiles)[0];
 }
 
 export function buildDefaultConfig(): string {

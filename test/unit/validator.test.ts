@@ -12,7 +12,7 @@ describe("validateContract", () => {
     );
     const result = validateContract(doc);
     expect(result.valid).toBe(true);
-    expect(result.errorCount).toBe(0);
+    expect(result.error_count).toBe(0);
   });
 
   it("validates a minimal contract without errors", async () => {
@@ -21,7 +21,7 @@ describe("validateContract", () => {
     );
     const result = validateContract(doc);
     expect(result.valid).toBe(true);
-    expect(result.errorCount).toBe(0);
+    expect(result.error_count).toBe(0);
   });
 
   // ── Structural checks (now caught by Zod at parse time) ─────
@@ -29,11 +29,11 @@ describe("validateContract", () => {
   it("rejects missing info.title at parse time", () => {
     expect(() =>
       parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: ""
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -48,11 +48,11 @@ commandSets:
   it("rejects missing command summary at parse time", () => {
     expect(() =>
       parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets:
+command_sets:
   x:
     commands:
       broken:
@@ -66,11 +66,11 @@ commandSets:
   it("rejects empty commandSets at parse time", () => {
     expect(() =>
       parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Test
   version: 1.0.0
-commandSets: {}
+command_sets: {}
 `),
     ).toThrow(/At least one command set/);
   });
@@ -143,11 +143,11 @@ commandSets: {}
 
   it("warns on stream schema conflict", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Stream Test
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       filter:

@@ -10,7 +10,7 @@ describe("runDiff", () => {
       resolve(FIXTURES, "valid-contract.yaml"),
       resolve(FIXTURES, "valid-contract.yaml"),
     );
-    expect(result.hasBreakingChanges).toBe(false);
+    expect(result.has_breaking_changes).toBe(false);
     expect(result.changes.length).toBe(0);
   });
 
@@ -20,7 +20,7 @@ describe("runDiff", () => {
       resolve(FIXTURES, "valid-contract.yaml"),
     );
     const added = result.changes.filter(
-      (c) => c.type === "added" && c.path.startsWith("/commandSets/"),
+      (c) => c.type === "added" && c.path.startsWith("/command_sets/"),
     );
     expect(added.length).toBeGreaterThan(0);
   });
@@ -34,7 +34,7 @@ describe("runDiff", () => {
       (c) => c.type === "removed" && c.breaking,
     );
     expect(removed.length).toBeGreaterThan(0);
-    expect(result.hasBreakingChanges).toBe(true);
+    expect(result.has_breaking_changes).toBe(true);
   });
 
   it("breakingOnly filters non-breaking changes", async () => {

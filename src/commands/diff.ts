@@ -23,9 +23,9 @@ export async function runDiff(
     : changes;
 
   return {
-    hasBreakingChanges: filtered.some((c) => c.breaking),
-    breakingCount: filtered.filter((c) => c.breaking).length,
-    nonBreakingCount: filtered.filter((c) => !c.breaking).length,
+    has_breaking_changes: filtered.some((c) => c.breaking),
+    breaking_count: filtered.filter((c) => c.breaking).length,
+    non_breaking_count: filtered.filter((c) => !c.breaking).length,
     changes: filtered,
   };
 }
@@ -36,27 +36,27 @@ function diffContracts(
 ): DiffChange[] {
   const changes: DiffChange[] = [];
 
-  const oldSets = Object.keys(oldDoc.commandSets);
-  const newSets = Object.keys(newDoc.commandSets);
+  const oldSets = Object.keys(oldDoc.command_sets);
+  const newSets = Object.keys(newDoc.command_sets);
 
   for (const setId of oldSets) {
     if (!newSets.includes(setId)) {
       changes.push({
         type: "removed",
-        path: `/commandSets/${setId}`,
+        path: `/command_sets/${setId}`,
         breaking: true,
         description: `Command set "${setId}" was removed`,
       });
       continue;
     }
 
-    const oldCs = oldDoc.commandSets[setId];
-    const newCs = newDoc.commandSets[setId];
+    const oldCs = oldDoc.command_sets[setId];
+    const newCs = newDoc.command_sets[setId];
 
     if (oldCs.executable !== newCs.executable && newCs.executable !== undefined) {
       changes.push({
         type: "changed",
-        path: `/commandSets/${setId}/executable`,
+        path: `/command_sets/${setId}/executable`,
         breaking: true,
         description: `Executable changed from "${oldCs.executable ?? setId}" to "${newCs.executable}"`,
       });
@@ -69,7 +69,7 @@ function diffContracts(
       if (!newCmds.includes(cmdId)) {
         changes.push({
           type: "removed",
-          path: `/commandSets/${setId}/commands/${cmdId}`,
+          path: `/command_sets/${setId}/commands/${cmdId}`,
           breaking: true,
           description: `Command "${cmdId}" was removed from "${setId}"`,
         });
@@ -86,7 +86,7 @@ function diffContracts(
         if (!newExits.includes(code)) {
           changes.push({
             type: "removed",
-            path: `/commandSets/${setId}/commands/${cmdId}/exits/${code}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/exits/${code}`,
             breaking: true,
             description: `Exit code ${code} removed from "${cmdId}"`,
           });
@@ -96,7 +96,7 @@ function diffContracts(
         if (!oldExits.includes(code)) {
           changes.push({
             type: "added",
-            path: `/commandSets/${setId}/commands/${cmdId}/exits/${code}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/exits/${code}`,
             breaking: false,
             description: `Exit code ${code} added to "${cmdId}"`,
           });
@@ -110,7 +110,7 @@ function diffContracts(
         if (!newOpts.includes(optName)) {
           changes.push({
             type: "removed",
-            path: `/commandSets/${setId}/commands/${cmdId}/options/${optName}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/options/${optName}`,
             breaking: true,
             description: `Option "--${optName}" removed from "${cmdId}"`,
           });
@@ -121,7 +121,7 @@ function diffContracts(
           const newOpt = newCmd.options!.find((o) => o.name === optName)!;
           changes.push({
             type: "added",
-            path: `/commandSets/${setId}/commands/${cmdId}/options/${optName}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/options/${optName}`,
             breaking: !!newOpt.required,
             description: `Option "--${optName}" added to "${cmdId}"${newOpt.required ? " (required — breaking)" : ""}`,
           });
@@ -135,7 +135,7 @@ function diffContracts(
         if (!newArgs.includes(argName)) {
           changes.push({
             type: "removed",
-            path: `/commandSets/${setId}/commands/${cmdId}/arguments/${argName}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/arguments/${argName}`,
             breaking: true,
             description: `Argument "${argName}" removed from "${cmdId}"`,
           });
@@ -146,7 +146,7 @@ function diffContracts(
           const newArg = newCmd.arguments!.find((a) => a.name === argName)!;
           changes.push({
             type: "added",
-            path: `/commandSets/${setId}/commands/${cmdId}/arguments/${argName}`,
+            path: `/command_sets/${setId}/commands/${cmdId}/arguments/${argName}`,
             breaking: !!newArg.required,
             description: `Argument "${argName}" added to "${cmdId}"${newArg.required ? " (required — breaking)" : ""}`,
           });
@@ -158,7 +158,7 @@ function diffContracts(
       if (!oldCmds.includes(cmdId)) {
         changes.push({
           type: "added",
-          path: `/commandSets/${setId}/commands/${cmdId}`,
+          path: `/command_sets/${setId}/commands/${cmdId}`,
           breaking: false,
           description: `Command "${cmdId}" added to "${setId}"`,
         });
@@ -170,7 +170,7 @@ function diffContracts(
     if (!oldSets.includes(setId)) {
       changes.push({
         type: "added",
-        path: `/commandSets/${setId}`,
+        path: `/command_sets/${setId}`,
         breaking: false,
         description: `Command set "${setId}" was added`,
       });

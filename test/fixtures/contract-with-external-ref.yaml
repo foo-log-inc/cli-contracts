@@ -1,11 +1,11 @@
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 
 info:
   title: External Ref CLI
   version: 1.0.0
   description: Contract with external $ref for testing.
 
-commandSets:
+command_sets:
   audit:
     summary: Audit tool.
     commands:

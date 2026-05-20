@@ -113,7 +113,7 @@ function getIterableFromContext(
 ): unknown[] {
   switch (key) {
     case "commandSets":
-      return ctx.commandSets;
+      return ctx.command_sets;
     default:
       return [];
   }

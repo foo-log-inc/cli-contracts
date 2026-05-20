@@ -10,11 +10,11 @@ import {
 describe("collectRefs", () => {
   it("collects all $ref strings", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Ref Test
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -49,11 +49,11 @@ components:
 describe("validateRefs", () => {
   it("validates all internal refs resolve", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Valid Refs
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -77,11 +77,11 @@ components:
 
   it("detects unresolved refs", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Bad Refs
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -103,11 +103,11 @@ commandSets:
 describe("resolveRefs", () => {
   it("resolves internal $ref pointers", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Resolve Test
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -129,7 +129,7 @@ components:
           type: string
 `);
     const resolved = resolveRefs(doc);
-    const schema = resolved.commandSets.x.commands.hello.exits["0"].stdout?.schema;
+    const schema = resolved.command_sets.x.commands.hello.exits["0"].stdout?.schema;
     expect(schema).toBeDefined();
     expect(schema?.type).toBe("object");
     expect(schema?.required).toEqual(["status"]);
@@ -140,11 +140,11 @@ components:
 
   it("throws on circular refs", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: Circular
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -168,11 +168,11 @@ components:
 
   it("leaves external refs untouched", () => {
     const doc = parseContractString(`
-cliContracts: 0.1.0
+cli_contracts: 0.1.0
 info:
   title: External Ref
   version: 0.1.0
-commandSets:
+command_sets:
   x:
     commands:
       hello:
@@ -186,7 +186,7 @@ commandSets:
                 $ref: ./schemas/external.json
 `);
     const resolved = resolveRefs(doc);
-    const schema = resolved.commandSets.x.commands.hello.exits["0"].stdout?.schema;
+    const schema = resolved.command_sets.x.commands.hello.exits["0"].stdout?.schema;
     expect(schema?.$ref).toBe("./schemas/external.json");
   });
 });

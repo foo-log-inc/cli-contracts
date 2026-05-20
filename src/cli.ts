@@ -142,13 +142,13 @@ const handlers: CommandHandlers = {
       const config = configResult?.config;
       const files = getContractFiles(config);
       const result = await runContractTests(files, {
-        profile: options.profile ?? config?.contractTests?.profile,
+        profile: options.profile ?? config?.contract_tests?.profile,
         caseIds: options.case ? [options.case] : undefined,
-        casesDir: options.casesDir ?? config?.contractTests?.casesDir,
+        casesDir: options.casesDir ?? config?.contract_tests?.cases_dir,
         timeoutMs: options.timeout ? Number(options.timeout) : 30000,
         bail: options.bail,
-        env: config?.contractTests?.env,
-        executionProfiles: config?.executionProfiles,
+        env: config?.contract_tests?.env,
+        executionProfiles: config?.execution_profiles,
       });
 
       writeOut(result, fmt);
@@ -171,7 +171,7 @@ const handlers: CommandHandlers = {
         breakingOnly: options.breakingOnly,
       });
       writeOut(result, fmt);
-      process.exit(result.hasBreakingChanges ? 7 : 0);
+      process.exit(result.has_breaking_changes ? 7 : 0);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);

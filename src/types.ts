@@ -48,9 +48,9 @@ export type {
 // ─── Normalized Context (for generators) ────────────────────────
 
 export interface NormalizedContext {
-  specVersion: string;
+  spec_version: string;
   info: import("./schema.js").Info;
-  commandSets: NormalizedCommandSet[];
+  command_sets: NormalizedCommandSet[];
   components: import("./schema.js").Components;
 }
 
@@ -59,7 +59,7 @@ export interface NormalizedCommandSet {
   executable: string;
   summary?: string;
   description?: string;
-  globalOptions: import("./schema.js").Option[];
+  global_options: import("./schema.js").Option[];
   env: Record<string, import("./schema.js").EnvVar>;
   commands: NormalizedCommand[];
   extensions: Record<string, unknown>;
@@ -67,7 +67,7 @@ export interface NormalizedCommandSet {
 
 export interface NormalizedCommand {
   id: string;
-  fullId: string;
+  full_id: string;
   path: string[];
   invocation: string;
   summary: string;
@@ -75,7 +75,7 @@ export interface NormalizedCommand {
   usage?: string[];
   arguments: import("./schema.js").Argument[];
   options: import("./schema.js").Option[];
-  allOptions: import("./schema.js").Option[];
+  all_options: import("./schema.js").Option[];
   effects?: import("./schema.js").Effects;
   streams?: import("./schema.js").Streams;
   signals?: Record<string, import("./schema.js").Signal>;
@@ -86,7 +86,7 @@ export interface NormalizedCommand {
 }
 
 export interface NormalizedExit {
-  exitCode: number;
+  exit_code: number;
   description: string;
   stdout?: import("./schema.js").OutputContract;
   stderr?: import("./schema.js").OutputContract;
@@ -104,8 +104,8 @@ export interface Diagnostic {
 
 export interface ValidateResult {
   valid: boolean;
-  errorCount: number;
-  warningCount: number;
+  error_count: number;
+  warning_count: number;
   errors: Diagnostic[];
   warnings: Diagnostic[];
 }
@@ -133,8 +133,8 @@ export interface DiffChange {
 }
 
 export interface DiffResult {
-  hasBreakingChanges: boolean;
-  breakingCount: number;
-  nonBreakingCount: number;
+  has_breaking_changes: boolean;
+  breaking_count: number;
+  non_breaking_count: number;
   changes: DiffChange[];
 }

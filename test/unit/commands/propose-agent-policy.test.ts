@@ -27,7 +27,7 @@ describe("propose-agent-policy command", () => {
 
     const r = result as { prompt: string };
     expect(r.prompt).toContain("users.import");
-    expect(r.prompt).toContain("riskLevel: high");
+    expect(r.prompt).toContain("risk_level: high");
   });
 
   it("returns exit code 2 for invalid contract", async () => {
