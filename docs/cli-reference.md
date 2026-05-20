@@ -3379,9 +3379,9 @@ cli-contracts extract --all
   | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
   | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
   | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-  | `cli_contracts` | `string` | No | Spec version from the source contract. |
+  | `cli_contracts` | `string` | Yes | Spec version from the source contract. |
   | `info` | `object` | Yes | Info block from the source contract. |
-  | `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
+  | `command_sets` | `object` | Yes | Subset of command sets containing only the requested commands. |
   | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
   <details>
@@ -3391,9 +3391,9 @@ cli-contracts extract --all
   {
     "type": "object",
     "required": [
-      "cliContracts",
+      "cli_contracts",
       "info",
-      "commandSets"
+      "command_sets"
     ],
     "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
     "properties": {
@@ -3653,9 +3653,9 @@ cli-contracts extract --all
   | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
   | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
   | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-  | `cli_contracts` | `string` | No | Spec version from the source contract. |
+  | `cli_contracts` | `string` | Yes | Spec version from the source contract. |
   | `info` | `object` | Yes | Info block from the source contract. |
-  | `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
+  | `command_sets` | `object` | Yes | Subset of command sets containing only the requested commands. |
   | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
   <details>
@@ -3665,9 +3665,9 @@ cli-contracts extract --all
   {
     "type": "object",
     "required": [
-      "cliContracts",
+      "cli_contracts",
       "info",
-      "commandSets"
+      "command_sets"
     ],
     "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
     "properties": {
@@ -7043,9 +7043,9 @@ Type: `object`
 | `_meta.extractedAt` | `string (format: date-time)` | Yes | ISO 8601 timestamp of extraction. |
 | `_meta.specVersion` | `string` | No | CLI Contracts spec version from the source. |
 | `_meta.commands` | `string[]` | Yes | List of command IDs that were extracted. |
-| `cli_contracts` | `string` | No | Spec version from the source contract. |
+| `cli_contracts` | `string` | Yes | Spec version from the source contract. |
 | `info` | `object` | Yes | Info block from the source contract. |
-| `command_sets` | `object` | No | Subset of command sets containing only the requested commands. |
+| `command_sets` | `object` | Yes | Subset of command sets containing only the requested commands. |
 | `components` | `object` | No | Only the schemas referenced by extracted commands. |
 
 <details>
@@ -7055,9 +7055,9 @@ Type: `object`
 {
   "type": "object",
   "required": [
-    "cliContracts",
+    "cli_contracts",
     "info",
-    "commandSets"
+    "command_sets"
   ],
   "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
   "properties": {

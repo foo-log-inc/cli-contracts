@@ -23,7 +23,7 @@
     }
   },
   "peerDependencies": {
-    "agent-contracts-runtime": "^0.13.0"
+    "agent-contracts-runtime": "^0.30.0"
   },
   "peerDependenciesMeta": {
     "agent-contracts-runtime": {
@@ -88,7 +88,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
     "agent-contracts": "^0.24.1",
-    "agent-contracts-runtime": "^0.13.0",
+    "agent-contracts-runtime": "^0.30.0",
     "tsx": "^4.19.4",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0",

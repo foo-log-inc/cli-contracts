@@ -410,9 +410,9 @@ export const schemas = {
   ExtractResult: {
     "type": "object",
     "required": [
-      "cliContracts",
+      "cli_contracts",
       "info",
-      "commandSets"
+      "command_sets"
     ],
     "description": "A self-contained contract subset with all $ref resolved inline. When --include-meta is true, a _meta property is included.",
     "properties": {
