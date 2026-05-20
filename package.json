@@ -87,7 +87,7 @@
     "@cursor/sdk": "^1.0.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
-    "agent-contracts": "^0.24.1",
+    "agent-contracts": "^0.30.0",
     "agent-contracts-runtime": "^0.30.0",
     "tsx": "^4.19.4",
     "typescript": "^5.3.3",

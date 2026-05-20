@@ -2047,7 +2047,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -2063,17 +2063,17 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -2086,14 +2086,14 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -2193,7 +2193,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -2243,7 +2243,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -2378,7 +2378,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -2394,17 +2394,17 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -2417,14 +2417,14 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -2524,7 +2524,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -2574,7 +2574,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -2713,7 +2713,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -2729,17 +2729,17 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -2752,14 +2752,14 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -2859,7 +2859,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -2909,7 +2909,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -3044,7 +3044,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -3060,17 +3060,17 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -3083,14 +3083,14 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -3190,7 +3190,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -3240,7 +3240,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -3810,7 +3810,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -3826,17 +3826,17 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -3849,14 +3849,14 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -3956,7 +3956,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -4006,7 +4006,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -4141,7 +4141,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -4157,17 +4157,17 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -4180,14 +4180,14 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -4287,7 +4287,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -4337,7 +4337,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -4478,7 +4478,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -4494,17 +4494,17 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -4517,14 +4517,14 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -4624,7 +4624,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -4674,7 +4674,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -4809,7 +4809,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -4825,17 +4825,17 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -4848,14 +4848,14 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -4955,7 +4955,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -5005,7 +5005,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -5143,7 +5143,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -5159,17 +5159,17 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -5182,14 +5182,14 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -5289,7 +5289,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -5339,7 +5339,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -5474,7 +5474,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -5490,17 +5490,17 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -5513,14 +5513,14 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -5620,7 +5620,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -5670,7 +5670,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -5807,7 +5807,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -5823,17 +5823,17 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -5846,14 +5846,14 @@ cli-contracts suggest --from-readme README.md --adapter gemini
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -5953,7 +5953,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -6003,7 +6003,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
@@ -6138,7 +6138,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | Property | Type | Required | Description |
   |---|---|---|---|
   | `summary` | `string` | Yes |  |
-  | `riskLevel` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
   | `findings` | `object[]` | Yes |  |
   | `findings[].id` | `string` | No | Unique finding identifier. |
   | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
@@ -6154,17 +6154,17 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
   | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
   | `findings[].details` | `Record<string, any>` | No |  |
-  | `recommendedActions` | `object[]` | No |  |
-  | `recommendedActions[].kind` | `enum(6 values)` | Yes |  |
-  | `recommendedActions[].title` | `string` | Yes |  |
-  | `recommendedActions[].command` | `string` | No | CLI command to run (for run_command kind). |
-  | `recommendedActions[].target` | `string` | No | Target file or resource. |
-  | `recommendedActions[].rationale` | `string` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
   | `metadata` | `object` | No |  |
   | `metadata.tool` | `string` | No |  |
   | `metadata.command` | `string` | No |  |
   | `metadata.version` | `string` | No |  |
-  | `metadata.generatedAt` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
   | `metadata.adapter` | `string` | No |  |
   | `metadata.model` | `string` | No |  |
 
@@ -6177,14 +6177,14 @@ cli-contracts suggest --from-readme README.md --adapter gemini
     "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
     "required": [
       "summary",
-      "riskLevel",
+      "risk_level",
       "findings"
     ],
     "properties": {
       "summary": {
         "type": "string"
       },
-      "riskLevel": {
+      "risk_level": {
         "type": "string",
         "enum": [
           "low",
@@ -6284,7 +6284,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           }
         }
       },
-      "recommendedActions": {
+      "recommended_actions": {
         "type": "array",
         "items": {
           "type": "object",
@@ -6334,7 +6334,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
           "version": {
             "type": "string"
           },
-          "generatedAt": {
+          "generated_at": {
             "type": "string"
           },
           "adapter": {
