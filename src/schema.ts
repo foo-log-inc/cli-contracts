@@ -95,6 +95,13 @@ export const EffectReadSchema = z.object({
   description: z.string().optional(),
 });
 
+export const SlotDirectionSchema = z.enum(["read", "write", "readwrite"]);
+
+export const ArtifactSlotSchema = z.object({
+  description: z.string().optional(),
+  direction: SlotDirectionSchema,
+});
+
 export const NetworkEffectSchema = z.union([
   z.boolean(),
   z.object({
@@ -109,8 +116,12 @@ export const NetworkEffectSchema = z.union([
 
 export const EffectsSchema = z.object({
   riskLevel: RiskLevelSchema.optional(),
-  reads: z.array(EffectReadSchema).optional(),
-  writes: z.array(EffectWriteSchema).optional(),
+  reads: z
+    .union([z.array(z.string()), z.array(EffectReadSchema)])
+    .optional(),
+  writes: z
+    .union([z.array(z.string()), z.array(EffectWriteSchema)])
+    .optional(),
   network: NetworkEffectSchema.optional(),
   executionMode: ExecutionModeSchema.optional(),
   requiresConfirmation: z.boolean().optional(),
@@ -293,6 +304,7 @@ export const ComponentsSchema = z.object({
 export const CliContractsDocumentSchema = z.object({
   cliContracts: z.string().min(1, "Spec version (cliContracts) is required"),
   info: InfoSchema,
+  artifactSlots: z.record(z.string(), ArtifactSlotSchema).optional(),
   commandSets: z
     .record(z.string(), CommandSetSchema)
     .refine((cs) => Object.keys(cs).length > 0, {
@@ -383,6 +395,8 @@ export type Rollback = z.infer<typeof RollbackSchema>;
 
 export type RiskLevel = z.infer<typeof RiskLevelSchema>;
 export type ExecutionMode = z.infer<typeof ExecutionModeSchema>;
+export type SlotDirection = z.infer<typeof SlotDirectionSchema>;
+export type ArtifactSlot = z.infer<typeof ArtifactSlotSchema>;
 export type EffectWrite = z.infer<typeof EffectWriteSchema>;
 export type EffectRead = z.infer<typeof EffectReadSchema>;
 export type NetworkEffect = z.infer<typeof NetworkEffectSchema>;

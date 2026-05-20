@@ -11,7 +11,7 @@
 
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { toJSONSchema, type ZodType } from "zod";
 import {
   CliContractsDocumentSchema,
   CliContractsConfigSchema,
@@ -23,20 +23,16 @@ mkdirSync(SCHEMAS_DIR, { recursive: true });
 
 function generate(
   filename: string,
-  zodSchema: Parameters<typeof zodToJsonSchema>[0],
+  zodSchema: ZodType,
   title: string,
   description: string,
 ): void {
-  const jsonSchema = zodToJsonSchema(zodSchema, {
-    name: title,
-    $refStrategy: "none",
-  });
+  const jsonSchema = toJSONSchema(zodSchema);
 
   const output = {
-    $schema: "http://json-schema.org/draft-07/schema#",
+    ...jsonSchema,
     title,
     description,
-    ...jsonSchema,
   };
 
   const outPath = resolve(SCHEMAS_DIR, filename);
