@@ -109,7 +109,6 @@ export interface ProposeAgentPolicyOptions {
   file?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
@@ -135,7 +134,6 @@ export interface AuditOptions {
   checks?: "agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk";
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
@@ -179,7 +177,6 @@ export interface ProposeTestsOptions {
   file?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
@@ -207,7 +204,6 @@ export interface ExplainDiffOptions {
   contractPath?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
@@ -232,7 +228,6 @@ export interface CheckReferenceOptions {
   file?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
@@ -255,7 +250,6 @@ export interface SuggestOptions {
   fromSource?: string;
   adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
   model?: string;
-  showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";

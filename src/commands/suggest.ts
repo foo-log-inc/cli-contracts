@@ -19,7 +19,7 @@ export interface SuggestOptions {
 
 export async function runSuggest(
   options: SuggestOptions,
-): Promise<{ result: unknown; exitCode: number }> {
+): Promise<string | { result: unknown; exitCode: number }> {
   if (!options.fromReadme && !options.fromHelp && !options.fromSource) {
     return {
       result: {
@@ -44,6 +44,10 @@ export async function runSuggest(
 
   const userRequest = buildSuggestContext(sources);
 
+  if (options.showPrompt) {
+    return userRequest;
+  }
+
   const auditConfig: AuditConfig = {
     adapter: options.adapter,
     model: options.model,
@@ -52,7 +56,6 @@ export async function runSuggest(
   const auditOptions: AuditOptions = {
     taskId: "suggest-contract",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -63,13 +66,6 @@ export async function runSuggest(
     auditConfig,
     auditOptions,
   );
-
-  if (auditResult.showPrompt) {
-    return {
-      result: { showPrompt: true, prompt: auditResult.prompt },
-      exitCode: 0,
-    };
-  }
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Suggestion completed",

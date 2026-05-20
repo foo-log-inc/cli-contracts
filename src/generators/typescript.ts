@@ -493,11 +493,15 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
     params.push(`${safeIdentifier(arg.name)}: ${type}`);
   }
 
-  if (cmd.options.length > 0) {
-    const optFields = cmd.options.map((o) => {
-      const type = o.schema?.type === "boolean" ? "boolean" : "string";
-      return `${toCamelCase(o.name)}?: ${type}`;
-    });
+  const optFields = cmd.options.map((o) => {
+    const type = o.schema?.type === "boolean" ? "boolean" : "string";
+    return `${toCamelCase(o.name)}?: ${type}`;
+  });
+  if (commandIsLlmPowered(cmd) && !commandHasManualShowPrompt(cmd)) {
+    optFields.push("showPrompt?: boolean");
+  }
+
+  if (optFields.length > 0) {
     params.push(`options: { ${optFields.join("; ")} }`);
   } else {
     params.push("options: Record<string, never>");
@@ -505,7 +509,9 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
 
   params.push("parentOpts: Record<string, unknown>");
 
-  return `(${params.join(", ")}) => Promise<void>`;
+  const isLlm = commandIsLlmPowered(cmd);
+  const returnType = isLlm ? "Promise<void | string>" : "Promise<void>";
+  return `(${params.join(", ")}) => ${returnType}`;
 }
 
 function generateProgramCommand(
@@ -543,6 +549,12 @@ function generateProgramCommand(
     }
   }
 
+  if (commandIsLlmPowered(cmd) && !commandHasManualShowPrompt(cmd)) {
+    lines.push(
+      `    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)`,
+    );
+  }
+
   const argSafeNames = cmd.arguments.map((a) => safeIdentifier(a.name));
   const actionParams = [...argSafeNames];
   actionParams.push("opts");
@@ -561,11 +573,24 @@ function generateProgramCommand(
     lines.push("      }");
   }
 
+  const isLlm = commandIsLlmPowered(cmd);
+  const hasOpts = cmd.options.length > 0 || isLlm;
   const callArgs = [
     ...argSafeNames,
-    cmd.options.length > 0 ? "opts" : "{}",
+    hasOpts ? "opts" : "{}",
     hasEffects ? "globalOpts" : "cmd.optsWithGlobals()",
   ];
+
+  if (isLlm) {
+    lines.push("      if (opts.showPrompt) {");
+    lines.push(
+      `        const prompt = await handlers.${handlerName}(${callArgs.join(", ")});`,
+    );
+    lines.push("        if (typeof prompt === \"string\") process.stdout.write(prompt + \"\\n\");");
+    lines.push("        return;");
+    lines.push("      }");
+  }
+
   lines.push(
     `      await handlers.${handlerName}(${callArgs.join(", ")});`,
   );
@@ -593,6 +618,14 @@ function contextHasEffects(ctx: NormalizedContext): boolean {
     }
   }
   return false;
+}
+
+function commandIsLlmPowered(cmd: NormalizedCommand): boolean {
+  return cmd.options.some((o) => o.name === "adapter");
+}
+
+function commandHasManualShowPrompt(cmd: NormalizedCommand): boolean {
+  return cmd.options.some((o) => o.name === "show-prompt");
 }
 
 const __filename = fileURLToPath(import.meta.url);

@@ -9,13 +9,13 @@ export interface CommandHandlers {
   docs: (options: { file?: string; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeAgentPolicy: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  audit: (contract: string | undefined, options: { file?: string; checks?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeAgentPolicy: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  audit: (contract: string | undefined, options: { file?: string; checks?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
+  proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
 }
 
 export function createProgram(
@@ -146,15 +146,20 @@ export function createProgram(
     .option("-f, --file <file>", "Contract file to analyze (alternative to positional argument).")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("propose-agent-policy", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.proposeAgentPolicy(contract, opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.proposeAgentPolicy(contract, opts, globalOpts);
@@ -168,15 +173,20 @@ export function createProgram(
     .option("--checks <check...>", "Audit dimension(s) to run.")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("audit", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.audit(contract, opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.audit(contract, opts, globalOpts);
@@ -206,15 +216,20 @@ export function createProgram(
     .option("-f, --file <file>", "Contract file to analyze (alternative to positional argument).")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("propose-tests", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.proposeTests(contract, opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.proposeTests(contract, opts, globalOpts);
@@ -230,15 +245,20 @@ export function createProgram(
     .option("-p, --contract-path <path>", "Contract file path within the repository (used with --base/--head).", "cli-contract.yaml")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the audit report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (old, newArg, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("explain-diff", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.explainDiff(old, newArg, opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.explainDiff(old, newArg, opts, globalOpts);
@@ -251,15 +271,20 @@ export function createProgram(
     .option("-f, --file <file>", "Contract file to check (alternative to positional argument).")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the conformance report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("check-reference", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.checkReference(contract, opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.checkReference(contract, opts, globalOpts);
@@ -273,15 +298,20 @@ export function createProgram(
     .option("--from-source <file>", "Path to CLI source code file.")
     .option("--adapter <name>", "LLM adapter to use.")
     .option("--model <name>", "Model name to pass to the adapter.")
-    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
     .option("--report-format <fmt>", "Output format for the suggestion report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
         const policy = deriveCommandPolicy("suggest", opts);
         console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.suggest(opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
         return;
       }
       await handlers.suggest(opts, globalOpts);

@@ -189,7 +189,10 @@ const handlers: CommandHandlers = {
           ? [options.file]
           : getContractFiles(configResult?.config);
 
-      const { result, exitCode } = await runProposeAgentPolicy(files, options);
+      const ret = await runProposeAgentPolicy(files, options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
@@ -223,7 +226,10 @@ const handlers: CommandHandlers = {
           ? [options.file]
           : getContractFiles(configResult?.config);
 
-      const { result, exitCode } = await runAuditCommand(files, options);
+      const ret = await runAuditCommand(files, options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
@@ -257,7 +263,10 @@ const handlers: CommandHandlers = {
           ? [options.file]
           : getContractFiles(configResult?.config);
 
-      const { result, exitCode } = await runProposeTests(files, options);
+      const ret = await runProposeTests(files, options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
@@ -282,7 +291,10 @@ const handlers: CommandHandlers = {
 
   async explainDiff(old, newArg, options, _parentOpts) {
     try {
-      const { result, exitCode } = await runExplainDiff(old, newArg, options);
+      const ret = await runExplainDiff(old, newArg, options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
@@ -316,7 +328,10 @@ const handlers: CommandHandlers = {
           ? [options.file]
           : getContractFiles(configResult?.config);
 
-      const { result, exitCode } = await runCheckReference(files, options);
+      const ret = await runCheckReference(files, options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
@@ -341,7 +356,10 @@ const handlers: CommandHandlers = {
 
   async suggest(options, _parentOpts) {
     try {
-      const { result, exitCode } = await runSuggest(options);
+      const ret = await runSuggest(options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
 
       if (options.reportFormat === "text") {
         process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");

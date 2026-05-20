@@ -21,7 +21,7 @@ export interface AuditCommandOptions {
 export async function runAuditCommand(
   contractFiles: string[],
   options: AuditCommandOptions,
-): Promise<{ result: unknown; exitCode: number }> {
+): Promise<string | { result: unknown; exitCode: number }> {
   const filePath = resolve(options.file ?? contractFiles[0]);
   const doc = await parseContractFile(filePath);
 
@@ -37,6 +37,10 @@ export async function runAuditCommand(
   const resolved = resolveRefs(doc, { basePath: dirname(filePath) });
   const userRequest = buildDesignAuditContext(resolved, checks);
 
+  if (options.showPrompt) {
+    return userRequest;
+  }
+
   const auditConfig: AuditConfig = {
     adapter: options.adapter,
     model: options.model,
@@ -45,7 +49,6 @@ export async function runAuditCommand(
   const auditOptions: AuditOptions = {
     taskId: "audit-contract-design",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -56,13 +59,6 @@ export async function runAuditCommand(
     auditConfig,
     auditOptions,
   );
-
-  if (auditResult.showPrompt) {
-    return {
-      result: { showPrompt: true, prompt: auditResult.prompt },
-      exitCode: 0,
-    };
-  }
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Audit completed",

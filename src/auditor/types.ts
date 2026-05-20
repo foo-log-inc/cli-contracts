@@ -7,7 +7,6 @@ export interface AuditConfig {
 export interface AuditOptions {
   taskId: string;
   format: "json" | "text";
-  showPrompt: boolean;
   failOn: "warning" | "error" | "critical";
   outputFile?: string;
 }
@@ -18,7 +17,6 @@ export interface AuditRunResult {
   data: any | null;
   raw: string;
   prompt: string;
-  showPrompt: boolean;
   status: "success" | "validation_error" | "escalation" | "error";
   errorMessage?: string;
   followUpsUsed: number;

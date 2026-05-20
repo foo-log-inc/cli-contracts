@@ -23,7 +23,7 @@ export async function runExplainDiff(
   oldPath: string | undefined,
   newPath: string | undefined,
   options: ExplainDiffOptions,
-): Promise<{ result: unknown; exitCode: number }> {
+): Promise<string | { result: unknown; exitCode: number }> {
   if (!oldPath || !newPath) {
     return {
       result: { code: "INVALID_ARGS", message: "Both old and new contract files are required" },
@@ -44,6 +44,10 @@ export async function runExplainDiff(
     newDoc.info.version,
   );
 
+  if (options.showPrompt) {
+    return userRequest;
+  }
+
   const auditConfig: AuditConfig = {
     adapter: options.adapter,
     model: options.model,
@@ -52,7 +56,6 @@ export async function runExplainDiff(
   const auditOptions: AuditOptions = {
     taskId: "explain-contract-diff",
     format: (options.reportFormat as "json" | "text") ?? "json",
-    showPrompt: options.showPrompt ?? false,
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
   };
@@ -63,13 +66,6 @@ export async function runExplainDiff(
     auditConfig,
     auditOptions,
   );
-
-  if (auditResult.showPrompt) {
-    return {
-      result: { showPrompt: true, prompt: auditResult.prompt },
-      exitCode: 0,
-    };
-  }
 
   const output = auditResult.data ?? {
     summary: auditResult.errorMessage ?? "Diff explanation completed",

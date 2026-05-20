@@ -68,19 +68,6 @@ export async function runAudit(
   auditConfig: AuditConfig,
   options: AuditOptions,
 ): Promise<AuditRunResult> {
-  if (options.showPrompt) {
-    return {
-      taskId,
-      data: null,
-      raw: "",
-      prompt: userRequest,
-      showPrompt: true,
-      status: "success",
-      followUpsUsed: 0,
-      retriesUsed: 0,
-    };
-  }
-
   const RUNTIME_PKG = ["agent-contracts", "runtime"].join("-");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,7 +124,6 @@ export async function runAudit(
     data: outcome.status === "success" ? outcome.data : null,
     raw: (outcome.raw as string) ?? "",
     prompt: userRequest,
-    showPrompt: false,
     status: outcome.status as AuditRunResult["status"],
     errorMessage:
       outcome.status === "error" ? outcome.message :
