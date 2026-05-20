@@ -189,6 +189,7 @@ components:
 |---|:---:|---|
 | `cliContracts` | Yes | Specification version (`0.1.0`) |
 | `info` | Yes | Title, version, description, license, contact |
+| `artifactSlots` | No | Named artifact slots declaring what the tool reads/writes at an abstract level |
 | `commandSets` | Yes | One or more CLI executables or command groups |
 | `components` | No | Shared schemas, examples, and reusable definitions |
 
@@ -337,9 +338,65 @@ signals:
     description: Immediately terminates.
 ```
 
+### Artifact Slots
+
+`artifactSlots` declares what a tool reads and writes at an abstract level, without referencing any specific project artifact. Each slot has a name, optional description, and a direction (`read`, `write`, or `readwrite`).
+
+```yaml
+artifactSlots:
+  spec-source:
+    description: "Specification files to lint/verify"
+    direction: read
+  design-models:
+    description: "Design model definitions"
+    direction: read
+  implementation-source:
+    description: "Source code for annotation/traceability check"
+    direction: read
+  generated-output:
+    description: "Files generated from models"
+    direction: write
+```
+
+| Field | Required | Description |
+|---|:---:|---|
+| `description` | No | What this slot represents |
+| `direction` | Yes | `read`, `write`, or `readwrite` |
+
+Slots are domain-agnostic. The binding of slots to concrete project artifacts is handled by `artifact_bindings` in agent-contracts, not in cli-contracts.
+
+When `artifactSlots` is declared, command effects can reference slot names instead of free-text targets:
+
+```yaml
+commands:
+  lint:
+    effects:
+      reads: [spec-source, design-models]
+      writes: []
+  build:
+    effects:
+      reads: [spec-source, design-models]
+      writes: [generated-output]
+```
+
+The validator checks that slot references in `effects.reads` / `effects.writes` exist in the document-level `artifactSlots`. Referencing an undefined slot produces a validation error.
+
 ### Effects
 
-Commands and options can declare execution effects:
+Commands and options can declare execution effects. Effects support two formats for `reads` and `writes`:
+
+- **Slot references** (string array) — references to `artifactSlots` entries, used when slots are declared
+- **Descriptive objects** (object array) — free-text targets with metadata, used when slots are not declared
+
+Slot reference format:
+
+```yaml
+effects:
+  reads: [spec-source, design-models]
+  writes: [generated-output]
+```
+
+Descriptive object format:
 
 ```yaml
 effects:
@@ -809,8 +866,8 @@ build:
 | Field | Type | Description |
 |---|---|---|
 | `riskLevel` | `low` \| `medium` \| `high` \| `critical` | Risk level contributed by this command/option |
-| `writes` | `EffectWrite[]` | File write side effects |
-| `reads` | `EffectRead[]` | Semantic read side effects |
+| `writes` | `string[]` \| `EffectWrite[]` | Slot references or descriptive write side effects |
+| `reads` | `string[]` \| `EffectRead[]` | Slot references or descriptive read side effects |
 | `network` | `boolean` \| `NetworkEffect` | Network call side effects |
 | `executionMode` | `normal` \| `long-running` \| `watch` \| `interactive` \| `background` | Execution mode |
 | `requiresConfirmation` | `boolean` | Explicit override for confirmation requirement |

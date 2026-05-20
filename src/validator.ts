@@ -26,7 +26,7 @@ import type {
   ValidateResult,
 } from "./types.js";
 import { XAgentSchema, EffectsSchema } from "./schema.js";
-import type { Effects, RiskLevel } from "./schema.js";
+import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 import { derivePolicy, isOptionActive } from "./policy.js";
 
@@ -123,11 +123,12 @@ function validateCommandSets(
       validateOptions(cs.globalOptions, `${basePath}/globalOptions`, diagnostics);
     }
 
-    validateCommands(cs, setId, basePath, diagnostics);
+    validateCommands(doc, cs, setId, basePath, diagnostics);
   }
 }
 
 function validateCommands(
+  doc: CliContractsDocument,
   cs: CommandSet,
   setId: string,
   basePath: string,
@@ -159,11 +160,18 @@ function validateCommands(
       pathMap.set(cmdPath, cmdId);
     }
 
-    validateCommand(cmd, cmdId, `${basePath}/commands/${cmdId}`, diagnostics);
+    validateCommand(
+      doc,
+      cmd,
+      cmdId,
+      `${basePath}/commands/${cmdId}`,
+      diagnostics,
+    );
   }
 }
 
 function validateCommand(
+  doc: CliContractsDocument,
   cmd: Command,
   _cmdId: string,
   basePath: string,
@@ -196,6 +204,77 @@ function validateCommand(
     diagnostics.push(
       ...validateXAgentDeprecation(xAgent as Record<string, unknown>, basePath),
     );
+  }
+
+  validateSlotReferences(doc, cmd, basePath, diagnostics);
+}
+
+function effectsUseSlotReferences(effects: Effects): boolean {
+  if (effects.reads?.length && typeof effects.reads[0] === "string") {
+    return true;
+  }
+  if (effects.writes?.length && typeof effects.writes[0] === "string") {
+    return true;
+  }
+  return false;
+}
+
+function validateSlotReferences(
+  doc: CliContractsDocument,
+  cmd: Command,
+  basePath: string,
+  diagnostics: Diagnostic[],
+): void {
+  const effects = cmd.effects;
+  if (!effects) return;
+
+  if (!doc.artifactSlots) {
+    if (effectsUseSlotReferences(effects)) {
+      diagnostics.push({
+        path: `${basePath}/effects`,
+        message:
+          "Effects use slot references but artifactSlots is not declared on the document",
+        rule: "slot-reference-without-artifact-slots",
+        severity: "warning",
+      });
+    }
+    return;
+  }
+
+  const slotNames = new Set(Object.keys(doc.artifactSlots));
+
+  if (
+    effects.reads &&
+    effects.reads.length > 0 &&
+    typeof effects.reads[0] === "string"
+  ) {
+    for (const slot of effects.reads as string[]) {
+      if (!slotNames.has(slot)) {
+        diagnostics.push({
+          path: `${basePath}/effects/reads`,
+          message: `Slot reference "${slot}" not found in artifactSlots`,
+          rule: "undefined-slot-reference",
+          severity: "error",
+        });
+      }
+    }
+  }
+
+  if (
+    effects.writes &&
+    effects.writes.length > 0 &&
+    typeof effects.writes[0] === "string"
+  ) {
+    for (const slot of effects.writes as string[]) {
+      if (!slotNames.has(slot)) {
+        diagnostics.push({
+          path: `${basePath}/effects/writes`,
+          message: `Slot reference "${slot}" not found in artifactSlots`,
+          rule: "undefined-slot-reference",
+          severity: "error",
+        });
+      }
+    }
   }
 }
 

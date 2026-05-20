@@ -37,6 +37,8 @@ export type {
   Rollback,
   RiskLevel,
   ExecutionMode,
+  SlotDirection,
+  ArtifactSlot,
   EffectWrite,
   EffectRead,
   NetworkEffect,

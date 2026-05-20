@@ -5,7 +5,25 @@ import type {
   EnvVar,
   RiskLevel,
   ExecutionMode,
+  EffectWrite,
+  EffectRead,
 } from "./schema.js";
+
+function isEffectWriteArray(
+  items: string[] | EffectWrite[] | undefined,
+): items is EffectWrite[] {
+  return (
+    items !== undefined && items.length > 0 && typeof items[0] !== "string"
+  );
+}
+
+function isEffectReadArray(
+  items: string[] | EffectRead[] | undefined,
+): items is EffectRead[] {
+  return (
+    items !== undefined && items.length > 0 && typeof items[0] !== "string"
+  );
+}
 
 // ─── Derived Policy Types ───────────────────────────────────────
 
@@ -125,7 +143,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
     const ce = input.commandEffects;
     riskLevels.push(ce.riskLevel ?? "low");
 
-    if (ce.writes) {
+    if (isEffectWriteArray(ce.writes)) {
       sideEffects.add("file_write");
       for (const w of ce.writes) {
         writes.push({
@@ -142,7 +160,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
       }
     }
 
-    if (ce.reads) {
+    if (isEffectReadArray(ce.reads)) {
       for (const r of ce.reads) {
         reads.push({
           kind: "semantic",
@@ -213,7 +231,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
       const eff = definition.effects;
       riskLevels.push(eff.riskLevel ?? "low");
 
-      if (eff.writes) {
+      if (isEffectWriteArray(eff.writes)) {
         sideEffects.add("file_write");
         for (const w of eff.writes) {
           writes.push({
@@ -230,7 +248,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
         }
       }
 
-      if (eff.reads) {
+      if (isEffectReadArray(eff.reads)) {
         for (const r of eff.reads) {
           reads.push({
             kind: "semantic",
