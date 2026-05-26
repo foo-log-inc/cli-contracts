@@ -1,7 +1,7 @@
 # CLI Contracts
 
 [![npm version](https://img.shields.io/npm/v/cli-contracts.svg)](https://www.npmjs.com/package/cli-contracts)
-[![license](https://img.shields.io/npm/l/cli-contracts.svg)](https://github.com/foo-ogawa/cli-contracts/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/cli-contracts.svg)](https://github.com/foo-log-inc/cli-contracts/blob/main/LICENSE)
 
 A contract-first toolchain for CLI interfaces.
 
