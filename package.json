@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.31.1",
+  "version": "0.31.2",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
