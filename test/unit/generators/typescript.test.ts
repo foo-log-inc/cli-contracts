@@ -284,4 +284,135 @@ command_sets:
 
     expect(output["types.ts"]).toContain("types generation disabled");
   });
+
+  it("generates interface extends for allOf with $ref + object", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      run:
+        summary: Run.
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ExtendedResult'
+components:
+  schemas:
+    BaseResult:
+      type: object
+      required: [summary]
+      properties:
+        summary:
+          type: string
+        details:
+          type: string
+    ExtendedResult:
+      allOf:
+        - $ref: '#/components/schemas/BaseResult'
+        - type: object
+          required: [changedFiles]
+          properties:
+            changedFiles:
+              type: array
+              items:
+                type: string
+            notes:
+              type: string
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const types = output["types.ts"];
+
+    expect(types).toContain("export interface ExtendedResult extends BaseResult {");
+    expect(types).toContain("changedFiles: string[];");
+    expect(types).toContain("notes?: string;");
+  });
+
+  it("generates type alias for allOf with only $refs", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      run:
+        summary: Run.
+        exits:
+          '0':
+            description: OK.
+components:
+  schemas:
+    A:
+      type: object
+      required: [x]
+      properties:
+        x:
+          type: string
+    B:
+      type: object
+      required: [y]
+      properties:
+        y:
+          type: number
+    Combined:
+      allOf:
+        - $ref: '#/components/schemas/A'
+        - $ref: '#/components/schemas/B'
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+
+    expect(output["types.ts"]).toContain("export type Combined = A & B;");
+  });
+
+  it("generates intersection type for inline allOf in jsonSchemaToTs", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      run:
+        summary: Run.
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Base'
+                      - type: object
+                        properties:
+                          extra:
+                            type: string
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+
+    expect(output["types.ts"]).toContain("Base & { extra?: string }");
+  });
 });
