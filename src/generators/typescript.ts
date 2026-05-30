@@ -297,7 +297,9 @@ function generateSchemaType(
   schema: JsonSchema,
   lines: string[],
 ): void {
-  if (schema.type === "object" && schema.properties) {
+  if (schema.allOf) {
+    generateAllOfSchemaType(name, schema.allOf, lines);
+  } else if (schema.type === "object" && schema.properties) {
     lines.push(`export interface ${name} {`);
     const required = new Set(schema.required ?? []);
     for (const [prop, propSchema] of Object.entries(schema.properties)) {
@@ -322,6 +324,49 @@ function generateSchemaType(
   }
 }
 
+function generateAllOfSchemaType(
+  name: string,
+  allOf: JsonSchema[],
+  lines: string[],
+): void {
+  const bases: string[] = [];
+  const ownProps: { key: string; optional: boolean; tsType: string }[] = [];
+
+  for (const sub of allOf) {
+    if (sub.$ref) {
+      bases.push(refToTypeName(sub.$ref));
+    } else if (sub.type === "object" && sub.properties) {
+      const required = new Set(sub.required ?? []);
+      for (const [key, propSchema] of Object.entries(sub.properties)) {
+        ownProps.push({
+          key,
+          optional: !required.has(key),
+          tsType: jsonSchemaToTs(propSchema),
+        });
+      }
+    } else {
+      bases.push(jsonSchemaToTs(sub));
+    }
+  }
+
+  if (ownProps.length > 0) {
+    const extendsClause = bases.length > 0 ? ` extends ${bases.join(", ")}` : "";
+    lines.push(`export interface ${name}${extendsClause} {`);
+    for (const p of ownProps) {
+      const opt = p.optional ? "?" : "";
+      lines.push(`  ${p.key}${opt}: ${p.tsType};`);
+    }
+    lines.push("}");
+    lines.push("");
+  } else if (bases.length > 0) {
+    lines.push(`export type ${name} = ${bases.join(" & ")};`);
+    lines.push("");
+  } else {
+    lines.push(`export type ${name} = unknown;`);
+    lines.push("");
+  }
+}
+
 function jsonSchemaToTs(schema?: JsonSchema): string {
   if (!schema) return "unknown";
   if (schema.$ref) return refToTypeName(schema.$ref);
@@ -331,6 +376,9 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
   }
   if (schema.anyOf) {
     return schema.anyOf.map(jsonSchemaToTs).join(" | ");
+  }
+  if (schema.allOf) {
+    return schema.allOf.map(jsonSchemaToTs).join(" & ");
   }
 
   if (schema.enum) {
