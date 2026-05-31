@@ -50,7 +50,8 @@
     "test:watch": "vitest",
     "lint": "eslint src/ test/",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run clean && npm run build && npm run generate:schema && npm test"
+    "prepublishOnly": "npm run clean && npm run build && npm run generate:schema && npm test",
+    "test:ci": "vitest run"
   },
   "keywords": [
     "cli",
