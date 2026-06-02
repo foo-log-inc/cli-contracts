@@ -222,3 +222,39 @@ suggest-contract:
   escalation_criteria:
     - condition: Source material does not contain recognizable CLI patterns
       action: stop_and_report
+
+propose-bundle-config:
+  description: Generate esbuild.bundle.mjs for a cli-contracts project
+  target_agent: cli-bundle-proposer
+  allowed_from_agents:
+    - cli-bundle-proposer
+  workflow: cli-audit
+  input_artifacts:
+    - cli-source
+    - config
+  invocation_handoff: cli-audit-request
+  result_handoff: cli-audit-result
+  responsibilities:
+    - Analyze project structure and dependencies
+    - Identify dynamic import patterns requiring esbuild plugins
+    - Determine external vs bundled dependencies
+    - Generate complete esbuild.bundle.mjs script
+  completion_criteria:
+    - Generated esbuild.bundle.mjs included as evidence excerpt
+    - Dynamic import resolution plugins documented in findings
+    - External SDK list matches project dependencies
+    - Version inlining strategy documented
+    - Bundle entry point correctly identified from package.json
+  execution_steps:
+    - id: analyze-project
+      action: Read package.json, entry point, and source structure
+      required: true
+    - id: detect-patterns
+      action: Identify dynamic imports, version reads, and other bundling patterns
+      required: true
+    - id: generate-config
+      action: Produce esbuild.bundle.mjs with appropriate plugins
+      required: true
+  escalation_criteria:
+    - condition: Project has no package.json or no bin entry
+      action: stop_and_report

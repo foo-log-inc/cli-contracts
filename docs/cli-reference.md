@@ -20,6 +20,7 @@ Contract definition for the cli-contracts command line tool itself. This is a se
   - [explain-diff](#cli-contracts-explain-diff)
   - [check-reference](#cli-contracts-check-reference)
   - [suggest](#cli-contracts-suggest)
+  - [bundle](#cli-contracts-bundle)
 
 ---
 
@@ -5127,6 +5128,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
+| `--scope` |  | No | `"contract"` | What to check. "contract" checks the contract definition against the reference spec (default). "implementation" checks that source code conforms to the contract. "all" checks both. |
 | `--report-format` |  | No | `"json"` | Output format for the conformance report. |
 
 #### Exit Codes
@@ -6126,6 +6128,627 @@ cli-contracts suggest --from-readme README.md --adapter gemini
   </details>
 
 **Exit 10:** Suggestion generated with blocking issues.
+
+- **stdout:** format=`{options.report-format}`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `summary` | `string` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `findings` | `object[]` | Yes |  |
+  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
+  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
+  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
+  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].message` | `string` | Yes |  |
+  | `findings[].recommendation` | `string` | No |  |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].evidence` | `object[]` | No |  |
+  | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
+  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
+  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
+  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].details` | `Record<string, any>` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
+  | `metadata` | `object` | No |  |
+  | `metadata.tool` | `string` | No |  |
+  | `metadata.command` | `string` | No |  |
+  | `metadata.version` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
+  | `metadata.adapter` | `string` | No |  |
+  | `metadata.model` | `string` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
+    "required": [
+      "summary",
+      "risk_level",
+      "findings"
+    ],
+    "properties": {
+      "summary": {
+        "type": "string"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A single finding from an agent audit or analysis.",
+          "required": [
+            "severity",
+            "category",
+            "message"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique finding identifier."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "error",
+                "critical"
+              ]
+            },
+            "category": {
+              "type": "string",
+              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target of the finding (command ID, schema path)."
+            },
+            "location": {
+              "type": "string",
+              "description": "Location within the target."
+            },
+            "message": {
+              "type": "string"
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence score (0-1) for LLM-generated findings."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "Evidence supporting an agent finding.",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "command",
+                      "schema",
+                      "diff",
+                      "stdout",
+                      "stderr",
+                      "text"
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Target identifier (file path, command ID, schema name)."
+                  },
+                  "location": {
+                    "type": "string",
+                    "description": "Location within the target (line number, JSON pointer)."
+                  },
+                  "excerpt": {
+                    "type": "string",
+                    "description": "Relevant excerpt from the target."
+                  }
+                }
+              }
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "recommended_actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A recommended action from an agent audit.",
+          "required": [
+            "kind",
+            "title"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "run_command",
+                "edit_file",
+                "review",
+                "confirm",
+                "block",
+                "ignore"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string",
+              "description": "CLI command to run (for run_command kind)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target file or resource."
+            },
+            "rationale": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 11:** Runtime dependency missing (agent-contracts-runtime).
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 12:** LLM provider or adapter error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+---
+
+### bundle
+
+Generate esbuild bundle config for a cli-contracts project via LLM.
+
+Analyzes a cli-contracts project structure (entry point, dependencies, dynamic imports, version handling) and generates a tailored esbuild.bundle.mjs build script. The LLM identifies patterns that require custom esbuild plugins (obfuscated agent-contracts-runtime imports, build-time version inlining, policy-runtime embedding) and produces a ready-to-use single-file bundle configuration. Results require human review before adoption.
+
+**Usage:**
+
+```
+cli-contracts bundle
+```
+```
+cli-contracts bundle --project-dir ./my-cli --show-prompt
+```
+```
+cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
+```
+
+#### Options
+
+| Option | Aliases | Required | Default | Description |
+|---|---|---|---|---|
+| `--project-dir` | -d | No | `"."` | Project directory to analyze. Must contain package.json and cli-contract.yaml. Defaults to the current working directory. |
+| `--adapter` |  | No |  | LLM adapter to use. |
+| `--model` |  | No |  | Model name to pass to the adapter. |
+| `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
+| `--output` | -o | No |  | Write result to a file instead of stdout. |
+| `--report-format` |  | No | `"json"` | Output format for the bundle analysis report. |
+
+#### Exit Codes
+
+**Exit 0:** Bundle configuration generated successfully.
+
+- **stdout:** format=`{options.report-format}`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `summary` | `string` | Yes |  |
+  | `risk_level` | `"low" \| "medium" \| "high" \| "critical"` | Yes |  |
+  | `findings` | `object[]` | Yes |  |
+  | `findings[].id` | `string` | No | Unique finding identifier. |
+  | `findings[].severity` | `"info" \| "warning" \| "error" \| "critical"` | Yes |  |
+  | `findings[].category` | `string` | Yes | Finding category (e.g. missing-policy, inconsistent-risk). |
+  | `findings[].target` | `string` | No | Target of the finding (command ID, schema path). |
+  | `findings[].location` | `string` | No | Location within the target. |
+  | `findings[].message` | `string` | Yes |  |
+  | `findings[].recommendation` | `string` | No |  |
+  | `findings[].confidence` | `number (min: 0, max: 1)` | No | Confidence score (0-1) for LLM-generated findings. |
+  | `findings[].evidence` | `object[]` | No |  |
+  | `findings[].evidence[].kind` | `enum(7 values)` | Yes |  |
+  | `findings[].evidence[].target` | `string` | No | Target identifier (file path, command ID, schema name). |
+  | `findings[].evidence[].location` | `string` | No | Location within the target (line number, JSON pointer). |
+  | `findings[].evidence[].excerpt` | `string` | No | Relevant excerpt from the target. |
+  | `findings[].details` | `Record<string, any>` | No |  |
+  | `recommended_actions` | `object[]` | No |  |
+  | `recommended_actions[].kind` | `enum(6 values)` | Yes |  |
+  | `recommended_actions[].title` | `string` | Yes |  |
+  | `recommended_actions[].command` | `string` | No | CLI command to run (for run_command kind). |
+  | `recommended_actions[].target` | `string` | No | Target file or resource. |
+  | `recommended_actions[].rationale` | `string` | No |  |
+  | `metadata` | `object` | No |  |
+  | `metadata.tool` | `string` | No |  |
+  | `metadata.command` | `string` | No |  |
+  | `metadata.version` | `string` | No |  |
+  | `metadata.generated_at` | `string` | No |  |
+  | `metadata.adapter` | `string` | No |  |
+  | `metadata.model` | `string` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "description": "Top-level result from an agent audit. Canonical schema for agent interoperability across toolchains.",
+    "required": [
+      "summary",
+      "risk_level",
+      "findings"
+    ],
+    "properties": {
+      "summary": {
+        "type": "string"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A single finding from an agent audit or analysis.",
+          "required": [
+            "severity",
+            "category",
+            "message"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique finding identifier."
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "error",
+                "critical"
+              ]
+            },
+            "category": {
+              "type": "string",
+              "description": "Finding category (e.g. missing-policy, inconsistent-risk)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target of the finding (command ID, schema path)."
+            },
+            "location": {
+              "type": "string",
+              "description": "Location within the target."
+            },
+            "message": {
+              "type": "string"
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence score (0-1) for LLM-generated findings."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "Evidence supporting an agent finding.",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "command",
+                      "schema",
+                      "diff",
+                      "stdout",
+                      "stderr",
+                      "text"
+                    ]
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Target identifier (file path, command ID, schema name)."
+                  },
+                  "location": {
+                    "type": "string",
+                    "description": "Location within the target (line number, JSON pointer)."
+                  },
+                  "excerpt": {
+                    "type": "string",
+                    "description": "Relevant excerpt from the target."
+                  }
+                }
+              }
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "recommended_actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "A recommended action from an agent audit.",
+          "required": [
+            "kind",
+            "title"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "run_command",
+                "edit_file",
+                "review",
+                "confirm",
+                "block",
+                "ignore"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "command": {
+              "type": "string",
+              "description": "CLI command to run (for run_command kind)."
+            },
+            "target": {
+              "type": "string",
+              "description": "Target file or resource."
+            },
+            "rationale": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "adapter": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid project directory or missing entry point.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 10:** Bundle config generated with blocking issues.
 
 - **stdout:** format=`{options.report-format}`
 

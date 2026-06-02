@@ -20,6 +20,7 @@ export async function runGenerators(
   overrideOutput?: string,
   dryRun = false,
   clean = false,
+  contractYaml?: string,
 ): Promise<GenerateResult> {
   const results: GeneratorOutput[] = [];
 
@@ -48,6 +49,7 @@ export async function runGenerators(
         ctx,
         output,
         dryRun,
+        contractYaml,
       );
       results.push({ name, status: "success", files });
     } catch (err) {
@@ -69,6 +71,7 @@ async function runSingleGenerator(
   ctx: NormalizedContext,
   outputPath: string,
   dryRun: boolean,
+  contractYaml?: string,
 ): Promise<string[]> {
   const templates = config.templates;
   const options = config.options ?? {};
@@ -78,7 +81,7 @@ async function runSingleGenerator(
   }
 
   if (templates === "builtin:typescript") {
-    return runTypeScriptGenerator(ctx, outputPath, options, dryRun);
+    return runTypeScriptGenerator(ctx, outputPath, options, dryRun, contractYaml);
   }
 
   if (templates === "builtin:rust") {
@@ -115,11 +118,13 @@ async function runTypeScriptGenerator(
   outputPath: string,
   options: Record<string, unknown>,
   dryRun: boolean,
+  contractYaml?: string,
 ): Promise<string[]> {
   const output = generateTypeScript(ctx, {
     emitTypes: (options.emitTypes as boolean) ?? true,
     emitClient: (options.emitClient as boolean) ?? true,
     emitValidators: (options.emitValidators as boolean) ?? true,
+    contractYaml,
   });
 
   const files: string[] = [];

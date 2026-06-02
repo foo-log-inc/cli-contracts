@@ -316,6 +316,81 @@ export function buildReferenceCheckContext(
   return sections.join("\n\n");
 }
 
+// ─── Implementation Conformance Check ───────────────────────────
+
+interface SourceFile {
+  path: string;
+  content: string;
+}
+
+export function buildImplementationCheckContext(
+  doc: CliContractsDocument,
+  contractYaml: string,
+  sourceFiles: SourceFile[],
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Implementation Conformance Check");
+  sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
+
+  sections.push(
+    "## Objective\n" +
+    "Verify that the CLI source code implementation conforms to the contract " +
+    "specification. Check that every command, option, argument, exit code, and " +
+    "effect declared in the contract is correctly implemented in the source code. " +
+    "Also verify that the implementation does not contain undeclared commands or " +
+    "behaviors that contradict the contract.",
+  );
+
+  sections.push("## Check Dimensions");
+  sections.push([
+    "| Dimension | What to check |",
+    "|-----------|--------------|",
+    "| Command coverage | Every contract command is registered in program.ts and has a handler |",
+    "| Option conformance | Option names, types, defaults, and enums match between contract and code |",
+    "| Exit code usage | Exit codes used in handlers match contract declarations |",
+    "| Output schema | Stdout/stderr structure matches declared JSON schemas |",
+    "| Effects accuracy | Declared effects (file I/O, network) match actual behavior |",
+    "| Agent metadata | x-agent metadata (riskLevel, idempotent, sideEffects) reflects implementation |",
+    "| Constraint enforcement | mutuallyExclusive and requiredTogether constraints enforced in code |",
+    "| Undeclared behavior | No commands, options, or exit codes exist only in code but not in contract |",
+  ].join("\n"));
+
+  sections.push(
+    "## Contract Specification\n```yaml\n" +
+    contractYaml.substring(0, 50000) +
+    (contractYaml.length > 50000 ? "\n# ... truncated ..." : "") +
+    "\n```",
+  );
+
+  if (sourceFiles.length > 0) {
+    sections.push("## Source Files");
+    for (const file of sourceFiles) {
+      const truncated = file.content.length > 20000
+        ? file.content.substring(0, 20000) + "\n// ... truncated ..."
+        : file.content;
+      sections.push(`### ${file.path}\n\`\`\`typescript\n${truncated}\n\`\`\``);
+    }
+  } else {
+    sections.push("## Source Files\n(No source files found. Check project structure.)");
+  }
+
+  sections.push(
+    "## Expected Finding Categories\n" +
+    "Use these categories for findings:\n" +
+    "- `missing-command`: command in contract not found in implementation\n" +
+    "- `undeclared-command`: command in implementation not in contract\n" +
+    "- `option-mismatch`: option type/default/enum differs between contract and code\n" +
+    "- `exit-code-violation`: handler uses exit code not declared in contract\n" +
+    "- `schema-violation`: output structure doesn't match declared schema\n" +
+    "- `effects-mismatch`: declared effects don't match actual behavior\n" +
+    "- `metadata-inconsistency`: x-agent metadata contradicts implementation\n" +
+    "- `constraint-violation`: declared constraints not enforced in code",
+  );
+
+  return sections.join("\n\n");
+}
+
 export function buildSuggestContext(
   sources: { readme?: string; help?: string; source?: string },
 ): string {
@@ -334,6 +409,169 @@ export function buildSuggestContext(
   if (sources.source) {
     sections.push(`## Source: CLI source code\n\`\`\`\n${sources.source}\n\`\`\``);
   }
+
+  return sections.join("\n\n");
+}
+
+// ─── Bundle Configuration Generation ────────────────────────────
+
+interface BundleSourceFile {
+  path: string;
+  content: string;
+}
+
+interface BundlePreAnalysis {
+  entryPoint: string | null;
+  packageName: string | null;
+  binName: string | null;
+  moduleType: string | null;
+  hasDynamicRuntimeImports: boolean;
+  hasRuntimePackageJsonRead: boolean;
+  hasPolicyRuntimeRead: boolean;
+  hasShebang: boolean;
+  externalCandidates: string[];
+  nativeModuleCandidates: string[];
+}
+
+function preAnalyzeBundle(files: BundleSourceFile[]): BundlePreAnalysis {
+  const result: BundlePreAnalysis = {
+    entryPoint: null,
+    packageName: null,
+    binName: null,
+    moduleType: null,
+    hasDynamicRuntimeImports: false,
+    hasRuntimePackageJsonRead: false,
+    hasPolicyRuntimeRead: false,
+    hasShebang: false,
+    externalCandidates: [],
+    nativeModuleCandidates: [],
+  };
+
+  const KNOWN_LLM_SDKS = [
+    "@anthropic-ai/claude-agent-sdk", "@anthropic-ai/sdk",
+    "@cursor/sdk", "@openai/agents", "@google/genai",
+  ];
+  const KNOWN_NATIVE = [
+    "better-sqlite3", "libpg-query", "puppeteer", "canvas", "sharp",
+  ];
+
+  for (const file of files) {
+    if (file.path === "package.json") {
+      try {
+        const pkg = JSON.parse(file.content);
+        result.packageName = pkg.name;
+        result.moduleType = pkg.type ?? "commonjs";
+        if (pkg.bin) {
+          const binEntries = typeof pkg.bin === "string"
+            ? { [pkg.name]: pkg.bin }
+            : pkg.bin;
+          const firstBin = Object.entries(binEntries)[0];
+          if (firstBin) {
+            result.binName = firstBin[0];
+            result.entryPoint = (firstBin[1] as string)
+              .replace(/^\.\/dist\//, "src/")
+              .replace(/\.js$/, ".ts");
+          }
+        }
+        const allDeps = {
+          ...pkg.dependencies,
+          ...pkg.devDependencies,
+          ...pkg.optionalDependencies,
+        };
+        for (const dep of Object.keys(allDeps)) {
+          if (KNOWN_LLM_SDKS.includes(dep)) {
+            result.externalCandidates.push(dep);
+          }
+          if (KNOWN_NATIVE.includes(dep)) {
+            result.nativeModuleCandidates.push(dep);
+          }
+        }
+      } catch {
+        // Invalid JSON
+      }
+    }
+
+    if (file.content.includes('["agent-contracts"') && file.content.includes('.join("-")')) {
+      result.hasDynamicRuntimeImports = true;
+    }
+    if (file.content.includes('require("../package.json")') ||
+        file.content.includes("require('../package.json')")) {
+      result.hasRuntimePackageJsonRead = true;
+    }
+    if (file.content.includes("policy-runtime.ts") && file.content.includes("readFileSync")) {
+      result.hasPolicyRuntimeRead = true;
+    }
+    if (file.content.startsWith("#!/")) {
+      result.hasShebang = true;
+    }
+  }
+
+  return result;
+}
+
+export function buildBundleContext(
+  files: BundleSourceFile[],
+  referenceTemplate: string,
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Bundle Configuration Generation");
+
+  const analysis = preAnalyzeBundle(files);
+
+  sections.push("## Objective");
+  sections.push(
+    "Generate a complete `esbuild.bundle.mjs` build script that produces a " +
+    "single-file CLI bundle for this project. The script must handle all " +
+    "identified patterns (dynamic imports, version inlining, shebang handling) " +
+    "using esbuild plugins.",
+  );
+
+  sections.push("## Deterministic Pre-Analysis");
+  sections.push([
+    `- Package: ${analysis.packageName ?? "(unknown)"}`,
+    `- Entry point: ${analysis.entryPoint ?? "(not detected)"}`,
+    `- Bin name: ${analysis.binName ?? "(not detected)"}`,
+    `- Module type: ${analysis.moduleType ?? "(not detected)"}`,
+    `- Has obfuscated runtime imports: ${analysis.hasDynamicRuntimeImports}`,
+    `- Has runtime package.json read: ${analysis.hasRuntimePackageJsonRead}`,
+    `- Has policy-runtime file read: ${analysis.hasPolicyRuntimeRead}`,
+    `- Has shebang: ${analysis.hasShebang}`,
+    `- External candidates (LLM SDKs): ${analysis.externalCandidates.join(", ") || "(none)"}`,
+    `- Native module candidates: ${analysis.nativeModuleCandidates.join(", ") || "(none)"}`,
+  ].join("\n"));
+
+  sections.push("## Reference Template");
+  sections.push(
+    "This is the canonical esbuild.bundle.mjs from cli-contracts itself. " +
+    "Adapt it to the target project's specific patterns.\n" +
+    "```javascript\n" + referenceTemplate + "\n```",
+  );
+
+  sections.push("## Source Files");
+  for (const file of files) {
+    if (file.path === "package.json") continue;
+    const truncated = file.content.length > 15000
+      ? file.content.substring(0, 15000) + "\n// ... truncated ..."
+      : file.content;
+    sections.push(`### ${file.path}\n\`\`\`typescript\n${truncated}\n\`\`\``);
+  }
+
+  const pkgFile = files.find((f) => f.path === "package.json");
+  if (pkgFile) {
+    sections.push(`### package.json\n\`\`\`json\n${pkgFile.content}\n\`\`\``);
+  }
+
+  sections.push(
+    "## Output Requirements\n" +
+    "Return the complete `esbuild.bundle.mjs` as a finding with:\n" +
+    "- `category`: `bundle-config`\n" +
+    "- `severity`: `info`\n" +
+    "- `evidence[0].kind`: `file`\n" +
+    "- `evidence[0].target`: `esbuild.bundle.mjs`\n" +
+    "- `evidence[0].excerpt`: the complete script content\n\n" +
+    "Also include findings for each detected pattern and the plugin used to handle it.",
+  );
 
   return sections.join("\n\n");
 }

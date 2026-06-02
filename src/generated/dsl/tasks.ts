@@ -28,10 +28,12 @@ export const auditAgentPolicy: TaskContract = {
   allowed_from_agents: [
   "cli-policy-auditor"
 ],
-  workflow: "",
+  workflow: "cli-audit",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-contract-source"
+],
   responsibilities: [
   "Analyze all commands for x-agent policy presence",
   "Evaluate risk level based on command semantics",
@@ -52,10 +54,12 @@ export const auditContractDesign: TaskContract = {
   allowed_from_agents: [
   "cli-contract-auditor"
 ],
-  workflow: "",
+  workflow: "cli-audit",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-contract-source"
+],
   responsibilities: [
   "Check command responsibility boundaries",
   "Review exit code coverage and consistency",
@@ -77,10 +81,12 @@ export const proposeTestCases: TaskContract = {
   allowed_from_agents: [
   "cli-test-proposer"
 ],
-  workflow: "",
+  workflow: "cli-audit",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-contract-source"
+],
   responsibilities: [
   "Analyze contract surface area for test coverage",
   "Propose success, error, and edge case tests",
@@ -111,10 +117,12 @@ export const explainContractDiff: TaskContract = {
   allowed_from_agents: [
   "cli-diff-explainer"
 ],
-  workflow: "",
+  workflow: "cli-audit",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-contract-source"
+],
   responsibilities: [
   "Explain each breaking change with impact",
   "Draft migration notes and release notes",
@@ -138,10 +146,12 @@ export const checkReferenceConformance: TaskContract = {
   allowed_from_agents: [
   "cli-reference-checker"
 ],
-  workflow: "",
+  workflow: "reference-conformance-check",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-contract-source"
+],
   responsibilities: [
   "Identify which commands are LLM-powered by inspecting the project source code",
   "Validate conformance of LLM commands against the reference specification",
@@ -168,10 +178,14 @@ export const suggestContract: TaskContract = {
   allowed_from_agents: [
   "cli-contract-suggester"
 ],
-  workflow: "",
+  workflow: "cli-audit",
   invocation_handoff: "cli-audit-request",
   result_handoff: "cli-audit-result",
-  input_artifacts: [],
+  input_artifacts: [
+  "cli-source-readme",
+  "cli-source-help",
+  "cli-source-code"
+],
   responsibilities: [
   "Extract command structure from source material",
   "Infer argument and option types",
@@ -193,6 +207,36 @@ export const suggestContract: TaskContract = {
   optional: false,
 };
 
+export const proposeBundleConfig: TaskContract = {
+  id: "propose-bundle-config",
+  description: "Generate esbuild.bundle.mjs for a cli-contracts project",
+  target_agent: "cli-bundle-proposer",
+  allowed_from_agents: [
+  "cli-bundle-proposer"
+],
+  workflow: "cli-audit",
+  invocation_handoff: "cli-audit-request",
+  result_handoff: "cli-audit-result",
+  input_artifacts: [
+  "cli-source",
+  "config"
+],
+  responsibilities: [
+  "Analyze project structure and dependencies",
+  "Identify dynamic import patterns requiring esbuild plugins",
+  "Determine external vs bundled dependencies",
+  "Generate complete esbuild.bundle.mjs script"
+],
+  completion_criteria: [
+  "Generated esbuild.bundle.mjs included as evidence excerpt",
+  "Dynamic import resolution plugins documented in findings",
+  "External SDK list matches project dependencies",
+  "Version inlining strategy documented",
+  "Bundle entry point correctly identified from package.json"
+],
+  optional: false,
+};
+
 export const taskRegistry: Record<string, TaskContract> = {
   "audit-agent-policy": auditAgentPolicy,
   "audit-contract-design": auditContractDesign,
@@ -200,4 +244,5 @@ export const taskRegistry: Record<string, TaskContract> = {
   "explain-contract-diff": explainContractDiff,
   "check-reference-conformance": checkReferenceConformance,
   "suggest-contract": suggestContract,
+  "propose-bundle-config": proposeBundleConfig,
 };

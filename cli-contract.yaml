@@ -1461,6 +1461,17 @@ command_sets:
               media_type: application/json
               encoding: utf-8
 
+          - name: scope
+            description: >-
+              What to check. "contract" checks the contract definition against the
+              reference spec (default). "implementation" checks that source code
+              conforms to the contract. "all" checks both.
+            value_name: scope
+            schema:
+              type: string
+              enum: [contract, implementation, all]
+              default: contract
+
           - name: report-format
             description: Output format for the conformance report.
             value_name: fmt
@@ -1472,6 +1483,7 @@ command_sets:
         effects:
           reads:
             - contract-definitions
+            - cli-source
           writes:
             - audit-report
           network:
@@ -1659,6 +1671,128 @@ command_sets:
 
           '10':
             description: Suggestion generated with blocking issues.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
+
+          '11':
+            description: Runtime dependency missing (agent-contracts-runtime).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '12':
+            description: LLM provider or adapter error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      # ── bundle ──────────────────────────────────────────────
+      bundle:
+        summary: Generate esbuild bundle config for a cli-contracts project via LLM.
+        description: >-
+          Analyzes a cli-contracts project structure (entry point, dependencies,
+          dynamic imports, version handling) and generates a tailored
+          esbuild.bundle.mjs build script. The LLM identifies patterns that
+          require custom esbuild plugins (obfuscated agent-contracts-runtime
+          imports, build-time version inlining, policy-runtime embedding) and
+          produces a ready-to-use single-file bundle configuration.
+          Results require human review before adoption.
+        usage:
+          - cli-contracts bundle
+          - cli-contracts bundle --project-dir ./my-cli --show-prompt
+          - cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
+
+        options:
+          - name: project-dir
+            aliases: [d]
+            description: >-
+              Project directory to analyze. Must contain package.json and
+              cli-contract.yaml. Defaults to the current working directory.
+            value_name: dir
+            schema:
+              type: string
+              default: "."
+
+          - name: adapter
+            description: LLM adapter to use.
+            value_name: name
+            schema:
+              type: string
+              enum: [mock, cursor, claude, openai, gemini]
+
+          - name: model
+            description: Model name to pass to the adapter.
+            value_name: name
+            schema:
+              type: string
+
+          - name: fail-on
+            description: Minimum severity that causes a non-zero exit.
+            value_name: level
+            schema:
+              type: string
+              enum: [warning, error, critical]
+              default: error
+
+          - name: output
+            aliases: [o]
+            description: Write result to a file instead of stdout.
+            value_name: file
+            schema:
+              type: string
+            file:
+              mode: write
+              media_type: application/json
+              encoding: utf-8
+
+          - name: report-format
+            description: Output format for the bundle analysis report.
+            value_name: fmt
+            schema:
+              type: string
+              enum: [json, text, yaml]
+              default: json
+
+        effects:
+          reads:
+            - cli-source
+            - config
+            - contract-definitions
+          writes:
+            - audit-report
+          network:
+            description: "LLM API calls to configured provider"
+            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            idempotent: true
+
+        exits:
+          '0':
+            description: Bundle configuration generated successfully.
+            stdout:
+              format: '{options.report-format}'
+              schema:
+                $ref: 'node_modules/agent-contracts/dsl_base/components.yaml#/schemas/agent-audit-result'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid project directory or missing entry point.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '10':
+            description: Bundle config generated with blocking issues.
             stdout:
               format: '{options.report-format}'
               schema:

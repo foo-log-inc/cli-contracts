@@ -14,8 +14,9 @@ export interface CommandHandlers {
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
-  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; scope?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  bundle: (options: { projectDir?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
 }
 
 export function createProgram(
@@ -273,6 +274,7 @@ export function createProgram(
     .option("--model <name>", "Model name to pass to the adapter.")
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--scope <scope>", "What to check. \"contract\" checks the contract definition against the reference spec (default). \"implementation\" checks that source code conforms to the contract. \"all\" checks both.", "contract")
     .option("--report-format <fmt>", "Output format for the conformance report.", "json")
     .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {
@@ -315,6 +317,31 @@ export function createProgram(
         return;
       }
       await handlers.suggest(opts, globalOpts);
+    });
+
+  program
+    .command("bundle")
+    .description("Generate esbuild bundle config for a cli-contracts project via LLM.")
+    .option("-d, --project-dir <dir>", "Project directory to analyze. Must contain package.json and cli-contract.yaml. Defaults to the current working directory.", ".")
+    .option("--adapter <name>", "LLM adapter to use.")
+    .option("--model <name>", "Model name to pass to the adapter.")
+    .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
+    .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--report-format <fmt>", "Output format for the bundle analysis report.", "json")
+    .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
+    .action(async (opts, cmd) => {
+      const globalOpts = cmd.optsWithGlobals();
+      if (globalOpts.introspect) {
+        const policy = deriveCommandPolicy("bundle", opts);
+        console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      if (opts.showPrompt) {
+        const prompt = await handlers.bundle(opts, globalOpts);
+        if (typeof prompt === "string") process.stdout.write(prompt + "\n");
+        return;
+      }
+      await handlers.bundle(opts, globalOpts);
     });
 
   return program;
