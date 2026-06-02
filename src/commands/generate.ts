@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { parseContractFile } from "../parser.js";
 import { validateContract } from "../validator.js";
@@ -41,6 +42,7 @@ export async function runGenerate(
 
     doc = resolveRefs(doc, { basePath: dirname(filePath) });
     const ctx = normalizeContract(doc);
+    const contractYaml = readFileSync(filePath, "utf-8");
 
     return runGenerators(
       ctx,
@@ -49,6 +51,7 @@ export async function runGenerate(
       options.output,
       options.dryRun,
       options.clean,
+      contractYaml,
     );
   }
 
