@@ -1461,6 +1461,17 @@ command_sets:
               media_type: application/json
               encoding: utf-8
 
+          - name: scope
+            description: >-
+              What to check. "contract" checks the contract definition against the
+              reference spec (default). "implementation" checks that source code
+              conforms to the contract. "all" checks both.
+            value_name: scope
+            schema:
+              type: string
+              enum: [contract, implementation, all]
+              default: contract
+
           - name: report-format
             description: Output format for the conformance report.
             value_name: fmt
@@ -1472,6 +1483,7 @@ command_sets:
         effects:
           reads:
             - contract-definitions
+            - cli-source
           writes:
             - audit-report
           network:

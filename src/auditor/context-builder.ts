@@ -316,6 +316,81 @@ export function buildReferenceCheckContext(
   return sections.join("\n\n");
 }
 
+// ─── Implementation Conformance Check ───────────────────────────
+
+interface SourceFile {
+  path: string;
+  content: string;
+}
+
+export function buildImplementationCheckContext(
+  doc: CliContractsDocument,
+  contractYaml: string,
+  sourceFiles: SourceFile[],
+): string {
+  const sections: string[] = [];
+
+  sections.push("# CLI Contract: Implementation Conformance Check");
+  sections.push(`## Info\n- Title: ${doc.info.title}\n- Version: ${doc.info.version}`);
+
+  sections.push(
+    "## Objective\n" +
+    "Verify that the CLI source code implementation conforms to the contract " +
+    "specification. Check that every command, option, argument, exit code, and " +
+    "effect declared in the contract is correctly implemented in the source code. " +
+    "Also verify that the implementation does not contain undeclared commands or " +
+    "behaviors that contradict the contract.",
+  );
+
+  sections.push("## Check Dimensions");
+  sections.push([
+    "| Dimension | What to check |",
+    "|-----------|--------------|",
+    "| Command coverage | Every contract command is registered in program.ts and has a handler |",
+    "| Option conformance | Option names, types, defaults, and enums match between contract and code |",
+    "| Exit code usage | Exit codes used in handlers match contract declarations |",
+    "| Output schema | Stdout/stderr structure matches declared JSON schemas |",
+    "| Effects accuracy | Declared effects (file I/O, network) match actual behavior |",
+    "| Agent metadata | x-agent metadata (riskLevel, idempotent, sideEffects) reflects implementation |",
+    "| Constraint enforcement | mutuallyExclusive and requiredTogether constraints enforced in code |",
+    "| Undeclared behavior | No commands, options, or exit codes exist only in code but not in contract |",
+  ].join("\n"));
+
+  sections.push(
+    "## Contract Specification\n```yaml\n" +
+    contractYaml.substring(0, 50000) +
+    (contractYaml.length > 50000 ? "\n# ... truncated ..." : "") +
+    "\n```",
+  );
+
+  if (sourceFiles.length > 0) {
+    sections.push("## Source Files");
+    for (const file of sourceFiles) {
+      const truncated = file.content.length > 20000
+        ? file.content.substring(0, 20000) + "\n// ... truncated ..."
+        : file.content;
+      sections.push(`### ${file.path}\n\`\`\`typescript\n${truncated}\n\`\`\``);
+    }
+  } else {
+    sections.push("## Source Files\n(No source files found. Check project structure.)");
+  }
+
+  sections.push(
+    "## Expected Finding Categories\n" +
+    "Use these categories for findings:\n" +
+    "- `missing-command`: command in contract not found in implementation\n" +
+    "- `undeclared-command`: command in implementation not in contract\n" +
+    "- `option-mismatch`: option type/default/enum differs between contract and code\n" +
+    "- `exit-code-violation`: handler uses exit code not declared in contract\n" +
+    "- `schema-violation`: output structure doesn't match declared schema\n" +
+    "- `effects-mismatch`: declared effects don't match actual behavior\n" +
+    "- `metadata-inconsistency`: x-agent metadata contradicts implementation\n" +
+    "- `constraint-violation`: declared constraints not enforced in code",
+  );
+
+  return sections.join("\n\n");
+}
+
 export function buildSuggestContext(
   sources: { readme?: string; help?: string; source?: string },
 ): string {

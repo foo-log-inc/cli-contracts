@@ -328,7 +328,10 @@ const handlers: CommandHandlers = {
           ? [options.file]
           : getContractFiles(configResult?.config);
 
-      const ret = await runCheckReference(files, options);
+      const ret = await runCheckReference(files, {
+        ...options,
+        scope: options.scope as "contract" | "implementation" | "all" | undefined,
+      });
       if (typeof ret === "string") return ret;
 
       const { result, exitCode } = ret;

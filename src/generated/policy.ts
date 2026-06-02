@@ -813,7 +813,8 @@ export const commandDefinitions = {
   "check-reference": {
     "effects": {
       "reads": [
-        "contract-definitions"
+        "contract-definitions",
+        "cli-source"
       ],
       "writes": [
         "audit-report"
@@ -882,6 +883,18 @@ export const commandDefinitions = {
           "mode": "write",
           "media_type": "application/json",
           "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "scope",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "contract",
+            "implementation",
+            "all"
+          ],
+          "default": "contract"
         }
       },
       {

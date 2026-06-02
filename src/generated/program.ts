@@ -14,7 +14,7 @@ export interface CommandHandlers {
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
-  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; scope?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
 }
 
@@ -273,6 +273,7 @@ export function createProgram(
     .option("--model <name>", "Model name to pass to the adapter.")
     .option("--fail-on <level>", "Minimum severity that causes a non-zero exit.", "error")
     .option("-o, --output <file>", "Write result to a file instead of stdout.")
+    .option("--scope <scope>", "What to check. \"contract\" checks the contract definition against the reference spec (default). \"implementation\" checks that source code conforms to the contract. \"all\" checks both.", "contract")
     .option("--report-format <fmt>", "Output format for the conformance report.", "json")
     .option("--show-prompt", "Output the constructed prompt without calling the LLM API.", false)
     .action(async (contract, opts, cmd) => {

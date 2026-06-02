@@ -5127,6 +5127,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--model` |  | No |  | Model name to pass to the adapter. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
+| `--scope` |  | No | `"contract"` | What to check. "contract" checks the contract definition against the reference spec (default). "implementation" checks that source code conforms to the contract. "all" checks both. |
 | `--report-format` |  | No | `"json"` | Output format for the conformance report. |
 
 #### Exit Codes

@@ -230,6 +230,7 @@ export interface CheckReferenceOptions {
   model?: string;
   failOn?: "warning" | "error" | "critical";
   output?: string;
+  scope?: "contract" | "implementation" | "all";
   reportFormat?: "json" | "text" | "yaml";
 }
 
