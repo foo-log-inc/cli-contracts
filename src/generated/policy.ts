@@ -1049,6 +1049,105 @@ export const commandDefinitions = {
       }
     }
   },
+  "bundle": {
+    "effects": {
+      "reads": [
+        "cli-source",
+        "config",
+        "contract-definitions"
+      ],
+      "writes": [
+        "audit-report"
+      ],
+      "network": {
+        "description": "LLM API calls to configured provider",
+        "requires_secrets": [
+          "CURSOR_API_KEY",
+          "GEMINI_API_KEY",
+          "OPENAI_API_KEY",
+          "ANTHROPIC_API_KEY"
+        ],
+        "idempotent": true
+      }
+    },
+    "options": [
+      {
+        "name": "project-dir",
+        "schema": {
+          "type": "string",
+          "default": "."
+        }
+      },
+      {
+        "name": "adapter",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "mock",
+            "cursor",
+            "claude",
+            "openai",
+            "gemini"
+          ]
+        }
+      },
+      {
+        "name": "model",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "fail-on",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "warning",
+            "error",
+            "critical"
+          ],
+          "default": "error"
+        }
+      },
+      {
+        "name": "output",
+        "schema": {
+          "type": "string"
+        },
+        "file": {
+          "mode": "write",
+          "media_type": "application/json",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "report-format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "json",
+            "text",
+            "yaml"
+          ],
+          "default": "json"
+        }
+      }
+    ],
+    "env": {
+      "CURSOR_API_KEY": {
+        "sensitive": true
+      },
+      "GEMINI_API_KEY": {
+        "sensitive": true
+      },
+      "OPENAI_API_KEY": {
+        "sensitive": true
+      },
+      "ANTHROPIC_API_KEY": {
+        "sensitive": true
+      }
+    }
+  },
 } as const;
 
 export function deriveCommandPolicy(

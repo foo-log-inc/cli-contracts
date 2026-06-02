@@ -17,6 +17,7 @@ import { runProposeTests } from "./commands/propose-tests.js";
 import { runExplainDiff } from "./commands/explain-diff.js";
 import { runSuggest } from "./commands/suggest.js";
 import { runCheckReference } from "./commands/check-reference.js";
+import { runBundle } from "./commands/bundle.js";
 import { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR } from "./auditor/auditor.js";
 import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
@@ -369,6 +370,34 @@ const handlers: CommandHandlers = {
       } else if (options.reportFormat === "yaml") {
         const yaml = await import("yaml");
         process.stdout.write(yaml.stringify(result) + "\n");
+      } else {
+        process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      }
+      process.exit(exitCode);
+    } catch (err) {
+      const exitCode = (err as { exitCode?: number }).exitCode;
+      if (exitCode === EXIT_RUNTIME_MISSING) {
+        writeError("RUNTIME_MISSING", (err as Error).message);
+        process.exit(11);
+      }
+      if (exitCode === EXIT_ADAPTER_ERROR) {
+        writeError("ADAPTER_ERROR", (err as Error).message);
+        process.exit(12);
+      }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async bundle(options, _parentOpts) {
+    try {
+      const ret = await runBundle(options);
+      if (typeof ret === "string") return ret;
+
+      const { result, exitCode } = ret;
+
+      if (options.reportFormat === "text") {
+        process.stdout.write(typeof result === "string" ? result : JSON.stringify(result, null, 2) + "\n");
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }

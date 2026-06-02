@@ -32,6 +32,74 @@ export interface AgentContract {
   readonly escalation_criteria: readonly EscalationCriterion[];
 }
 
+export const cliBundleProposer: AgentContract = {
+  id: "cli-bundle-proposer",
+  role_name: "CLI Bundle Proposer",
+  purpose: "Analyze a cli-contracts project and generate a tailored esbuild.bundle.mjs build script that produces a single-file CLI bundle. Identifies dynamic import patterns, build-time inlining needs, and external dependency decisions specific to each project.",
+  mode: "read-only",
+  dispatch_only: false,
+  can_read_artifacts: [
+  "cli-source",
+  "config"
+],
+  can_write_artifacts: [],
+  can_execute_tools: [],
+  can_invoke_agents: [],
+  can_return_handoffs: [
+  "cli-audit-result"
+],
+  responsibilities: [
+  "Identify the CLI entry point from package.json bin field",
+  "Detect obfuscated dynamic imports of agent-contracts-runtime",
+  "Identify runtime package.json reads that need build-time inlining",
+  "Determine which dependencies should remain external (LLM SDKs, native modules)",
+  "Detect CJS/ESM resolution issues requiring mainFields configuration",
+  "Handle shebang deduplication in bundled output",
+  "Detect policy-runtime.ts inlining needs for generate commands",
+  "Generate a complete esbuild.bundle.mjs with appropriate plugins"
+],
+  constraints: [
+  "Generated script must be valid ESM JavaScript",
+  "Must use esbuild API (not CLI flags)",
+  "Must keep LLM SDK packages external",
+  "Must handle platform node and target node20",
+  "Must include createRequire banner for CJS interop",
+  "Must report bundle as evidence excerpt with kind file"
+],
+  rules: [
+  {
+    "id": "R-BUNDLE-001",
+    "description": "Must detect and handle the obfuscated RUNTIME_PKG pattern ([\"agent-contracts\",\"runtime\"].join(\"-\")) if present in auditor code.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-BUNDLE-002",
+    "description": "Must externalize all known LLM SDK packages: @anthropic-ai/claude-agent-sdk, @anthropic-ai/sdk, @cursor/sdk, @openai/agents, @google/genai.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-BUNDLE-003",
+    "description": "Must use mainFields [\"module\", \"main\"] and conditions [\"import\", \"node\"] to prevent CJS bundling issues with packages like jsonc-parser.",
+    "severity": "mandatory"
+  },
+  {
+    "id": "R-BUNDLE-004",
+    "description": "The generated script must include file size reporting after build.",
+    "severity": "recommended"
+  }
+],
+  escalation_criteria: [
+  {
+    "condition": "Project has no package.json or no bin entry",
+    "action": "stop_and_report"
+  },
+  {
+    "condition": "Entry point file cannot be identified",
+    "action": "stop_and_report"
+  }
+],
+} as const;
+
 export const cliContractAuditor: AgentContract = {
   id: "cli-contract-auditor",
   role_name: "CLI Contract Design Auditor",
@@ -226,7 +294,7 @@ export const cliPolicyAuditor: AgentContract = {
   },
   {
     "id": "R-POLICY-002",
-    "description": "High or critical riskLevel requires requires_confirmation: true.",
+    "description": "High or critical riskLevel requires requiresConfirmation: true.",
     "severity": "mandatory"
   },
   {
@@ -399,6 +467,7 @@ export const cliTestProposer: AgentContract = {
 } as const;
 
 export const agentRegistry: Record<string, AgentContract> = {
+  "cli-bundle-proposer": cliBundleProposer,
   "cli-contract-auditor": cliContractAuditor,
   "cli-contract-suggester": cliContractSuggester,
   "cli-diff-explainer": cliDiffExplainer,

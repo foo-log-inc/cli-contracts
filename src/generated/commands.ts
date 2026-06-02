@@ -369,3 +369,30 @@ export async function cliContractsSuggest(
     };
   }
 }
+
+export async function cliContractsBundle(
+  executable: string,
+  options?: Partial<import("./types.js").BundleOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["bundle"];
+  if (options) {
+    if (options.projectDir !== undefined) cmdArgs.push("--project-dir", String(options.projectDir));
+    if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
+    if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
+    if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
+    if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}

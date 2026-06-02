@@ -23,7 +23,7 @@ export type CliAuditRequest = z.infer<typeof CliAuditRequestSchema>;
 
 export const CliAuditResultSchema = z.object({
   summary: z.string(),
-  risk_level: z.enum(["low", "medium", "high", "critical"]),
+  riskLevel: z.enum(["low", "medium", "high", "critical"]),
   findings: z.array(z.object({
   id: z.string().optional(),
   severity: z.enum(["info", "warning", "error", "critical"]),
