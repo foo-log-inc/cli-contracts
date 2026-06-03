@@ -176,3 +176,89 @@ describe("validateXAgent standalone", () => {
     expect(diags.length).toBe(0);
   });
 });
+
+describe("x-agent DSL binding fields", () => {
+  it("accepts dsl_task alone", () => {
+    const diags = validateXAgent(
+      { risk_level: "low", dsl_task: "audit-something" },
+      "/test",
+    );
+    expect(diags.length).toBe(0);
+  });
+
+  it("accepts dsl_workflow alone", () => {
+    const diags = validateXAgent(
+      { risk_level: "low", dsl_workflow: "audit-workflow" },
+      "/test",
+    );
+    expect(diags.length).toBe(0);
+  });
+
+  it("rejects dsl_task and dsl_workflow together", () => {
+    const diags = validateXAgent(
+      { risk_level: "low", dsl_task: "audit-task", dsl_workflow: "audit-workflow" },
+      "/test",
+    );
+    expect(diags.length).toBeGreaterThan(0);
+    const mutualExclusive = diags.find(
+      (d) => d.message.includes("mutually exclusive"),
+    );
+    expect(mutualExclusive).toBeDefined();
+  });
+
+  it("validates dsl_task and dsl_workflow in full contract", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: Test
+  version: 1.0.0
+command_sets:
+  x:
+    commands:
+      audit:
+        summary: Audit something.
+        exits:
+          '0':
+            description: OK.
+        x-agent:
+          risk_level: low
+          dsl_workflow: migration-audit
+      generate:
+        summary: Generate something.
+        exits:
+          '0':
+            description: OK.
+        x-agent:
+          risk_level: low
+          dsl_task: implement-feature
+`);
+    const result = validateContract(doc);
+    expect(result.valid).toBe(true);
+  });
+
+  it("reports error when both dsl_task and dsl_workflow in same command", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: Test
+  version: 1.0.0
+command_sets:
+  x:
+    commands:
+      broken:
+        summary: Broken command.
+        exits:
+          '0':
+            description: OK.
+        x-agent:
+          risk_level: low
+          dsl_task: some-task
+          dsl_workflow: some-workflow
+`);
+    const result = validateContract(doc);
+    const errors = result.errors.filter(
+      (e) => e.message.includes("mutually exclusive"),
+    );
+    expect(errors.length).toBeGreaterThan(0);
+  });
+});

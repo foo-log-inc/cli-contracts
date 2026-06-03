@@ -241,7 +241,12 @@ export const XAgentSchema = z.object({
   requires_secrets: z.array(z.string()).optional(),
   human_review: HumanReviewSchema.optional(),
   rollback: RollbackSchema.optional(),
-}).passthrough();
+  dsl_task: z.string().optional(),
+  dsl_workflow: z.string().optional(),
+}).passthrough().refine(
+  (data) => !(data.dsl_task && data.dsl_workflow),
+  { message: "dsl_task and dsl_workflow are mutually exclusive — specify one or the other" },
+);
 
 // ─── Command Schema ─────────────────────────────────────────────
 
