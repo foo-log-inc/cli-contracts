@@ -1,6 +1,8 @@
 import type { AgentId } from "./agents.js";
 import type { HandoffTypeId } from "./handoffs.js";
 
+export type ModelClass = "fast" | "standard" | "thinking";
+
 export interface TaskContract {
   readonly id: string;
   readonly description: string;
@@ -13,6 +15,7 @@ export interface TaskContract {
   readonly responsibilities: readonly string[];
   readonly completion_criteria: readonly string[];
   readonly optional: boolean;
+  readonly model_class?: ModelClass;
 }
 
 {{#each taskEntries}}
@@ -28,6 +31,9 @@ export const {{varName}}: TaskContract = {
   responsibilities: {{{json responsibilities}}},
   completion_criteria: {{{json completion_criteria}}},
   optional: {{optional}},
+{{#if model_class}}
+  model_class: "{{model_class}}",
+{{/if}}
 };
 
 {{/each}}

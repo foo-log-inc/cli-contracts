@@ -32,7 +32,7 @@ export const CliAuditResultSchema = z.object({
   location: z.string().optional(),
   message: z.string(),
   recommendation: z.string().optional(),
-  confidence: z.number().optional(),
+  confidence: z.number().min(0).max(1).optional(),
   evidence: z.array(z.object({
   kind: z.enum(["file", "command", "schema", "diff", "stdout", "stderr", "text"]),
   target: z.string().optional(),

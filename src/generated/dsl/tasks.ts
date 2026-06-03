@@ -7,6 +7,8 @@
 import type { AgentId } from "./agents.js";
 import type { HandoffTypeId } from "./handoffs.js";
 
+export type ModelClass = "fast" | "standard" | "thinking";
+
 export interface TaskContract {
   readonly id: string;
   readonly description: string;
@@ -19,6 +21,7 @@ export interface TaskContract {
   readonly responsibilities: readonly string[];
   readonly completion_criteria: readonly string[];
   readonly optional: boolean;
+  readonly model_class?: ModelClass;
 }
 
 export const auditAgentPolicy: TaskContract = {
@@ -45,6 +48,7 @@ export const auditAgentPolicy: TaskContract = {
   "Risk assessments provided with confidence scores"
 ],
   optional: false,
+  model_class: "standard",
 };
 
 export const auditContractDesign: TaskContract = {
@@ -72,6 +76,7 @@ export const auditContractDesign: TaskContract = {
   "Actionable recommendations provided"
 ],
   optional: false,
+  model_class: "standard",
 };
 
 export const proposeTestCases: TaskContract = {
@@ -108,6 +113,7 @@ export const proposeTestCases: TaskContract = {
   "Each command evaluated for timeout / signal handling"
 ],
   optional: false,
+  model_class: "standard",
 };
 
 export const explainContractDiff: TaskContract = {
@@ -137,6 +143,7 @@ export const explainContractDiff: TaskContract = {
   "AI agent consumer impacts highlighted (x-agent policy changes)"
 ],
   optional: false,
+  model_class: "fast",
 };
 
 export const checkReferenceConformance: TaskContract = {
@@ -169,6 +176,7 @@ export const checkReferenceConformance: TaskContract = {
   "Overall riskLevel reflects the worst conformance gap"
 ],
   optional: false,
+  model_class: "thinking",
 };
 
 export const suggestContract: TaskContract = {
@@ -205,6 +213,7 @@ export const suggestContract: TaskContract = {
   "Findings include contract YAML draft as evidence excerpts"
 ],
   optional: false,
+  model_class: "thinking",
 };
 
 export const proposeBundleConfig: TaskContract = {
@@ -235,6 +244,7 @@ export const proposeBundleConfig: TaskContract = {
   "Bundle entry point correctly identified from package.json"
 ],
   optional: false,
+  model_class: "thinking",
 };
 
 export const taskRegistry: Record<string, TaskContract> = {

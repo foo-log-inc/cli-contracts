@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.32.0",
+  "version": "0.32.1",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -22,7 +22,6 @@
       "types": "./dist/policy.d.ts"
     }
   },
-  "peerDependencies": {},
   "peerDependenciesMeta": {},
   "files": [
     "dist/cli-contracts.bundle.mjs",
@@ -74,13 +73,12 @@
   "bugs": {
     "url": "https://github.com/foo-log-inc/cli-contracts/issues"
   },
-  "dependencies": {},
   "devDependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.138",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
-    "agent-contracts": "^0.32.0",
-    "agent-contracts-runtime": "^0.31.4",
+    "agent-contracts": "^0.33.1",
+    "agent-contracts-runtime": "^0.32.10",
     "ajv": "^8.17.1",
     "commander": "^12.1.0",
     "esbuild": "^0.28.0",
