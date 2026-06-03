@@ -1148,6 +1148,35 @@ export const commandDefinitions = {
       }
     }
   },
+  "agents": {
+    "options": [
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      }
+    ],
+    "env": {
+      "CURSOR_API_KEY": {
+        "sensitive": true
+      },
+      "GEMINI_API_KEY": {
+        "sensitive": true
+      },
+      "OPENAI_API_KEY": {
+        "sensitive": true
+      },
+      "ANTHROPIC_API_KEY": {
+        "sensitive": true
+      }
+    }
+  },
 } as const;
 
 export function deriveCommandPolicy(

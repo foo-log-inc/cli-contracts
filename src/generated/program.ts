@@ -17,6 +17,7 @@ export interface CommandHandlers {
   checkReference: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; failOn?: string; output?: string; scope?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   suggest: (options: { fromReadme?: string; fromHelp?: string; fromSource?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   bundle: (options: { projectDir?: string; adapter?: string; model?: string; failOn?: string; output?: string; reportFormat?: string; showPrompt?: boolean }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  agents: (options: { format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
 }
 
 export function createProgram(
@@ -342,6 +343,20 @@ export function createProgram(
         return;
       }
       await handlers.bundle(opts, globalOpts);
+    });
+
+  program
+    .command("agents")
+    .description("Output the full resolved agent DSL as structured data.")
+    .option("-F, --format <value>", "Output format.", "yaml")
+    .action(async (opts, cmd) => {
+      const globalOpts = cmd.optsWithGlobals();
+      if (globalOpts.introspect) {
+        const policy = deriveCommandPolicy("agents", opts);
+        console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      await handlers.agents(opts, globalOpts);
     });
 
   return program;
