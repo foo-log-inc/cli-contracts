@@ -1,6 +1,7 @@
 audit-agent-policy:
   description: Audit and propose x-agent execution policies for CLI commands
   target_agent: cli-policy-auditor
+  model_class: standard
   allowed_from_agents:
     - cli-policy-auditor
   workflow: cli-audit
@@ -31,6 +32,7 @@ audit-agent-policy:
 audit-contract-design:
   description: Audit CLI contract design quality
   target_agent: cli-contract-auditor
+  model_class: standard
   allowed_from_agents:
     - cli-contract-auditor
   workflow: cli-audit
@@ -62,6 +64,7 @@ audit-contract-design:
 propose-test-cases:
   description: Propose contract test cases for CLI commands
   target_agent: cli-test-proposer
+  model_class: standard
   allowed_from_agents:
     - cli-test-proposer
   workflow: cli-audit
@@ -102,6 +105,7 @@ propose-test-cases:
 explain-contract-diff:
   description: Explain contract diff in human- and agent-readable terms
   target_agent: cli-diff-explainer
+  model_class: fast
   allowed_from_agents:
     - cli-diff-explainer
   workflow: cli-audit
@@ -135,6 +139,7 @@ explain-contract-diff:
 check-reference-conformance:
   description: Check LLM command conformance against the cli-contracts reference specification
   target_agent: cli-reference-checker
+  model_class: thinking
   allowed_from_agents:
     - cli-reference-checker
   workflow: reference-conformance-check
@@ -186,6 +191,7 @@ check-reference-conformance:
 suggest-contract:
   description: Generate cli-contract.yaml draft from CLI sources
   target_agent: cli-contract-suggester
+  model_class: thinking
   allowed_from_agents:
     - cli-contract-suggester
   workflow: cli-audit
@@ -226,6 +232,7 @@ suggest-contract:
 propose-bundle-config:
   description: Generate esbuild.bundle.mjs for a cli-contracts project
   target_agent: cli-bundle-proposer
+  model_class: thinking
   allowed_from_agents:
     - cli-bundle-proposer
   workflow: cli-audit
