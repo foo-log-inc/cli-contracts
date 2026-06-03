@@ -23,6 +23,7 @@ export interface CheckReferenceOptions {
   output?: string;
   reportFormat?: string;
   scope?: CheckScope;
+  logFile?: string;
 }
 
 export async function runCheckReference(
@@ -81,6 +82,7 @@ export async function runCheckReference(
       format: (options.reportFormat as "json" | "text") ?? "json",
       failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
       outputFile: options.output,
+      logFile: options.logFile,
     };
 
     const auditResult = await runAudit(

@@ -1093,6 +1093,9 @@ These commands share a common option interface:
 | `--fail-on <level>` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
 | `--output <file>` | Write result to a file instead of stdout |
 | `--report-format <fmt>` | Output format: `json`, `text`, or `yaml` |
+| `--log-file <path>` | `-l` | Write structured progress logs to a file for debugging and monitoring |
+
+All LLM commands support `--log-file <path>` (`-l`) to write structured progress logs to a file for debugging and monitoring.
 
 All LLM commands declare `effects.network` for their API calls, with `expectedDurationMs: 120000` and `retryableExitCodes: [1, 12]` in `x-agent`.
 

@@ -112,6 +112,7 @@ export interface ProposeAgentPolicyOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type ProposeAgentPolicyExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -137,6 +138,7 @@ export interface AuditOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type AuditExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -180,6 +182,7 @@ export interface ProposeTestsOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type ProposeTestsExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -207,6 +210,7 @@ export interface ExplainDiffOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type ExplainDiffExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -232,6 +236,7 @@ export interface CheckReferenceOptions {
   output?: string;
   scope?: "contract" | "implementation" | "all";
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type CheckReferenceExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -254,6 +259,7 @@ export interface SuggestOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type SuggestExitCode = 0 | 1 | 2 | 3 | 10 | 11 | 12;
@@ -274,6 +280,7 @@ export interface BundleOptions {
   failOn?: "warning" | "error" | "critical";
   output?: string;
   reportFormat?: "json" | "text" | "yaml";
+  logFile?: string;
 }
 
 export type BundleExitCode = 0 | 1 | 2 | 10 | 11 | 12;

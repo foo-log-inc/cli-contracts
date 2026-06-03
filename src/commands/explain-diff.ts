@@ -17,6 +17,7 @@ export interface ExplainDiffOptions {
   failOn?: string;
   output?: string;
   reportFormat?: string;
+  logFile?: string;
 }
 
 export async function runExplainDiff(
@@ -58,6 +59,7 @@ export async function runExplainDiff(
     format: (options.reportFormat as "json" | "text") ?? "json",
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
+    logFile: options.logFile,
   };
 
   const auditResult = await runAudit(

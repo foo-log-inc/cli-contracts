@@ -16,6 +16,7 @@ export interface AuditCommandOptions {
   failOn?: string;
   output?: string;
   reportFormat?: string;
+  logFile?: string;
 }
 
 export async function runAuditCommand(
@@ -51,6 +52,7 @@ export async function runAuditCommand(
     format: (options.reportFormat as "json" | "text") ?? "json",
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
+    logFile: options.logFile,
   };
 
   const auditResult = await runAudit(
