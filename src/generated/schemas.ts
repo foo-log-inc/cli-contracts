@@ -601,3 +601,4 @@ export const explainDiffExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const checkReferenceExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const suggestExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const bundleExitCodes = [0, 1, 2, 10, 11, 12] as const;
+export const agentsExitCodes = [0, 1] as const;

@@ -286,6 +286,16 @@ export type BundleExitResult =
   | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface AgentsOptions {
+  format?: "yaml" | "json";
+}
+
+export type AgentsExitCode = 0 | 1;
+
+export type AgentsExitResult =
+  { exitCode: 0; stdout: unknown }
+  | { exitCode: 1; stderr: unknown };
+
 export interface Error {
   code: string;
   message: string;

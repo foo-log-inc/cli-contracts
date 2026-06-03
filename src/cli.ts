@@ -18,6 +18,7 @@ import { runExplainDiff } from "./commands/explain-diff.js";
 import { runSuggest } from "./commands/suggest.js";
 import { runCheckReference } from "./commands/check-reference.js";
 import { runBundle } from "./commands/bundle.js";
+import { resolvedDsl } from "./generated/dsl/index.js";
 import { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR } from "./auditor/auditor.js";
 import { formatOutput, resolveFormat, type OutputFormat } from "./output.js";
 
@@ -413,6 +414,21 @@ const handlers: CommandHandlers = {
         process.exit(12);
       }
       writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async agents(options, _parentOpts) {
+    const YAML = await import("yaml");
+    const format = options.format ?? "yaml";
+    try {
+      if (format === "json") {
+        process.stdout.write(JSON.stringify(resolvedDsl, null, 2) + "\n");
+      } else {
+        process.stdout.write(YAML.stringify(resolvedDsl, { lineWidth: 120 }) + "\n");
+      }
+    } catch (err) {
+      process.stderr.write(`Failed to output DSL: ${(err as Error).message}\n`);
       process.exit(1);
     }
   },

@@ -21,6 +21,7 @@ Contract definition for the cli-contracts command line tool itself. This is a se
   - [check-reference](#cli-contracts-check-reference)
   - [suggest](#cli-contracts-suggest)
   - [bundle](#cli-contracts-bundle)
+  - [agents](#cli-contracts-agents)
 
 ---
 
@@ -7041,6 +7042,47 @@ cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
   ```
 
   </details>
+
+---
+
+### agents
+
+Output the full resolved agent DSL as structured data.
+
+Outputs the complete resolved agent-contracts DSL (agents, tasks, workflows, handoff_types) embedded in this CLI binary. Useful for debugging, external tooling integration, and DSL inspection.
+
+**Usage:**
+
+```
+cli-contracts agents [--format]
+```
+
+#### Options
+
+| Option | Aliases | Required | Default | Description |
+|---|---|---|---|---|
+| `--format` | -F | No | `"yaml"` | Output format. |
+
+#### Exit Codes
+
+**Exit 0:** DSL output successfully.
+
+- **stdout:** format=`text`
+
+**Exit 1:** Failed to load embedded DSL.
+
+- **stderr:** format=`text`
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+
+```
 
 ---
 
