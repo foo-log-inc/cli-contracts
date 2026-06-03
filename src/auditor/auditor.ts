@@ -73,11 +73,13 @@ export async function runAudit(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let runTask: (...args: any[]) => Promise<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let createProgressSink: (...args: any[]) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let agentRegistry: any, taskRegistry: any, handoffSchemas: any;
 
   try {
     const runtime = await import(RUNTIME_PKG);
-    runTask = runtime.runTask;
+    ({ runTask, createProgressSink } = runtime);
   } catch {
     throw Object.assign(
       new Error(
@@ -108,15 +110,26 @@ export async function runAudit(
     throw Object.assign(err as Error, { exitCode: EXIT_ADAPTER_ERROR });
   }
 
-  const result = await runTask(adapter, taskId, {
-    user_request: userRequest,
-  }, {
-    maxFollowUps: 3,
-    maxRetries: 1,
-    agentRegistry,
-    taskRegistry,
-    handoffSchemas,
-  });
+  const { resolve } = await import("node:path");
+  const progressSink = options.logFile
+    ? createProgressSink({ stderr: true, file: resolve(options.logFile), naming: "single" })
+    : createProgressSink({ stderr: true });
+
+  let result;
+  try {
+    result = await runTask(adapter, taskId, {
+      user_request: userRequest,
+    }, {
+      maxFollowUps: 3,
+      maxRetries: 1,
+      progressOutput: progressSink,
+      agentRegistry,
+      taskRegistry,
+      handoffSchemas,
+    });
+  } finally {
+    progressSink.close();
+  }
 
   const outcome = result.outcome;
   return {

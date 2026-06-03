@@ -179,6 +179,7 @@ export async function cliContractsProposeAgentPolicy(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -209,6 +210,7 @@ export async function cliContractsAudit(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -264,6 +266,7 @@ export async function cliContractsProposeTests(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -296,6 +299,7 @@ export async function cliContractsExplainDiff(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -326,6 +330,7 @@ export async function cliContractsCheckReference(
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.scope !== undefined) cmdArgs.push("--scope", String(options.scope));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -355,6 +360,7 @@ export async function cliContractsSuggest(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {
@@ -382,6 +388,7 @@ export async function cliContractsBundle(
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
+    if (options.logFile !== undefined) cmdArgs.push("--log-file", String(options.logFile));
   }
 
   try {

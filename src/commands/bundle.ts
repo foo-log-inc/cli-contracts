@@ -17,6 +17,7 @@ export interface BundleOptions {
   failOn?: string;
   output?: string;
   reportFormat?: string;
+  logFile?: string;
 }
 
 export async function runBundle(
@@ -93,6 +94,7 @@ export async function runBundle(
     format: (options.reportFormat as "json" | "text") ?? "json",
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
+    logFile: options.logFile,
   };
 
   const auditResult = await runAudit(

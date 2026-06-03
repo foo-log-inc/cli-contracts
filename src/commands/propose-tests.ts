@@ -15,6 +15,7 @@ export interface ProposeTestsOptions {
   failOn?: string;
   output?: string;
   reportFormat?: string;
+  logFile?: string;
 }
 
 export async function runProposeTests(
@@ -49,6 +50,7 @@ export async function runProposeTests(
     format: (options.reportFormat as "json" | "text") ?? "json",
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
+    logFile: options.logFile,
   };
 
   const auditResult = await runAudit(

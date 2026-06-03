@@ -9,6 +9,7 @@ export interface AuditOptions {
   format: "json" | "text";
   failOn: "warning" | "error" | "critical";
   outputFile?: string;
+  logFile?: string;
 }
 
 export interface AuditRunResult {

@@ -2038,6 +2038,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -2703,6 +2704,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -3799,6 +3801,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -4466,6 +4469,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -5131,6 +5135,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--scope` |  | No | `"contract"` | What to check. "contract" checks the contract definition against the reference spec (default). "implementation" checks that source code conforms to the contract. "all" checks both. |
 | `--report-format` |  | No | `"json"` | Output format for the conformance report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -5794,6 +5799,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the suggestion report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 
@@ -6452,6 +6458,7 @@ cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the bundle analysis report. |
+| `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
 #### Exit Codes
 

@@ -776,6 +776,12 @@ command_sets:
               enum: [json, text, yaml]
               default: json
 
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
+
         effects:
           reads:
             - contract-definitions
@@ -927,6 +933,12 @@ command_sets:
               type: string
               enum: [json, text, yaml]
               default: json
+
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
 
         effects:
           reads:
@@ -1162,6 +1174,12 @@ command_sets:
               enum: [json, text, yaml]
               default: json
 
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
+
         effects:
           reads:
             - contract-definitions
@@ -1322,6 +1340,12 @@ command_sets:
               enum: [json, text, yaml]
               default: json
 
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
+
         effects:
           reads:
             - contract-definitions
@@ -1480,6 +1504,12 @@ command_sets:
               enum: [json, text, yaml]
               default: json
 
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
+
         effects:
           reads:
             - contract-definitions
@@ -1629,6 +1659,12 @@ command_sets:
               enum: [json, text, yaml]
               default: json
 
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
+
         effects:
           reads:
             - contract-definitions
@@ -1756,6 +1792,12 @@ command_sets:
               type: string
               enum: [json, text, yaml]
               default: json
+
+          - name: log-file
+            aliases: [l]
+            description: Write agent progress log to this file path.
+            schema:
+              type: string
 
         effects:
           reads:

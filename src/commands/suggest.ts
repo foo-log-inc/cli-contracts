@@ -15,6 +15,7 @@ export interface SuggestOptions {
   failOn?: string;
   output?: string;
   reportFormat?: string;
+  logFile?: string;
 }
 
 export async function runSuggest(
@@ -58,6 +59,7 @@ export async function runSuggest(
     format: (options.reportFormat as "json" | "text") ?? "json",
     failOn: (options.failOn as "warning" | "error" | "critical") ?? "error",
     outputFile: options.output,
+    logFile: options.logFile,
   };
 
   const auditResult = await runAudit(
