@@ -58,10 +58,98 @@ describe("generateTypeScript program.ts", () => {
     const output = generateTypeScript(ctx);
     const program = output["program.ts"];
 
-    expect(program).toContain('.command("users list")');
-    expect(program).toContain('.command("users import")');
-    expect(program).toContain('.command("logs filter")');
-    expect(program).toContain('.command("tenants create")');
+    expect(program).toContain('const __cmd_users = program.command("users");');
+    expect(program).toContain('__cmd_users');
+    expect(program).toContain('.command("list")');
+    expect(program).toContain('.command("import")');
+    expect(program).toContain('const __cmd_logs = program.command("logs");');
+    expect(program).toContain('.command("filter")');
+    expect(program).toContain('const __cmd_tenants = program.command("tenants");');
+    expect(program).toContain('.command("create")');
+    expect(program).not.toContain('.command("users list")');
+    expect(program).not.toContain('.command("users import")');
+  });
+
+  it("nested subcommands under the same parent do not duplicate the parent", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      providers.list:
+        summary: List providers.
+        exits:
+          '0':
+            description: OK.
+      providers.test:
+        summary: Test a provider.
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    const parentCreations = program.match(
+      /const __cmd_providers = program\.command\("providers"\);/g,
+    );
+    expect(parentCreations).toHaveLength(1);
+    expect(program).toMatch(/__cmd_providers\s*\n\s*\.command\("list"\)/);
+    expect(program).toMatch(/__cmd_providers\s*\n\s*\.command\("test"\)/);
+    expect(program).not.toContain('.command("providers list")');
+    expect(program).not.toContain('.command("providers test")');
+  });
+
+  it("single-segment commands register directly on program", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      doctor:
+        summary: Run diagnostics.
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain('program\n    .command("doctor")');
+    expect(program).not.toMatch(/const __cmd_doctor/);
+  });
+
+  it("three-segment command paths register nested parents", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      a.b.c:
+        summary: Deep command.
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain('const __cmd_a = program.command("a");');
+    expect(program).toContain('const __cmd_a_b = __cmd_a.command("b");');
+    expect(program).toMatch(/__cmd_a_b\s*\n\s*\.command\("c"\)/);
+    expect(program).not.toContain('.command("a b c")');
   });
 
   it("generates handler entries for each command", async () => {
