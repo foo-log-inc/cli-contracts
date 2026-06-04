@@ -1,0 +1,20 @@
+cli_contracts: "0.1.0"
+info:
+  title: test-tool-with-memory
+  version: "1.0.0"
+  description: Test CLI tool with memory_ref support
+command_sets:
+  test-tool:
+    commands:
+      analyze:
+        summary: Analyze with resumable context
+        memory_ref:
+          input: true
+          output: true
+        effects:
+          risk_level: low
+          reads: []
+          writes: []
+        exits:
+          "0":
+            description: Success

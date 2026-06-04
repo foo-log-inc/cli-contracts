@@ -215,6 +215,29 @@ export const DeprecationInfoSchema = z.object({
   alternative: z.string().optional(),
 });
 
+// ─── Memory Ref Schema ──────────────────────────────────────────
+
+export const MemoryRefSchema = z.object({
+  id: z.string().min(1),
+  provider: z.string().min(1),
+  compat: z.string().min(1),
+  created_at: z.string(),
+  parent_run_id: z.string().optional(),
+});
+export type MemoryRef = z.infer<typeof MemoryRefSchema>;
+
+export const MemoryRefSpecSchema = z.object({
+  input: z
+    .boolean()
+    .optional()
+    .describe("Command accepts memory_ref as input for resumption"),
+  output: z
+    .boolean()
+    .optional()
+    .describe("Command emits memory_ref in output"),
+});
+export type MemoryRefSpec = z.infer<typeof MemoryRefSpecSchema>;
+
 // ─── x-agent Extension Schema ───────────────────────────────────
 
 export const HumanReviewSchema = z.object({
@@ -259,6 +282,7 @@ export const CommandSchema = z
     arguments: z.array(ArgumentSchema).optional(),
     options: z.array(OptionSchema).optional(),
     effects: EffectsSchema.optional(),
+    memory_ref: MemoryRefSpecSchema.optional(),
     streams: StreamsSchema.optional(),
     signals: z.record(z.string(), SignalSchema).optional(),
     exits: z.record(exitCodeKey, ExitSchema),

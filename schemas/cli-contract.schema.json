@@ -614,6 +614,20 @@
                   },
                   "additionalProperties": false
                 },
+                "memory_ref": {
+                  "type": "object",
+                  "properties": {
+                    "input": {
+                      "description": "Command accepts memory_ref as input for resumption",
+                      "type": "boolean"
+                    },
+                    "output": {
+                      "description": "Command emits memory_ref in output",
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "streams": {
                   "type": "object",
                   "properties": {

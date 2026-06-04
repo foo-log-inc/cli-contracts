@@ -37,6 +37,8 @@ export type {
   XAgent,
   HumanReview,
   Rollback,
+  MemoryRef,
+  MemoryRefSpec,
 } from "./types.js";
 
 export type {
@@ -81,6 +83,8 @@ export {
   EffectReadSchema,
   NetworkEffectSchema,
   EffectsSchema,
+  MemoryRefSchema,
+  MemoryRefSpecSchema,
 } from "./schema.js";
 
 export { parseContractFile, parseContractString } from "./parser.js";
@@ -88,6 +92,7 @@ export { validateContract } from "./validator.js";
 export {
   validateXAgentDeprecation,
   validateEffectsConsistency,
+  validateMemoryRef,
 } from "./validator.js";
 export { resolveRefs, collectRefs, validateRefs } from "./ref-resolver.js";
 export { normalizeContract } from "./normalizer.js";

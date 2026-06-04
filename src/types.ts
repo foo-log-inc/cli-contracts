@@ -43,6 +43,8 @@ export type {
   EffectRead,
   NetworkEffect,
   Effects,
+  MemoryRef,
+  MemoryRefSpec,
 } from "./schema.js";
 
 // ─── Normalized Context (for generators) ────────────────────────
