@@ -538,10 +538,13 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   }
   lines.push("");
 
-  // Commands
+  // Commands (nested paths register parent subcommands once)
+  const cmdRegistrationState: CommandRegistrationState = {
+    createdPrefixes: new Set(),
+  };
   for (const cs of ctx.command_sets) {
     for (const cmd of cs.commands) {
-      generateProgramCommand(cmd, lines, hasEffects);
+      generateProgramCommand(cmd, lines, hasEffects, cmdRegistrationState);
     }
   }
 
@@ -585,16 +588,62 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
   return `(${params.join(", ")}) => ${returnType}`;
 }
 
+interface CommandRegistrationState {
+  createdPrefixes: Set<string>;
+}
+
+function commandParentVarName(prefixSegments: string[]): string {
+  return `__cmd_${prefixSegments.join("_")}`;
+}
+
+function prefixKey(segments: string[]): string {
+  return segments.join("\0");
+}
+
+/** Ensures ancestor subcommands exist; returns the receiver for the leaf command. */
+function ensureCommandAncestors(
+  path: string[],
+  state: CommandRegistrationState,
+  lines: string[],
+): string {
+  if (path.length <= 1) {
+    return "program";
+  }
+
+  for (let depth = 1; depth < path.length; depth++) {
+    const prefix = path.slice(0, depth);
+    const key = prefixKey(prefix);
+    if (state.createdPrefixes.has(key)) continue;
+
+    const segment = path[depth - 1]!;
+    const parentVar =
+      depth === 1 ? "program" : commandParentVarName(path.slice(0, depth - 1));
+    const varName = commandParentVarName(prefix);
+
+    lines.push(
+      `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)});`,
+    );
+    state.createdPrefixes.add(key);
+  }
+
+  return commandParentVarName(path.slice(0, -1));
+}
+
 function generateProgramCommand(
   cmd: NormalizedCommand,
   lines: string[],
   hasEffects: boolean = false,
+  registrationState?: CommandRegistrationState,
 ): void {
   const handlerName = toCamelCase(cmd.id);
-  const cmdPath = cmd.path.join(" ");
+  const path = cmd.path;
+  const state = registrationState ?? { createdPrefixes: new Set() };
+  const receiver =
+    path.length === 1 ? "program" : ensureCommandAncestors(path, state, lines);
+  const commandName = path[path.length - 1]!;
 
-  lines.push(`  program`);
-  lines.push(`    .command(${JSON.stringify(cmdPath)})`);
+  lines.push(`  ${receiver}`);
+  lines.push(`    .command(${JSON.stringify(commandName)})`);
   lines.push(`    .description(${JSON.stringify(cmd.summary)})`);
 
   // Arguments
