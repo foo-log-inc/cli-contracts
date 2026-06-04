@@ -206,7 +206,75 @@ function validateCommand(
     );
   }
 
+  diagnostics.push(...validateMemoryRef(cmd, basePath));
+
   validateSlotReferences(doc, cmd, basePath, diagnostics);
+}
+
+export function validateMemoryRef(
+  cmd: Command,
+  basePath: string,
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const memoryRef = cmd.memory_ref;
+  if (!memoryRef?.output) {
+    return diagnostics;
+  }
+
+  const xAgent = (cmd as Record<string, unknown>)["x-agent"];
+  if (commandDeclaresSideEffects(cmd, xAgent)) {
+    return diagnostics;
+  }
+
+  diagnostics.push({
+    path: `${basePath}/memory_ref`,
+    message:
+      "memory_ref.output is true but no side-effect declaration found; declare effects or x-agent side_effects for external memory store writes",
+    rule: "memory-ref-output-no-side-effects",
+    severity: "warning",
+  });
+  return diagnostics;
+}
+
+function commandDeclaresSideEffects(
+  cmd: Command,
+  xAgent: unknown,
+): boolean {
+  if (xAgent && typeof xAgent === "object" && xAgent !== null) {
+    const agent = xAgent as Record<string, unknown>;
+    if (Array.isArray(agent.side_effects) && agent.side_effects.length > 0) {
+      return true;
+    }
+    if (Array.isArray(agent.writes) && agent.writes.length > 0) {
+      return true;
+    }
+  }
+
+  const effects = cmd.effects;
+  if (!effects) {
+    return false;
+  }
+
+  if (effects.writes && effects.writes.length > 0) {
+    return true;
+  }
+  if (effects.reads && effects.reads.length > 0) {
+    return true;
+  }
+  if (effects.network === true) {
+    return true;
+  }
+  if (typeof effects.network === "object" && effects.network !== null) {
+    return true;
+  }
+  if (effects.risk_level) {
+    return true;
+  }
+  if (effects.description) {
+    return true;
+  }
+
+  return false;
 }
 
 function effectsUseSlotReferences(effects: Effects): boolean {
