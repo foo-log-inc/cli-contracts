@@ -176,6 +176,7 @@ export async function cliContractsProposeAgentPolicy(
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
@@ -207,6 +208,7 @@ export async function cliContractsAudit(
     if (options.checks !== undefined) cmdArgs.push("--checks", String(options.checks));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
@@ -263,6 +265,7 @@ export async function cliContractsProposeTests(
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
@@ -296,6 +299,7 @@ export async function cliContractsExplainDiff(
     if (options.contractPath !== undefined) cmdArgs.push("--contract-path", String(options.contractPath));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
@@ -326,6 +330,7 @@ export async function cliContractsCheckReference(
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.scope !== undefined) cmdArgs.push("--scope", String(options.scope));
@@ -357,6 +362,7 @@ export async function cliContractsSuggest(
     if (options.fromSource !== undefined) cmdArgs.push("--from-source", String(options.fromSource));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));
@@ -385,6 +391,7 @@ export async function cliContractsBundle(
     if (options.projectDir !== undefined) cmdArgs.push("--project-dir", String(options.projectDir));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
+    if (options.showPrompt) cmdArgs.push("--show-prompt");
     if (options.failOn !== undefined) cmdArgs.push("--fail-on", String(options.failOn));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.reportFormat !== undefined) cmdArgs.push("--report-format", String(options.reportFormat));

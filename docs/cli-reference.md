@@ -2035,6 +2035,7 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 | `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -2666,6 +2667,23 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
   ```
 
   </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
 
 ---
 
@@ -2701,6 +2719,7 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 | `--checks` |  | No |  | Audit dimension(s) to run. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -3332,6 +3351,23 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
   ```
 
   </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
 
 ---
 
@@ -3798,6 +3834,7 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 | `--file` | -f | No |  | Contract file to analyze (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -4429,6 +4466,23 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
   ```
 
   </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
 
 ---
 
@@ -4466,6 +4520,7 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 | `--contract-path` | -p | No | `"cli-contract.yaml"` | Contract file path within the repository (used with --base/--head). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
@@ -5098,6 +5153,23 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
+
 ---
 
 ### check-reference
@@ -5131,6 +5203,7 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--file` | -f | No |  | Contract file to check (alternative to positional argument). |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--scope` |  | No | `"contract"` | What to check. "contract" checks the contract definition against the reference spec (default). "implementation" checks that source code conforms to the contract. "all" checks both. |
@@ -5764,6 +5837,23 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
+
 ---
 
 ### suggest
@@ -5796,6 +5886,7 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--from-source` |  | No |  | Path to CLI source code file. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the suggestion report. |
@@ -6428,6 +6519,23 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 
   </details>
 
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
+
 ---
 
 ### bundle
@@ -6455,6 +6563,7 @@ cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
 | `--project-dir` | -d | No | `"."` | Project directory to analyze. Must contain package.json and cli-contract.yaml. Defaults to the current working directory. |
 | `--adapter` |  | No |  | LLM adapter to use. |
 | `--model` |  | No |  | Model name to pass to the adapter. |
+| `--show-prompt` |  | No | `false` | Output the constructed prompt without calling the LLM API. |
 | `--fail-on` |  | No | `"error"` | Minimum severity that causes a non-zero exit. |
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the bundle analysis report. |
@@ -7049,6 +7158,23 @@ cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
   ```
 
   </details>
+
+#### Extensions
+
+```yaml
+x-agent: 
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects: 
+    - network
+  sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
+  safeDryRunOption: show-prompt
+  expectedDurationMs: 120000
+  retryableExitCodes: 
+    - 1
+    - 12
+```
 
 ---
 

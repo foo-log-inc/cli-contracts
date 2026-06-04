@@ -749,6 +749,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -791,6 +797,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -907,6 +925,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -949,6 +973,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1147,6 +1183,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1189,6 +1231,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1313,6 +1367,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1355,6 +1415,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1466,6 +1538,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1520,6 +1598,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1632,6 +1722,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1675,6 +1771,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':
@@ -1766,6 +1874,12 @@ command_sets:
             schema:
               type: string
 
+          - name: show-prompt
+            description: Output the constructed prompt without calling the LLM API.
+            schema:
+              type: boolean
+              default: false
+
           - name: fail-on
             description: Minimum severity that causes a non-zero exit.
             value_name: level
@@ -1810,6 +1924,18 @@ command_sets:
             description: "LLM API calls to configured provider"
             requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [network]
+          sideEffectNote: >-
+            Makes network calls to the configured LLM provider when adapter is
+            not mock. Filesystem write only when --output is specified.
+          safeDryRunOption: show-prompt
+          expectedDurationMs: 120000
+          retryableExitCodes: [1, 12]
 
         exits:
           '0':

@@ -389,6 +389,13 @@ export const commandDefinitions = {
         }
       },
       {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
         "name": "fail-on",
         "schema": {
           "type": "string",
@@ -508,6 +515,13 @@ export const commandDefinitions = {
         "name": "model",
         "schema": {
           "type": "string"
+        }
+      },
+      {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
         }
       },
       {
@@ -663,6 +677,13 @@ export const commandDefinitions = {
         }
       },
       {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
         "name": "fail-on",
         "schema": {
           "type": "string",
@@ -778,6 +799,13 @@ export const commandDefinitions = {
         }
       },
       {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
         "name": "fail-on",
         "schema": {
           "type": "string",
@@ -884,6 +912,13 @@ export const commandDefinitions = {
         "name": "model",
         "schema": {
           "type": "string"
+        }
+      },
+      {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
         }
       },
       {
@@ -1029,6 +1064,13 @@ export const commandDefinitions = {
         }
       },
       {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
         "name": "fail-on",
         "schema": {
           "type": "string",
@@ -1131,6 +1173,13 @@ export const commandDefinitions = {
         "name": "model",
         "schema": {
           "type": "string"
+        }
+      },
+      {
+        "name": "show-prompt",
+        "schema": {
+          "type": "boolean",
+          "default": false
         }
       },
       {
