@@ -4,7 +4,7 @@
  *
  * Produces dist/cli-contracts.bundle.mjs — a self-contained CLI that only
  * requires Node.js 20+ and (optionally) the LLM SDK packages that are kept
- * external: @anthropic-ai/claude-agent-sdk, @cursor/sdk, @openai/agents,
+ * external: @anthropic-ai/claude-agent-sdk, @google/adk, @openai/agents,
  * @google/genai.
  *
  * Usage:
@@ -21,7 +21,7 @@ const minify = process.argv.includes("--minify");
 const externalSdks = [
   "@anthropic-ai/claude-agent-sdk",
   "@anthropic-ai/sdk",
-  "@cursor/sdk",
+  "@google/adk",
   "@openai/agents",
   "@google/genai",
 ];

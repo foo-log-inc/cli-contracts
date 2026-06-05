@@ -44,7 +44,6 @@ Contract-first specification and toolchain for CLI interfaces.
 
 | Variable | Description |
 |---|---|
-| `CURSOR_API_KEY` | API key for the Cursor adapter (required when --adapter=cursor). |
 | `GEMINI_API_KEY` | API key for the Gemini adapter (required when --adapter=gemini). |
 | `OPENAI_API_KEY` | API key for the OpenAI adapter (required when --adapter=openai). |
 | `ANTHROPIC_API_KEY` | API key for the Claude adapter (required when --adapter=claude). |

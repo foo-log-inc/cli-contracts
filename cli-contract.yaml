@@ -41,11 +41,6 @@ command_sets:
       or positional arguments. Pipeline composition is not supported.
 
     env:
-      CURSOR_API_KEY:
-        description: API key for the Cursor adapter (required when --adapter=cursor).
-        required: false
-        sensitive: true
-        requiredWhen: '{options.adapter} == "cursor"'
       GEMINI_API_KEY:
         description: API key for the Gemini adapter (required when --adapter=gemini).
         required: false
@@ -741,7 +736,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -795,7 +790,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -917,7 +912,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -971,7 +966,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -1175,7 +1170,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -1229,7 +1224,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -1359,7 +1354,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -1413,7 +1408,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -1530,7 +1525,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -1596,7 +1591,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -1714,7 +1709,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -1769,7 +1764,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:
@@ -1866,7 +1861,7 @@ command_sets:
             value_name: name
             schema:
               type: string
-              enum: [mock, cursor, claude, openai, gemini]
+              enum: [mock, claude, openai, gemini]
 
           - name: model
             description: Model name to pass to the adapter.
@@ -1922,7 +1917,7 @@ command_sets:
             - audit-report
           network:
             description: "LLM API calls to configured provider"
-            requires_secrets: [CURSOR_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
+            requires_secrets: [GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY]
             idempotent: true
 
         x-agent:

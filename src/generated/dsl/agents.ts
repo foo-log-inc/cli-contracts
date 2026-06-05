@@ -74,7 +74,7 @@ export const cliBundleProposer: AgentContract = {
   },
   {
     "id": "R-BUNDLE-002",
-    "description": "Must externalize all known LLM SDK packages: @anthropic-ai/claude-agent-sdk, @anthropic-ai/sdk, @cursor/sdk, @openai/agents, @google/genai.",
+    "description": "Must externalize all known LLM SDK packages: @anthropic-ai/claude-agent-sdk, @anthropic-ai/sdk, @google/adk, @openai/agents, @google/genai.",
     "severity": "mandatory"
   },
   {

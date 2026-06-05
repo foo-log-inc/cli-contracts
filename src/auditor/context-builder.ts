@@ -449,7 +449,7 @@ function preAnalyzeBundle(files: BundleSourceFile[]): BundlePreAnalysis {
 
   const KNOWN_LLM_SDKS = [
     "@anthropic-ai/claude-agent-sdk", "@anthropic-ai/sdk",
-    "@cursor/sdk", "@openai/agents", "@google/genai",
+    "@google/adk", "@openai/agents", "@google/genai",
   ];
   const KNOWN_NATIVE = [
     "better-sqlite3", "libpg-query", "puppeteer", "canvas", "sharp",
