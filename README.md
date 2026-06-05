@@ -80,7 +80,7 @@ npx cli-contracts audit cli-contract.yaml --adapter gemini
 npx cli-contracts check-reference path/to/cli-contract.yaml --adapter openai
 
 # Generate a contract draft from an existing README
-npx cli-contracts suggest --from-readme README.md --adapter cursor
+npx cli-contracts suggest --from-readme README.md --adapter claude
 ```
 
 After running `generate`, you get:
@@ -1077,7 +1077,7 @@ cli-contracts explain-diff old.yaml new.yaml --adapter gemini
 cli-contracts check-reference path/to/cli-contract.yaml --adapter openai
 
 # Generate a contract draft from an existing README
-cli-contracts suggest --from-readme README.md --adapter cursor
+cli-contracts suggest --from-readme README.md --adapter claude
 
 # Inspect the prompt without making an LLM call
 cli-contracts propose-agent-policy cli-contract.yaml --show-prompt
@@ -1087,7 +1087,7 @@ These commands share a common option interface:
 
 | Option | Description |
 |---|---|
-| `--adapter <name>` | LLM adapter: `mock`, `cursor`, `claude`, `openai`, `gemini` |
+| `--adapter <name>` | LLM adapter: `mock`, `claude`, `openai`, `gemini` |
 | `--model <name>` | Model name to pass to the adapter |
 | `--show-prompt` | Output the constructed prompt without calling the LLM API |
 | `--fail-on <level>` | Minimum severity that causes a non-zero exit (`warning`, `error`, `critical`) |
@@ -1111,7 +1111,6 @@ Required environment variables depend on the chosen adapter:
 
 | Adapter | Environment Variable |
 |---|---|
-| `cursor` | `CURSOR_API_KEY` |
 | `gemini` | `GEMINI_API_KEY` |
 | `openai` | `OPENAI_API_KEY` |
 | `claude` | `ANTHROPIC_API_KEY` |

@@ -107,7 +107,7 @@ export interface ProposeAgentPolicyArgs {
 
 export interface ProposeAgentPolicyOptions {
   file?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -134,7 +134,7 @@ export interface AuditArgs {
 export interface AuditOptions {
   file?: string;
   checks?: "agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk";
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -179,7 +179,7 @@ export interface ProposeTestsArgs {
 
 export interface ProposeTestsOptions {
   file?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -208,7 +208,7 @@ export interface ExplainDiffOptions {
   base?: string;
   head?: string;
   contractPath?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -234,7 +234,7 @@ export interface CheckReferenceArgs {
 
 export interface CheckReferenceOptions {
   file?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -259,7 +259,7 @@ export interface SuggestOptions {
   fromReadme?: string;
   fromHelp?: string;
   fromSource?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";
@@ -281,7 +281,7 @@ export type SuggestExitResult =
 
 export interface BundleOptions {
   projectDir?: string;
-  adapter?: "mock" | "cursor" | "claude" | "openai" | "gemini";
+  adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;
   failOn?: "warning" | "error" | "critical";

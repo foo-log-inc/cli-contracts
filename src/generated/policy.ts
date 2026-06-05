@@ -42,9 +42,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -87,9 +84,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -155,9 +149,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -210,9 +201,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -272,9 +260,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -323,9 +308,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -348,7 +330,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -375,7 +356,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -438,9 +418,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -463,7 +440,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -504,7 +480,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -567,9 +542,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -611,9 +583,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -636,7 +605,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -663,7 +631,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -726,9 +693,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -751,7 +715,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -785,7 +748,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -848,9 +810,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -874,7 +833,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -901,7 +859,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -976,9 +933,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -1002,7 +956,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -1050,7 +1003,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -1113,9 +1065,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -1140,7 +1089,6 @@ export const commandDefinitions = {
       "network": {
         "description": "LLM API calls to configured provider",
         "requires_secrets": [
-          "CURSOR_API_KEY",
           "GEMINI_API_KEY",
           "OPENAI_API_KEY",
           "ANTHROPIC_API_KEY"
@@ -1162,7 +1110,6 @@ export const commandDefinitions = {
           "type": "string",
           "enum": [
             "mock",
-            "cursor",
             "claude",
             "openai",
             "gemini"
@@ -1225,9 +1172,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
@@ -1254,9 +1198,6 @@ export const commandDefinitions = {
       }
     ],
     "env": {
-      "CURSOR_API_KEY": {
-        "sensitive": true
-      },
       "GEMINI_API_KEY": {
         "sensitive": true
       },
