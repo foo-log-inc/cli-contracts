@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.33.6",
+  "version": "0.33.7",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.141",
-    "@google/adk": "^1.2.0",
+    "@google/adk": "^0.1.2",
     "@openai/agents": "^0.11.6",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
