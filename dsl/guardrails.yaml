@@ -1,0 +1,58 @@
+output-schema-conformance:
+  description: >-
+    All agent outputs must conform to the declared result handoff schema
+    (cli-audit-result / agent-audit-result). Validation is performed at
+    runtime via Zod schema in handoff definition.
+  scope:
+    agents:
+      - cli-policy-auditor
+      - cli-contract-auditor
+      - cli-test-proposer
+      - cli-diff-explainer
+      - cli-reference-checker
+      - cli-contract-suggester
+      - cli-bundle-proposer
+    tasks:
+      - audit-agent-policy
+      - audit-contract-design
+      - propose-test-cases
+      - explain-contract-diff
+      - check-reference-conformance
+      - suggest-contract
+      - propose-bundle-config
+  rationale: >-
+    Structured output conformance is critical for CLI parsing and
+    downstream tooling integration.
+
+audit-read-only:
+  description: >-
+    All agents must operate in read-only mode. They audit, propose, and
+    explain but must never modify project files.
+  scope:
+    agents:
+      - cli-policy-auditor
+      - cli-contract-auditor
+      - cli-test-proposer
+      - cli-diff-explainer
+      - cli-reference-checker
+      - cli-contract-suggester
+      - cli-bundle-proposer
+  rationale: >-
+    All cli-contracts agents are static analysis agents.
+    File modification is out of scope for audit operations.
+
+confidence-threshold:
+  description: >-
+    Findings with confidence below 0.5 must include an explicit
+    uncertainty disclaimer in their recommendation.
+  scope:
+    tasks:
+      - audit-agent-policy
+      - audit-contract-design
+      - propose-test-cases
+      - check-reference-conformance
+      - suggest-contract
+      - propose-bundle-config
+  rationale: >-
+    Low-confidence findings without disclaimers may mislead operators
+    into applying unnecessary changes.

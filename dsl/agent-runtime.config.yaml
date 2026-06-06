@@ -1,3 +1,6 @@
 dsl: ./cli-contracts-dsl.yaml
 generated_dir: ../src/generated/dsl
 templates_dir: ./templates
+bindings:
+  - ./bindings/runtime.yaml
+active_guardrail_policy: cli-audit-policy

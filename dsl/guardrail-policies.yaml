@@ -1,0 +1,13 @@
+cli-audit-policy:
+  description: >-
+    Policy governing CLI contract audit and analysis operations.
+  rules:
+    - guardrail: output-schema-conformance
+      severity: critical
+      action: block
+    - guardrail: audit-read-only
+      severity: critical
+      action: block
+    - guardrail: confidence-threshold
+      severity: warning
+      action: warn

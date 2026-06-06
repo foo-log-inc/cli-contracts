@@ -1,0 +1,24 @@
+software: cli-contracts
+version: 1
+
+# output-schema-conformance and confidence-threshold are semantic guardrails
+# enforced at runtime (Zod validation and output content checks).
+# No standard binding matcher applies.
+guardrail_impl:
+  audit-read-only:
+    checks:
+      - matcher:
+          type: file_glob
+          pattern: "src/generated/**"
+        message: >-
+          Modifying generated files is forbidden.
+      - matcher:
+          type: file_glob
+          pattern: "cli-contract.yaml"
+        message: >-
+          Modifying the CLI contract is forbidden.
+      - matcher:
+          type: file_glob
+          pattern: "dsl/**"
+        message: >-
+          Modifying DSL files is forbidden.
