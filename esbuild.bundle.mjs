@@ -19,7 +19,6 @@ const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const minify = process.argv.includes("--minify");
 
 const externalSdks = [
-  "agent-contracts-runtime",
   "@anthropic-ai/claude-agent-sdk",
   "@anthropic-ai/sdk",
   "@google/adk",
@@ -92,8 +91,8 @@ const result = await build({
   banner: {
     js: [
       "#!/usr/bin/env node",
-      "import { createRequire } from 'module';",
-      "const require = createRequire(import.meta.url);",
+      "import { createRequire as __banner_createRequire } from 'module';",
+      "const require = __banner_createRequire(import.meta.url);",
     ].join("\n"),
   },
 
