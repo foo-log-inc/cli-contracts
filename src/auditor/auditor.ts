@@ -1,53 +1,19 @@
 /**
  * Audit orchestrator — runs LLM-based semantic audits via agent-contracts-runtime.
  *
+ * Uses executeTask() from agent-contracts-runtime for the complete execution
+ * lifecycle: adapter creation, DSL context loading, progress sink, and task invocation.
+ *
  * agent-contracts-runtime is an optional peer dependency — it is loaded
  * dynamically at audit invocation time so that users who don't use audit
  * have zero additional overhead.
  */
 
 import type { AuditConfig, AuditOptions, AuditRunResult } from "./types.js";
+import { resolvedDsl } from "../generated/dsl/index.js";
 
 const EXIT_RUNTIME_MISSING = 11;
 const EXIT_ADAPTER_ERROR = 12;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function createAdapter(runtimePkg: string, name: string, config: AuditConfig): Promise<any> {
-  switch (name) {
-    case "mock": {
-      const mod = await import(`${runtimePkg}/adapters/mock`);
-      return new mod.MockAdapter();
-    }
-    case "claude": {
-      const mod = await import(`${runtimePkg}/adapters/claude-agent-sdk`);
-      return new mod.ClaudeAgentSdkAdapter({
-        model: config.model,
-        tools: ["Read", "Glob", "Grep"],
-        permissionMode: "bypassPermissions",
-      });
-    }
-    case "openai": {
-      const mod = await import(`${runtimePkg}/adapters/openai-agents-sdk`);
-      return new mod.OpenAIAgentsSdkAdapter({
-        model: config.model,
-        maxTurns: 1,
-      });
-    }
-    case "gemini": {
-      const mod = await import(`${runtimePkg}/adapters/adk-sdk`);
-      return new mod.AdkSdkAdapter({
-        apiKey: process.env.GEMINI_API_KEY,
-        model: config.model ?? "gemini-2.5-pro",
-        temperature: config.temperature,
-      });
-    }
-    default:
-      throw new Error(
-        `Unsupported audit adapter: "${name}". ` +
-        "Available: mock, claude, openai, gemini.",
-      );
-  }
-}
 
 export { EXIT_RUNTIME_MISSING, EXIT_ADAPTER_ERROR };
 
@@ -57,18 +23,11 @@ export async function runAudit(
   auditConfig: AuditConfig,
   options: AuditOptions,
 ): Promise<AuditRunResult> {
-  const RUNTIME_PKG = ["agent-contracts", "runtime"].join("-");
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let runTask: (...args: any[]) => Promise<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let createProgressSink: (...args: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let agentRegistry: any, taskRegistry: any, handoffSchemas: any;
-
+  let executeTask: (taskId: string, options: any) => Promise<any>;
   try {
-    const runtime = await import(RUNTIME_PKG);
-    ({ runTask, createProgressSink } = runtime);
+    const runtime = await import("agent-contracts-runtime");
+    executeTask = runtime.executeTask;
   } catch {
     throw Object.assign(
       new Error(
@@ -80,44 +39,25 @@ export async function runAudit(
     );
   }
 
-  try {
-    const dsl = await import("../generated/dsl/index.js");
-    agentRegistry = dsl.agentRegistry;
-    taskRegistry = dsl.taskRegistry;
-    handoffSchemas = dsl.handoffSchemas;
-  } catch {
-    agentRegistry = {};
-    taskRegistry = {};
-    handoffSchemas = {};
-  }
-
   const adapterName = auditConfig.adapter ?? "mock";
-  let adapter;
-  try {
-    adapter = await createAdapter(RUNTIME_PKG, adapterName, auditConfig);
-  } catch (err) {
-    throw Object.assign(err as Error, { exitCode: EXIT_ADAPTER_ERROR });
-  }
-
-  const { resolve } = await import("node:path");
-  const progressSink = options.logFile
-    ? createProgressSink({ stderr: true, file: resolve(options.logFile), naming: "single" })
-    : createProgressSink({ stderr: true });
 
   let result;
   try {
-    result = await runTask(adapter, taskId, {
-      user_request: userRequest,
-    }, {
+    result = await executeTask(taskId, {
+      request: userRequest,
+      adapter: adapterName,
+      model: auditConfig.model,
+      dsl: resolvedDsl,
+      logFile: options.logFile,
       maxFollowUps: 3,
       maxRetries: 1,
-      progressOutput: progressSink,
-      agentRegistry,
-      taskRegistry,
-      handoffSchemas,
+      adapterOptions: {
+        tools: ["Read", "Glob", "Grep"],
+        permissionMode: "bypassPermissions",
+      },
     });
-  } finally {
-    progressSink.close();
+  } catch (err) {
+    throw Object.assign(err as Error, { exitCode: EXIT_ADAPTER_ERROR });
   }
 
   const outcome = result.outcome;

@@ -19,6 +19,7 @@ const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const minify = process.argv.includes("--minify");
 
 const externalSdks = [
+  "agent-contracts-runtime",
   "@anthropic-ai/claude-agent-sdk",
   "@anthropic-ai/sdk",
   "@google/adk",
@@ -26,38 +27,9 @@ const externalSdks = [
   "@google/genai",
 ];
 
-/**
- * Plugin: resolve the obfuscated dynamic imports in auditor.ts.
- *
- * The source uses `const RUNTIME_PKG = ["agent-contracts","runtime"].join("-")`
- * followed by `await import(RUNTIME_PKG)` and template-literal adapter imports
- * to prevent TypeScript from resolving them at compile time.  For bundling we
- * need esbuild to see literal specifiers so it can follow the imports.
- */
 const resolveRuntimeDynamicImports = {
   name: "resolve-runtime-dynamic-imports",
-  setup(build) {
-    build.onLoad({ filter: /auditor[\\/]auditor\.ts$/ }, async (args) => {
-      let contents = readFileSync(args.path, "utf8");
-
-      contents = contents.replace(
-        /const RUNTIME_PKG = \["agent-contracts",\s*"runtime"\]\.join\("-"\);/,
-        'const RUNTIME_PKG = "agent-contracts-runtime";',
-      );
-
-      contents = contents.replace(
-        /await import\(RUNTIME_PKG\)/g,
-        'await import("agent-contracts-runtime")',
-      );
-
-      contents = contents.replace(
-        /await import\(`\$\{runtimePkg\}\/adapters\/([^`]+)`\)/g,
-        'await import("agent-contracts-runtime/adapters/$1")',
-      );
-
-      return { contents, loader: "ts" };
-    });
-  },
+  setup(_build) {},
 };
 
 /**
