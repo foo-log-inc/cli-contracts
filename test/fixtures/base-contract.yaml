@@ -1,0 +1,19 @@
+cli_contracts: 0.1.0
+info:
+  title: Base CLI
+  version: 1.0.0
+  description: Base contract for extends tests.
+command_sets:
+  base-cli:
+    summary: Base command set.
+    commands:
+      hello:
+        summary: Say hello.
+        exits:
+          "0":
+            description: Success.
+      goodbye:
+        summary: Say goodbye.
+        exits:
+          "0":
+            description: Success.

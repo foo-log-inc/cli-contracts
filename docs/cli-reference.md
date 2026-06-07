@@ -9,6 +9,7 @@ Contract definition for the cli-contracts command line tool itself. This is a se
 - [cli-contracts](#cli-contracts)
   - [init](#cli-contracts-init)
   - [validate](#cli-contracts-validate)
+  - [resolve](#cli-contracts-resolve)
   - [generate](#cli-contracts-generate)
   - [docs](#cli-contracts-docs)
   - [test](#cli-contracts-test)
@@ -556,6 +557,126 @@ cli-contracts validate --strict
   </details>
 
 - **stderr:** format=`json` *(optional)*
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+---
+
+### resolve
+
+Resolve extends chain and dump merged contract.
+
+Loads a contract with optional extends field, resolves the base chain (including merge operators $append and $replace), and outputs the fully merged contract document.
+
+**Usage:**
+
+```
+cli-contracts resolve
+```
+```
+cli-contracts resolve --file overlay.yaml
+```
+```
+cli-contracts resolve --file overlay.yaml --format json
+```
+
+#### Options
+
+| Option | Aliases | Required | Default | Description |
+|---|---|---|---|---|
+| `--file` | -f | No |  | Contract file to resolve. Defaults to config input.files. |
+| `--format` |  | No | `"yaml"` | Output format for the resolved contract. |
+
+#### Exit Codes
+
+**Exit 0:** Contract resolved successfully.
+
+- **stdout:** format=`{options.format}`
+
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "description": "Fully resolved CLI Contracts document (extends field stripped)."
+  }
+  ```
+
+  </details>
+
+**Exit 1:** Unexpected error (circular extends, merge error, etc.).
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid arguments.
+
+- **stderr:** format=`json`
 
   | Property | Type | Required | Description |
   |---|---|---|---|

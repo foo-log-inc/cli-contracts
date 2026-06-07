@@ -1,0 +1,13 @@
+extends: circular-a-contract.yaml
+cli_contracts: 0.1.0
+info:
+  title: Circular B
+  version: 1.0.0
+command_sets:
+  circular:
+    commands:
+      b:
+        summary: B command.
+        exits:
+          "0":
+            description: Success.

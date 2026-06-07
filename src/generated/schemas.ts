@@ -589,6 +589,7 @@ export const schemas = {
 
 export const initExitCodes = [0, 1, 2, 4] as const;
 export const validateExitCodes = [0, 1, 2, 9] as const;
+export const resolveExitCodes = [0, 1, 2] as const;
 export const generateExitCodes = [0, 1, 2, 3, 5] as const;
 export const docsExitCodes = [0, 1, 2, 3] as const;
 export const testExitCodes = [0, 1, 2, 3, 6] as const;

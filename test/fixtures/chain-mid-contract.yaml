@@ -1,0 +1,13 @@
+extends: chain-base-contract.yaml
+cli_contracts: 0.1.0
+info:
+  title: Chain Mid
+  version: 1.5.0
+command_sets:
+  chain-cli:
+    commands:
+      mid:
+        summary: Mid command.
+        exits:
+          "0":
+            description: Success.

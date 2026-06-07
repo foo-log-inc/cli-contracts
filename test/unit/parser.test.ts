@@ -6,6 +6,7 @@ import {
   parseConfigString,
   ParseError,
 } from "../../src/parser.js";
+import { ResolveError } from "../../src/resolver/index.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../fixtures");
 
@@ -30,10 +31,10 @@ describe("parseContractFile", () => {
     expect(doc.command_sets.minimal.commands.hello.summary).toBe("Say hello.");
   });
 
-  it("throws ParseError for non-existent file", async () => {
+  it("throws ResolveError for non-existent file", async () => {
     await expect(
       parseContractFile(resolve(FIXTURES, "nonexistent.yaml")),
-    ).rejects.toThrow(ParseError);
+    ).rejects.toThrow(ResolveError);
   });
 });
 

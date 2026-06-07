@@ -95,6 +95,44 @@ export const commandDefinitions = {
       }
     }
   },
+  "resolve": {
+    "options": [
+      {
+        "name": "file",
+        "schema": {
+          "type": "string"
+        },
+        "file": {
+          "mode": "read",
+          "exists": true,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      }
+    ],
+    "env": {
+      "GEMINI_API_KEY": {
+        "sensitive": true
+      },
+      "OPENAI_API_KEY": {
+        "sensitive": true
+      },
+      "ANTHROPIC_API_KEY": {
+        "sensitive": true
+      }
+    }
+  },
   "generate": {
     "effects": {
       "risk_level": "low",

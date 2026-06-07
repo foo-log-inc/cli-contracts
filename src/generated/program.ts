@@ -5,6 +5,7 @@ import { commandDefinitions, deriveCommandPolicy } from "./policy.js";
 export interface CommandHandlers {
   init: (options: { name?: string; multiCommandSet?: boolean; output?: string; withConfig?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   validate: (options: { file?: string; strict?: boolean; resolveRefs?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  resolve: (options: { file?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   docs: (options: { file?: string; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
@@ -67,6 +68,21 @@ export function createProgram(
         return;
       }
       await handlers.validate(opts, globalOpts);
+    });
+
+  program
+    .command("resolve")
+    .description("Resolve extends chain and dump merged contract.")
+    .option("-f, --file <file>", "Contract file to resolve. Defaults to config input.files.")
+    .option("--format <value>", "Output format for the resolved contract.", "yaml")
+    .action(async (opts, cmd) => {
+      const globalOpts = cmd.optsWithGlobals();
+      if (globalOpts.introspect) {
+        const policy = deriveCommandPolicy("resolve", opts);
+        console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      await handlers.resolve(opts, globalOpts);
     });
 
   program

@@ -29,6 +29,18 @@ export type ValidateExitResult =
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 9; stdout: { valid: boolean; errorCount: number; warningCount: number; errors: { path: string; message: string; rule: string; severity?: "error" | "warning" }[]; warnings: { path: string; message: string; rule: string; severity?: "error" | "warning" }[] }; stderr?: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface ResolveOptions {
+  file?: string;
+  format?: "yaml" | "json";
+}
+
+export type ResolveExitCode = 0 | 1 | 2;
+
+export type ResolveExitResult =
+  { exitCode: 0; stdout: Record<string, unknown> }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } };
+
 export interface GenerateArgs {
   generators?: string[];
 }
