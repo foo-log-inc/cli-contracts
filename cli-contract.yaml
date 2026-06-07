@@ -276,6 +276,62 @@ command_sets:
                 $ref: '#/components/schemas/Error'
 
 
+      # ── resolve ────────────────────────────────────────
+      resolve:
+        summary: Resolve extends chain and dump merged contract.
+        description: >-
+          Loads a contract with optional extends field, resolves the base
+          chain (including merge operators $append and $replace), and outputs
+          the fully merged contract document.
+        usage:
+          - cli-contracts resolve
+          - cli-contracts resolve --file overlay.yaml
+          - cli-contracts resolve --file overlay.yaml --format json
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file to resolve. Defaults to config input.files.
+            value_name: file
+            schema:
+              type: string
+            file:
+              mode: read
+              exists: true
+              media_type: application/yaml
+              encoding: utf-8
+
+          - name: format
+            description: Output format for the resolved contract.
+            schema:
+              type: string
+              enum: [yaml, json]
+              default: yaml
+
+        exits:
+          '0':
+            description: Contract resolved successfully.
+            stdout:
+              format: '{options.format}'
+              schema:
+                type: object
+                description: Fully resolved CLI Contracts document (extends field stripped).
+
+          '1':
+            description: Unexpected error (circular extends, merge error, etc.).
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
       # ── generate ────────────────────────────────────────
       generate:
         summary: Run code generators.

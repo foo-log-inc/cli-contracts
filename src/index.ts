@@ -88,6 +88,14 @@ export {
 } from "./schema.js";
 
 export { parseContractFile, parseContractString } from "./parser.js";
+export {
+  resolveContractFile,
+  resolveContractString,
+  mergeCliContract,
+  MergeError,
+  ResolveError,
+} from "./resolver/index.js";
+export type { ResolveResult } from "./resolver/index.js";
 export { validateContract } from "./validator.js";
 export {
   validateXAgentDeprecation,

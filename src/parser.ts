@@ -6,6 +6,7 @@ import {
   CliContractsConfigSchema,
 } from "./schema.js";
 import type { CliContractsDocument, CliContractsConfig } from "./schema.js";
+import { resolveContractFile } from "./resolver/resolve.js";
 
 export class ParseError extends Error {
   constructor(
@@ -21,8 +22,8 @@ export class ParseError extends Error {
 export async function parseContractFile(
   filePath: string,
 ): Promise<CliContractsDocument> {
-  const content = await readFileContent(filePath);
-  return parseContractString(content, filePath);
+  const result = await resolveContractFile(filePath);
+  return result.document;
 }
 
 export function parseContractString(
@@ -30,6 +31,17 @@ export function parseContractString(
   filePath = "<string>",
 ): CliContractsDocument {
   const raw = parseYamlContent(content, filePath);
+  if (
+    typeof raw === "object" &&
+    raw !== null &&
+    !Array.isArray(raw) &&
+    "extends" in raw
+  ) {
+    throw new ParseError(
+      "Document has 'extends' field; use resolveContractString() for overlay resolution",
+      filePath,
+    );
+  }
   return validateWithZod(CliContractsDocumentSchema, raw, filePath);
 }
 

@@ -1,0 +1,12 @@
+cli_contracts: 0.1.0
+info:
+  title: Chain Base
+  version: 1.0.0
+command_sets:
+  chain-cli:
+    commands:
+      root:
+        summary: Root command.
+        exits:
+          "0":
+            description: Success.

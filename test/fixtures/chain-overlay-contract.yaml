@@ -1,0 +1,13 @@
+extends: chain-mid-contract.yaml
+cli_contracts: 0.1.0
+info:
+  title: Chain Overlay
+  version: 2.0.0
+command_sets:
+  chain-cli:
+    commands:
+      top:
+        summary: Top command.
+        exits:
+          "0":
+            description: Success.

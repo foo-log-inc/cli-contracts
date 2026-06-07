@@ -6,6 +6,7 @@ import type { CommandHandlers } from "./generated/program.js";
 import { loadConfig, getContractFiles } from "./config.js";
 import { runInit, FileExistsError } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
+import { runResolve } from "./commands/resolve.js";
 import { runGenerate } from "./commands/generate.js";
 import { runDocs } from "./commands/docs.js";
 import { runDiff } from "./commands/diff.js";
@@ -72,6 +73,30 @@ const handlers: CommandHandlers = {
       });
       writeOut(result, fmt);
       process.exit(result.valid ? 0 : 9);
+    } catch (err) {
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async resolve(options, parentOpts) {
+    try {
+      const configResult = await loadConfig(
+        parentOpts.config as string | undefined,
+      );
+      const fileOpt = options.file as string | undefined;
+      const files = fileOpt
+        ? [fileOpt]
+        : getContractFiles(configResult?.config);
+      if (files.length === 0) {
+        writeError("INVALID_ARGS", "No contract file specified");
+        process.exit(2);
+      }
+      const result = await runResolve(files[0], {
+        format: options.format as "yaml" | "json" | undefined,
+      });
+      process.stdout.write(result.output);
+      process.exit(0);
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
