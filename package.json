@@ -44,7 +44,6 @@
     "prebuild": "npm run generate --silent 2>/dev/null || true",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src/ test/",
     "typecheck": "tsc --noEmit",
     "bundle": "node esbuild.bundle.mjs",
     "bundle:min": "node esbuild.bundle.mjs --minify",
