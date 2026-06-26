@@ -1242,3 +1242,11 @@ Until 1.0:
 ## License
 
 MIT
+
+---
+
+## 関連リポジトリ
+
+本リポジトリは foo-log-inc の AI 駆動開発関連リポジトリ群の一つです。各リポジトリの役割と一覧は以下のカタログを参照してください。
+
+📦 [AI関連リポジトリ カタログ](https://github.com/foo-log-inc/foolog_ojt/blob/main/REPOSITORIES.md)
