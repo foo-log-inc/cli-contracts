@@ -541,8 +541,10 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   // Commands (nested paths register parent subcommands once)
   const cmdRegistrationState: CommandRegistrationState = {
     createdPrefixes: new Set(),
+    groups: {},
   };
   for (const cs of ctx.command_sets) {
+    cmdRegistrationState.groups = cs.groups;
     for (const cmd of cs.commands) {
       generateProgramCommand(cmd, lines, hasEffects, cmdRegistrationState);
     }
@@ -590,6 +592,8 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
 
 interface CommandRegistrationState {
   createdPrefixes: Set<string>;
+  /** Parent command-group metadata for the active command set, keyed by dotted-path prefix. */
+  groups: Record<string, import("../schema.js").Group>;
 }
 
 function commandParentVarName(prefixSegments: string[]): string {
@@ -620,9 +624,20 @@ function ensureCommandAncestors(
       depth === 1 ? "program" : commandParentVarName(path.slice(0, depth - 1));
     const varName = commandParentVarName(prefix);
 
-    lines.push(
-      `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)});`,
-    );
+    // A groups entry keyed by this prefix's dotted path supplies a group-level
+    // description. When absent, output is byte-identical to prior behavior.
+    const group = state.groups[prefix.join(".")];
+    const groupDesc = group?.description ?? group?.summary;
+
+    if (groupDesc !== undefined) {
+      lines.push(
+        `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)}).description(${JSON.stringify(groupDesc)});`,
+      );
+    } else {
+      lines.push(
+        `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)});`,
+      );
+    }
     state.createdPrefixes.add(key);
   }
 
@@ -637,7 +652,7 @@ function generateProgramCommand(
 ): void {
   const handlerName = toCamelCase(cmd.id);
   const path = cmd.path;
-  const state = registrationState ?? { createdPrefixes: new Set() };
+  const state = registrationState ?? { createdPrefixes: new Set(), groups: {} };
   const receiver =
     path.length === 1 ? "program" : ensureCommandAncestors(path, state, lines);
   const commandName = path[path.length - 1]!;

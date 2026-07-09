@@ -170,4 +170,52 @@ command_sets:
     );
     expect(streamWarn.length).toBeGreaterThan(0);
   });
+
+  it("accepts a groups entry that matches a real command prefix", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      components.build:
+        summary: Build components.
+        exits:
+          '0':
+            description: OK.
+    groups:
+      components:
+        description: Manage components.
+`);
+    const result = validateContract(doc);
+    expect(
+      result.warnings.filter((w) => w.rule === "orphan-group"),
+    ).toHaveLength(0);
+  });
+
+  it("warns when a groups entry references a path with no commands under it", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      components.build:
+        summary: Build components.
+        exits:
+          '0':
+            description: OK.
+    groups:
+      nonexistent:
+        description: Nothing here.
+`);
+    const result = validateContract(doc);
+    const orphan = result.warnings.filter((w) => w.rule === "orphan-group");
+    expect(orphan).toHaveLength(1);
+    expect(orphan[0].message).toContain("nonexistent");
+  });
 });

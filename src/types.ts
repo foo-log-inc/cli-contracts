@@ -64,6 +64,8 @@ export interface NormalizedCommandSet {
   global_options: import("./schema.js").Option[];
   env: Record<string, import("./schema.js").EnvVar>;
   commands: NormalizedCommand[];
+  /** Parent command-group metadata, keyed by dotted-path prefix (e.g. "components", "a.b"). */
+  groups: Record<string, import("./schema.js").Group>;
   extensions: Record<string, unknown>;
 }
 
