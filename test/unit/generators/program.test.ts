@@ -368,4 +368,157 @@ command_sets:
     expect(program).toContain('.description("My awesome tool.")');
     expect(program).toContain('.description("Say hello nicely.")');
   });
+
+  it("emits a parent-group description from a groups entry", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      components.build:
+        summary: Build components.
+        exits:
+          '0':
+            description: OK.
+      icons.export:
+        summary: Export icons.
+        exits:
+          '0':
+            description: OK.
+    groups:
+      components:
+        description: Manage design components.
+      icons:
+        description: Manage icons.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain(
+      'const __cmd_components = program.command("components").description("Manage design components.");',
+    );
+    expect(program).toContain(
+      'const __cmd_icons = program.command("icons").description("Manage icons.");',
+    );
+  });
+
+  it("falls back to a group summary when description is absent", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      components.build:
+        summary: Build components.
+        exits:
+          '0':
+            description: OK.
+    groups:
+      components:
+        summary: Component tools.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain(
+      'const __cmd_components = program.command("components").description("Component tools.");',
+    );
+  });
+
+  it("emits no parent .description() when groups is absent (byte-identical to prior output)", () => {
+    const contract = `
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      components.build:
+        summary: Build components.
+        exits:
+          '0':
+            description: OK.
+      icons.export:
+        summary: Export icons.
+        exits:
+          '0':
+            description: OK.
+`;
+    const withoutGroups = generateTypeScript(
+      normalizeContract(parseContractString(contract)),
+    )["program.ts"];
+
+    // No .description() hung on the parent group registrations.
+    expect(withoutGroups).toContain(
+      'const __cmd_components = program.command("components");',
+    );
+    expect(withoutGroups).toContain(
+      'const __cmd_icons = program.command("icons");',
+    );
+    expect(withoutGroups).not.toContain(
+      'program.command("components").description(',
+    );
+
+    // Adding a groups section leaves everything else byte-identical: the only
+    // difference is the .description() suffix on the matched parent lines.
+    const withGroups = generateTypeScript(
+      normalizeContract(
+        parseContractString(
+          contract +
+            `    groups:
+      components:
+        description: Manage design components.
+`,
+        ),
+      ),
+    )["program.ts"];
+
+    const normalized = withGroups
+      .replace(
+        'const __cmd_components = program.command("components").description("Manage design components.");',
+        'const __cmd_components = program.command("components");',
+      );
+    expect(normalized).toBe(withoutGroups);
+  });
+
+  it("resolves group descriptions at each level of deeper nesting", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      a.b.c:
+        summary: Deep command.
+        exits:
+          '0':
+            description: OK.
+    groups:
+      a:
+        description: Group A.
+      a.b:
+        description: Group A B.
+`);
+    const ctx = normalizeContract(doc);
+    const output = generateTypeScript(ctx);
+    const program = output["program.ts"];
+
+    expect(program).toContain(
+      'const __cmd_a = program.command("a").description("Group A.");',
+    );
+    expect(program).toContain(
+      'const __cmd_a_b = __cmd_a.command("b").description("Group A B.");',
+    );
+  });
 });

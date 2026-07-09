@@ -168,6 +168,42 @@ function validateCommands(
       diagnostics,
     );
   }
+
+  validateGroups(cs, setId, basePath, diagnostics);
+}
+
+/**
+ * Warns when a `groups` entry references a dotted-path prefix that no command
+ * is actually nested under, since such an entry produces no generated output.
+ */
+function validateGroups(
+  cs: CommandSet,
+  _setId: string,
+  basePath: string,
+  diagnostics: Diagnostic[],
+): void {
+  if (!cs.groups) return;
+
+  // Collect every ancestor prefix of every command path (dotted).
+  const prefixes = new Set<string>();
+  for (const cmdId of Object.keys(cs.commands)) {
+    const cmd = cs.commands[cmdId];
+    const segments = cmd.path ?? cmdId.split(".");
+    for (let depth = 1; depth < segments.length; depth++) {
+      prefixes.add(segments.slice(0, depth).join("."));
+    }
+  }
+
+  for (const groupPath of Object.keys(cs.groups)) {
+    if (!prefixes.has(groupPath)) {
+      diagnostics.push({
+        path: `${basePath}/groups/${groupPath}`,
+        message: `Group "${groupPath}" has no commands nested under it; the group description will not be emitted`,
+        rule: "orphan-group",
+        severity: "warning",
+      });
+    }
+  }
 }
 
 function validateCommand(

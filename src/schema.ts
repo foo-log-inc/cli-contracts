@@ -298,12 +298,20 @@ export const EnvVarSchema = z.object({
   sensitive: z.boolean().optional(),
 });
 
+// Describes a parent command group (a dotted-path prefix, e.g. "components"
+// or "a.b") that exists only because leaf commands are nested under it.
+export const GroupSchema = z.object({
+  summary: z.string().optional(),
+  description: z.string().optional(),
+});
+
 export const CommandSetSchema = z
   .object({
     executable: z.string().optional(),
     summary: z.string().optional(),
     description: z.string().optional(),
     commands: z.record(z.string(), CommandSchema),
+    groups: z.record(z.string(), GroupSchema).optional(),
     global_options: z.array(OptionSchema).optional(),
     env: z.record(z.string(), EnvVarSchema).optional(),
   })
@@ -402,6 +410,7 @@ export const CliContractsConfigSchema = z.object({
 export type CliContractsDocument = z.infer<typeof CliContractsDocumentSchema>;
 export type Info = z.infer<typeof InfoSchema>;
 export type CommandSet = z.infer<typeof CommandSetSchema>;
+export type Group = z.infer<typeof GroupSchema>;
 export type Command = z.infer<typeof CommandSchema>;
 export type Argument = z.infer<typeof ArgumentSchema>;
 export type Option = z.infer<typeof OptionSchema>;

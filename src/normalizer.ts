@@ -81,6 +81,7 @@ export function normalizeContract(
       global_options,
       env: cs.env ?? {},
       commands,
+      groups: cs.groups ?? {},
       extensions: setExtensions,
     });
   }
