@@ -11,6 +11,7 @@ import type {
   JsonSchema,
   GeneratedFile,
 } from "../types.js";
+import type { Constraints } from "../schema.js";
 
 export interface MarkdownGeneratorOptions {
   includeExamples?: boolean;
@@ -177,6 +178,10 @@ function renderCommand(
     lines.push("");
   }
 
+  if (cmd.constraints && hasConstraints(cmd.constraints)) {
+    renderConstraints(cmd.constraints, lines);
+  }
+
   if (cmd.streams) {
     renderStreams(cmd.streams, lines);
   }
@@ -235,6 +240,45 @@ function renderOptionsTable(opts: Option[], lines: string[]): void {
     const desc = opt.description ?? "";
     lines.push(`| \`--${opt.name}\` | ${aliases} | ${req} | ${def} | ${desc} |`);
   }
+}
+
+// ─── Constraints ────────────────────────────────────────────────
+
+function hasConstraints(c: Constraints): boolean {
+  return (
+    (c.mutuallyExclusive?.length ?? 0) > 0 ||
+    (c.requiredOneOf?.length ?? 0) > 0 ||
+    (c.requiredTogether?.length ?? 0) > 0
+  );
+}
+
+function renderConstraints(c: Constraints, lines: string[]): void {
+  lines.push("#### Constraints");
+  lines.push("");
+  lines.push("| Rule | Members |");
+  lines.push("|---|---|");
+
+  if (c.mutuallyExclusive) {
+    for (const group of c.mutuallyExclusive) {
+      lines.push(`| Mutually exclusive | ${formatConstraintMembers(group)} |`);
+    }
+  }
+  if (c.requiredOneOf && c.requiredOneOf.length > 0) {
+    lines.push(
+      `| Required one of | ${formatConstraintMembers(c.requiredOneOf)} |`,
+    );
+  }
+  if (c.requiredTogether) {
+    for (const group of c.requiredTogether) {
+      lines.push(`| Required together | ${formatConstraintMembers(group)} |`);
+    }
+  }
+
+  lines.push("");
+}
+
+function formatConstraintMembers(members: string[]): string {
+  return members.map((m) => `\`${m}\``).join(", ");
 }
 
 // ─── Streams ────────────────────────────────────────────────────
@@ -568,18 +612,27 @@ function yamlLike(obj: unknown, indent = 0): string {
   if (typeof obj === "string") return obj;
   if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
   if (Array.isArray(obj)) {
+    const pad = " ".repeat(indent);
     return obj
-      .map((item) => `${" ".repeat(indent)}- ${yamlLike(item, indent + 2)}`)
+      .map((item) => {
+        // Nested arrays/objects must start on their own line, indented
+        // beneath the parent list item — otherwise a value like
+        // `[[a, b]]` collapses into malformed `-       - a` output.
+        if (typeof item === "object" && item !== null) {
+          return `${pad}-\n${yamlLike(item, indent + 2)}`;
+        }
+        return `${pad}- ${yamlLike(item, indent + 2)}`;
+      })
       .join("\n");
   }
   if (typeof obj === "object") {
     return Object.entries(obj as Record<string, unknown>)
       .map(
         ([k, v]) =>
-          `${" ".repeat(indent)}${k}: ${
+          `${" ".repeat(indent)}${k}:${
             typeof v === "object" && v !== null
               ? "\n" + yamlLike(v, indent + 2)
-              : yamlLike(v, indent)
+              : " " + yamlLike(v, indent)
           }`,
       )
       .join("\n");

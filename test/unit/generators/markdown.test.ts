@@ -361,6 +361,161 @@ components:
     expect(md).toContain("<summary>JSON Schema</summary>");
   });
 
+  // ── yamlLike nested-array rendering (via Extensions) ────
+  it("renders array-of-arrays in the yaml-like block without malformed output", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  x:
+    commands:
+      run:
+        summary: Run.
+        x-groups:
+          pairs: [[a, b], [c, d]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const md = generateMarkdown(ctx, { includeExtensions: true });
+
+    // The malformed form that the old yamlLike produced must NOT appear:
+    // a nested list item glued onto the same line as its parent "-".
+    expect(md).not.toMatch(/-[ \t]+- a/);
+
+    // A nested list item begins on its own line, indented under its parent "-".
+    const block = md.slice(md.indexOf("#### Extensions"));
+    expect(block).toContain("pairs:");
+    // parent list marker on its own line, children indented beneath it
+    expect(block).toContain("    -\n      - a\n      - b");
+    expect(block).toContain("    -\n      - c\n      - d");
+  });
+
+  it("renders a scalar array in the yaml-like block as a simple list", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  x:
+    commands:
+      run:
+        summary: Run.
+        x-groups:
+          tags: [alpha, beta]
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const md = generateMarkdown(ctx, { includeExtensions: true });
+
+    const block = md.slice(md.indexOf("#### Extensions"));
+    expect(block).toContain("tags:");
+    expect(block).toContain("- alpha");
+    expect(block).toContain("- beta");
+  });
+
+  // ── Constraints rendering ──────────────────────────────
+  it("renders a Constraints section with mutuallyExclusive / requiredOneOf / requiredTogether", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  x:
+    commands:
+      run:
+        summary: Run.
+        arguments:
+          - name: contract
+            index: 0
+            schema:
+              type: string
+        options:
+          - name: file
+            schema:
+              type: string
+          - name: json
+            schema:
+              type: boolean
+          - name: yaml
+            schema:
+              type: boolean
+          - name: user
+            schema:
+              type: string
+          - name: token
+            schema:
+              type: string
+        constraints:
+          mutuallyExclusive: [[contract, file], [json, yaml]]
+          requiredOneOf: [json, yaml]
+          requiredTogether: [[user, token]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const md = generateMarkdown(ctx);
+
+    expect(md).toContain("#### Constraints");
+    expect(md).toContain("| Rule | Members |");
+    // one row per mutuallyExclusive group
+    expect(md).toContain("| Mutually exclusive | `contract`, `file` |");
+    expect(md).toContain("| Mutually exclusive | `json`, `yaml` |");
+    expect(md).toContain("| Required one of | `json`, `yaml` |");
+    expect(md).toContain("| Required together | `user`, `token` |");
+  });
+
+  it("omits the Constraints section when a command has no constraints", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  x:
+    commands:
+      run:
+        summary: Run.
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const md = generateMarkdown(ctx);
+
+    expect(md).not.toContain("#### Constraints");
+  });
+
+  it("omits the Constraints section when constraints is present but empty", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  x:
+    commands:
+      run:
+        summary: Run.
+        constraints: {}
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const md = generateMarkdown(ctx);
+
+    expect(md).not.toContain("#### Constraints");
+  });
+
   it("renders enum types in property table", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
