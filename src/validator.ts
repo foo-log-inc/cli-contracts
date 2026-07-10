@@ -14,6 +14,18 @@
  *  - stream schema vs framing conflict
  *  - unresolved $ref targets
  *  - empty command set warnings
+ *  - constraint references to unknown option / argument names
+ *
+ * Enforcement layer note (see also README "Constraints" section):
+ * The `constraints` block (mutuallyExclusive / requiredOneOf / requiredTogether)
+ * is enforced HERE, at contract-validation time, only as a *reference integrity*
+ * check: every name it lists must resolve to a real option, alias, or argument
+ * declared on the same command (or a global option of its command set). It is a
+ * static check on the contract document. cli-contracts does NOT itself parse
+ * end-user CLI invocations, so the *behavioral* semantics of the constraints
+ * (rejecting a runtime invocation that supplies two mutually-exclusive options,
+ * etc.) are the responsibility of the target CLI's own argument parser at
+ * runtime; the contract merely declares them.
  */
 
 import type {
@@ -249,6 +261,7 @@ function validateCommands(
       cmd,
       cmdId,
       `${basePath}/commands/${cmdId}`,
+      cs.global_options ?? [],
       diagnostics,
     );
   }
@@ -295,6 +308,7 @@ function validateCommand(
   cmd: Command,
   _cmdId: string,
   basePath: string,
+  globalOptions: Option[],
   diagnostics: Diagnostic[],
 ): void {
   validateUnknownKeys(
@@ -305,6 +319,10 @@ function validateCommand(
   );
 
   validateExits(cmd, basePath, diagnostics);
+
+  if (cmd.constraints) {
+    validateConstraints(cmd, globalOptions, basePath, diagnostics);
+  }
 
   if (cmd.arguments) {
     validateArguments(cmd.arguments, basePath, diagnostics);
@@ -488,6 +506,75 @@ function validateExits(
         severity: "error",
       });
     }
+  }
+}
+
+/**
+ * Validates a command's `constraints` block at contract-validation time.
+ *
+ * This is a static reference-integrity check: every name listed in
+ * `mutuallyExclusive`, `requiredOneOf`, or `requiredTogether` must resolve to a
+ * real option name, option alias, or argument name declared on the same command
+ * (or a global option of the command set). An unresolvable name is almost always
+ * a typo or a renamed field and would make the declared constraint meaningless,
+ * so it is reported as an error.
+ *
+ * The *behavioral* enforcement of constraints (rejecting an actual CLI
+ * invocation) is out of scope: cli-contracts describes the interface, it does
+ * not execute it. See the module header and README "Constraints" section.
+ */
+function validateConstraints(
+  cmd: Command,
+  globalOptions: Option[],
+  basePath: string,
+  diagnostics: Diagnostic[],
+): void {
+  const constraints = cmd.constraints;
+  if (!constraints) return;
+
+  // Build the set of names a constraint may legally reference.
+  const known = new Set<string>();
+  for (const arg of cmd.arguments ?? []) {
+    known.add(arg.name);
+  }
+  for (const opt of [...(cmd.options ?? []), ...globalOptions]) {
+    known.add(opt.name);
+    for (const alias of opt.aliases ?? []) {
+      known.add(alias);
+    }
+  }
+
+  const checkName = (name: string, subPath: string): void => {
+    if (!known.has(name)) {
+      diagnostics.push({
+        path: subPath,
+        message: `Constraint references unknown option/argument name "${name}"; it does not match any option, alias, or argument on this command`,
+        rule: "constraint-unknown-reference",
+        severity: "error",
+      });
+    }
+  };
+
+  if (constraints.mutuallyExclusive) {
+    constraints.mutuallyExclusive.forEach((group, gi) => {
+      group.forEach((name, ni) => {
+        checkName(name, `${basePath}/constraints/mutuallyExclusive/${gi}/${ni}`);
+      });
+    });
+  }
+
+  if (constraints.requiredOneOf) {
+    constraints.requiredOneOf.forEach((name, ni) => {
+      checkName(name, `${basePath}/constraints/requiredOneOf/${ni}`);
+    });
+  }
+
+  if (constraints.requiredTogether) {
+    constraints.requiredTogether.forEach((group, gi) => {
+      group.forEach((name, ni) => {
+        checkName(name, `${basePath}/constraints/requiredTogether/${gi}/${ni}`);
+      });
+    });
   }
 }
 

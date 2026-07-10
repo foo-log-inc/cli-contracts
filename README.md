@@ -215,7 +215,7 @@ components:
 | `arguments` | No | Positional arguments |
 | `options` | No | Named options and flags |
 | `effects` | No | Base execution effects (always active regardless of options) |
-| `constraints` | No | Input constraints (`mutuallyExclusive`, `requiredOneOf`) |
+| `constraints` | No | Input constraints (`mutuallyExclusive`, `requiredOneOf`, `requiredTogether`) — see [Constraints](#constraints) |
 | `streams` | No | stdin/stdout/stderr contracts during execution |
 | `signals` | No | OS signals the command handles |
 | `exits` | Yes | Exit-code keyed output contracts |
@@ -303,6 +303,29 @@ file:
   schema:
     $ref: ./schemas/input.schema.json
 ```
+
+### Constraints
+
+`constraints` declares relationships between a command's options and arguments:
+
+| Field | Description |
+|---|---|
+| `mutuallyExclusive` | Groups of names; at most one name per group may be supplied |
+| `requiredOneOf` | At least one of these names must be supplied |
+| `requiredTogether` | Groups of names that must all be supplied together |
+
+```yaml
+constraints:
+  mutuallyExclusive:
+    - [json, yaml]
+  requiredOneOf: [input, stdin]
+  requiredTogether:
+    - [cert, key]
+```
+
+**Enforcement layer.** cli-contracts enforces `constraints` at **contract-validation time**, and only as a *reference-integrity* check: every name listed in `mutuallyExclusive`, `requiredOneOf`, or `requiredTogether` must resolve to a real option name, option alias, or argument name declared on the same command (or a command-set global option). An unresolvable name is reported as a `constraint-unknown-reference` **error** (it is almost always a typo or a renamed field that would make the constraint meaningless).
+
+cli-contracts describes a CLI interface; it does **not** parse end-user invocations. The *behavioral* enforcement of a constraint — rejecting an actual invocation that, for example, passes two mutually-exclusive options — is the responsibility of the target CLI's own argument parser at runtime. The contract declares and reference-checks the constraint; the CLI implements it.
 
 ### Streams
 

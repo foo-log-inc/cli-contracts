@@ -274,11 +274,17 @@ export const XAgentSchema = z.object({
 // ─── Constraints Schema ─────────────────────────────────────────
 
 // Declarative input constraints between a command's options/arguments.
-// Declaration only; enforcement (checking these at validate/runtime) is a
-// separate concern and intentionally not implemented here.
 //   - mutuallyExclusive: groups of names; at most one per group may be given.
 //   - requiredOneOf: at least one of these names must be given.
 //   - requiredTogether: groups of names that must all be given together.
+//
+// Enforcement layer: the *references* here (the names listed in each field) are
+// checked at contract-validation time by validateConstraints() in validator.ts —
+// every name must resolve to a real option/alias/argument on the same command
+// (or a command-set global option), else a `constraint-unknown-reference` error
+// is emitted. The *behavioral* enforcement of a constraint against a live CLI
+// invocation is the target CLI's own runtime responsibility; cli-contracts only
+// declares and reference-checks it.
 export const ConstraintsSchema = z.object({
   mutuallyExclusive: z.array(z.array(z.string())).optional(),
   requiredOneOf: z.array(z.string()).optional(),

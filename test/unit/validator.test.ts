@@ -362,6 +362,184 @@ command_sets:
     expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
   });
 
+  // ── Constraints reference-integrity (#81) ───────────────────
+
+  it("accepts a constraints block whose names all reference real options/arguments", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+        options:
+          - name: json
+          - name: yaml
+        constraints:
+          mutuallyExclusive: [[json, yaml]]
+          requiredOneOf: [json, yaml, target]
+          requiredTogether: [[json, target]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(
+      result.errors.filter((e) => e.rule === "constraint-unknown-reference"),
+    ).toHaveLength(0);
+  });
+
+  it("errors when mutuallyExclusive references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+        constraints:
+          mutuallyExclusive: [[json, yaml]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].severity).toBe("error");
+    expect(errs[0].message).toContain("yaml");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/mutuallyExclusive/0/1",
+    );
+  });
+
+  it("errors when requiredOneOf references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+        constraints:
+          requiredOneOf: [json, nope]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("nope");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/requiredOneOf/1",
+    );
+  });
+
+  it("errors when requiredTogether references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: cert
+        constraints:
+          requiredTogether: [[cert, key]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("key");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/requiredTogether/0/1",
+    );
+  });
+
+  it("errors when a constraint references an unknown argument name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+        constraints:
+          requiredOneOf: [target, ghost]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("ghost");
+  });
+
+  it("resolves constraint references against option aliases and global options", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    global_options:
+      - name: verbose
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+            aliases: [j]
+        constraints:
+          mutuallyExclusive: [[j, verbose]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(
+      result.errors.filter((e) => e.rule === "constraint-unknown-reference"),
+    ).toHaveLength(0);
+  });
+
   it("warns when a groups entry references a path with no commands under it", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
