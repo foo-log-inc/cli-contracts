@@ -25,10 +25,87 @@ import type {
   Diagnostic,
   ValidateResult,
 } from "./types.js";
-import { XAgentSchema, EffectsSchema } from "./schema.js";
+import { XAgentSchema, EffectsSchema, CommandSchema, CommandSetSchema } from "./schema.js";
 import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 import { derivePolicy, isOptionActive } from "./policy.js";
+
+// Known-key allow-lists derived directly from the Zod schema shapes so they
+// cannot drift from the schema. Any object field added to CommandSchema /
+// CommandSetSchema is automatically recognized here without touching this file.
+const KNOWN_COMMAND_KEYS = new Set(Object.keys(CommandSchema.shape));
+const KNOWN_COMMAND_SET_KEYS = new Set(Object.keys(CommandSetSchema.shape));
+
+/**
+ * Flags keys on a command / command-set object that are neither a known schema
+ * field nor an `x-`-prefixed extension. Because both schemas use `.passthrough()`,
+ * such keys are silently accepted by Zod and then dropped by the normalizer —
+ * a typo (`descriptio:`) or undocumented field silently no-ops. Surfacing it as
+ * a warning (never an error) keeps existing contracts valid while giving authors
+ * feedback. `x-*` extensions remain silently allowed.
+ */
+function validateUnknownKeys(
+  obj: Record<string, unknown>,
+  knownKeys: Set<string>,
+  basePath: string,
+  diagnostics: Diagnostic[],
+): void {
+  for (const key of Object.keys(obj)) {
+    if (knownKeys.has(key) || key.startsWith("x-")) continue;
+
+    const suggestion = closestKnownKey(key, knownKeys);
+    const hint = suggestion
+      ? ` Did you mean "${suggestion}"?`
+      : ' Prefix it with "x-" if this is an intentional extension.';
+    diagnostics.push({
+      path: `${basePath}/${key}`,
+      message: `Unknown key "${key}" is not a recognized field and will be ignored.${hint}`,
+      rule: "unknown-key",
+      severity: "warning",
+    });
+  }
+}
+
+/**
+ * Returns the closest known key within a small edit distance, or undefined when
+ * nothing is close enough to be a likely typo.
+ */
+function closestKnownKey(key: string, knownKeys: Set<string>): string | undefined {
+  let best: string | undefined;
+  let bestDistance = Infinity;
+  for (const known of knownKeys) {
+    const distance = levenshtein(key, known);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = known;
+    }
+  }
+  // Only suggest a near-miss: within edit distance 2 and no longer than the key.
+  const threshold = Math.min(2, Math.floor(key.length / 2));
+  return best !== undefined && bestDistance <= Math.max(1, threshold)
+    ? best
+    : undefined;
+}
+
+function levenshtein(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[] = new Array(cols);
+  for (let j = 0; j < cols; j++) dp[j] = j;
+  for (let i = 1; i < rows; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j < cols; j++) {
+      const temp = dp[j];
+      dp[j] =
+        a[i - 1] === b[j - 1]
+          ? prev
+          : 1 + Math.min(prev, dp[j], dp[j - 1]);
+      prev = temp;
+    }
+  }
+  return dp[cols - 1];
+}
 
 export function validateContract(
   doc: CliContractsDocument,
@@ -118,6 +195,13 @@ function validateCommandSets(
   for (const setId of Object.keys(doc.command_sets)) {
     const basePath = `/command_sets/${setId}`;
     const cs = doc.command_sets[setId];
+
+    validateUnknownKeys(
+      cs as unknown as Record<string, unknown>,
+      KNOWN_COMMAND_SET_KEYS,
+      basePath,
+      diagnostics,
+    );
 
     if (cs.global_options) {
       validateOptions(cs.global_options, `${basePath}/global_options`, diagnostics);
@@ -213,6 +297,13 @@ function validateCommand(
   basePath: string,
   diagnostics: Diagnostic[],
 ): void {
+  validateUnknownKeys(
+    cmd as unknown as Record<string, unknown>,
+    KNOWN_COMMAND_KEYS,
+    basePath,
+    diagnostics,
+  );
+
   validateExits(cmd, basePath, diagnostics);
 
   if (cmd.arguments) {
