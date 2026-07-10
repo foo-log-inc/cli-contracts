@@ -2791,6 +2791,10 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 #### Extensions
 
 ```yaml
+x-constraints: 
+  mutuallyExclusive: 
+    -       - contract
+      - file
 x-agent: 
   riskLevel: low
   requiresConfirmation: false
@@ -3475,6 +3479,10 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 #### Extensions
 
 ```yaml
+x-constraints: 
+  mutuallyExclusive: 
+    -       - contract
+      - file
 x-agent: 
   riskLevel: low
   requiresConfirmation: false
@@ -4590,6 +4598,10 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 #### Extensions
 
 ```yaml
+x-constraints: 
+  mutuallyExclusive: 
+    -       - contract
+      - file
 x-agent: 
   riskLevel: low
   requiresConfirmation: false
@@ -5960,6 +5972,10 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 #### Extensions
 
 ```yaml
+x-constraints: 
+  mutuallyExclusive: 
+    -       - contract
+      - file
 x-agent: 
   riskLevel: low
   requiresConfirmation: false
@@ -6642,6 +6658,11 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 #### Extensions
 
 ```yaml
+x-constraints: 
+  requiredOneOf: 
+    - from-readme
+    - from-help
+    - from-source
 x-agent: 
   riskLevel: low
   requiresConfirmation: false

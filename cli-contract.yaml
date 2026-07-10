@@ -771,7 +771,7 @@ command_sets:
               media_type: application/yaml
               encoding: utf-8
 
-        constraints:
+        x-constraints:
           mutuallyExclusive: [[contract, file]]
 
         options:
@@ -939,7 +939,7 @@ command_sets:
               media_type: application/yaml
               encoding: utf-8
 
-        constraints:
+        x-constraints:
           mutuallyExclusive: [[contract, file]]
 
         options:
@@ -1205,7 +1205,7 @@ command_sets:
               media_type: application/yaml
               encoding: utf-8
 
-        constraints:
+        x-constraints:
           mutuallyExclusive: [[contract, file]]
 
         options:
@@ -1560,7 +1560,7 @@ command_sets:
               media_type: application/yaml
               encoding: utf-8
 
-        constraints:
+        x-constraints:
           mutuallyExclusive: [[contract, file]]
 
         options:
@@ -1726,7 +1726,7 @@ command_sets:
           - cli-contracts suggest --from-source src/cli.ts
           - cli-contracts suggest --from-readme README.md --adapter gemini
 
-        constraints:
+        x-constraints:
           requiredOneOf: [from-readme, from-help, from-source]
 
         options:

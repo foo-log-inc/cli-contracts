@@ -195,6 +195,137 @@ command_sets:
     ).toHaveLength(0);
   });
 
+  it("warns on a typo'd (unknown non-x-) key on a command, naming key and path", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        descriptio: Typo of description.
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].severity).toBe("warning");
+    expect(unknown[0].message).toContain("descriptio");
+    // Near-miss hint via Levenshtein.
+    expect(unknown[0].message).toContain("description");
+    expect(unknown[0].path).toBe("/command_sets/tool/commands/build/descriptio");
+  });
+
+  it("warns on an unknown key on a command set", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    executabl: tool
+    commands:
+      build:
+        summary: Build.
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].message).toContain("executabl");
+    expect(unknown[0].path).toBe("/command_sets/tool/executabl");
+  });
+
+  it("does not flag x--prefixed extension keys", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    x-set-ext: allowed
+    commands:
+      build:
+        summary: Build.
+        x-agent:
+          risk_level: low
+        x-constraints:
+          mutuallyExclusive: [[a, b]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
+  it("does not flag any known field on a fully-populated command / command set", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    executable: tool
+    summary: A tool.
+    description: A full tool.
+    global_options:
+      - name: verbose
+    env:
+      TOKEN:
+        description: A token.
+    groups:
+      grp:
+        description: A group.
+    commands:
+      grp.build:
+        path: [grp, build]
+        summary: Build.
+        description: Builds things.
+        usage: ["tool grp build"]
+        arguments:
+          - name: target
+        options:
+          - name: force
+        effects:
+          risk_level: low
+        streams:
+          stdout:
+            format: text
+        signals:
+          SIGINT:
+            description: Interrupt.
+        examples:
+          - command: tool grp build
+        deprecated:
+          since: "1.0.0"
+          message: none
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
+  it("emits no unknown-key warnings for the repository's own contract", async () => {
+    const doc = await parseContractFile(
+      resolve(import.meta.dirname, "../../cli-contract.yaml"),
+    );
+    const result = validateContract(doc);
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
   it("warns when a groups entry references a path with no commands under it", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
