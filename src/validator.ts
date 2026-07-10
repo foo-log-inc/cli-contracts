@@ -37,7 +37,15 @@ import type {
   Diagnostic,
   ValidateResult,
 } from "./types.js";
-import { XAgentSchema, EffectsSchema, CommandSchema, CommandSetSchema } from "./schema.js";
+import {
+  XAgentSchema,
+  EffectsSchema,
+  CommandSchema,
+  CommandSetSchema,
+  ArgumentSchema,
+  OptionSchema,
+  ExitSchema,
+} from "./schema.js";
 import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 import { derivePolicy, isOptionActive } from "./policy.js";
@@ -47,14 +55,18 @@ import { derivePolicy, isOptionActive } from "./policy.js";
 // CommandSetSchema is automatically recognized here without touching this file.
 const KNOWN_COMMAND_KEYS = new Set(Object.keys(CommandSchema.shape));
 const KNOWN_COMMAND_SET_KEYS = new Set(Object.keys(CommandSetSchema.shape));
+const KNOWN_ARGUMENT_KEYS = new Set(Object.keys(ArgumentSchema.shape));
+const KNOWN_OPTION_KEYS = new Set(Object.keys(OptionSchema.shape));
+const KNOWN_EXIT_KEYS = new Set(Object.keys(ExitSchema.shape));
 
 /**
- * Flags keys on a command / command-set object that are neither a known schema
- * field nor an `x-`-prefixed extension. Because both schemas use `.passthrough()`,
- * such keys are silently accepted by Zod and then dropped by the normalizer —
- * a typo (`descriptio:`) or undocumented field silently no-ops. Surfacing it as
- * a warning (never an error) keeps existing contracts valid while giving authors
- * feedback. `x-*` extensions remain silently allowed.
+ * Flags keys on a command / command-set / argument / option / exit object that
+ * are neither a known schema field nor an `x-`-prefixed extension. Because those
+ * schemas use `.passthrough()`, such keys are silently accepted by Zod and then
+ * dropped by the normalizer — a typo (`descriptio:`) or undocumented field
+ * silently no-ops. Surfacing it as a warning (never an error) keeps existing
+ * contracts valid while giving authors feedback. `x-*` extensions remain
+ * silently allowed.
  */
 function validateUnknownKeys(
   obj: Record<string, unknown>,
@@ -496,7 +508,7 @@ function validateExits(
   basePath: string,
   diagnostics: Diagnostic[],
 ): void {
-  for (const [code] of Object.entries(cmd.exits)) {
+  for (const [code, exit] of Object.entries(cmd.exits)) {
     const numCode = Number(code);
     if (!Number.isInteger(numCode) || numCode < 0 || numCode > 255) {
       diagnostics.push({
@@ -506,6 +518,13 @@ function validateExits(
         severity: "error",
       });
     }
+
+    validateUnknownKeys(
+      exit as unknown as Record<string, unknown>,
+      KNOWN_EXIT_KEYS,
+      `${basePath}/exits/${code}`,
+      diagnostics,
+    );
   }
 }
 
@@ -588,6 +607,13 @@ function validateArguments(
     const arg = args[i];
     const argPath = `${basePath}/arguments/${i}`;
 
+    validateUnknownKeys(
+      arg as unknown as Record<string, unknown>,
+      KNOWN_ARGUMENT_KEYS,
+      argPath,
+      diagnostics,
+    );
+
     if (argNames.has(arg.name)) {
       diagnostics.push({
         path: argPath,
@@ -620,6 +646,13 @@ function validateOptions(
   for (let i = 0; i < opts.length; i++) {
     const opt = opts[i];
     const optPath = `${basePath}/${i}`;
+
+    validateUnknownKeys(
+      opt as unknown as Record<string, unknown>,
+      KNOWN_OPTION_KEYS,
+      optPath,
+      diagnostics,
+    );
 
     if (optNames.has(opt.name)) {
       diagnostics.push({
