@@ -362,6 +362,392 @@ command_sets:
     expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
   });
 
+  // ── Unknown-key on arguments / options / exits (#83) ────────
+
+  it("warns on a typo'd (unknown non-x-) key on an argument, naming key and path", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+            descriptn: Typo of description.
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].severity).toBe("warning");
+    expect(unknown[0].message).toContain("descriptn");
+    // Near-miss hint via Levenshtein.
+    expect(unknown[0].message).toContain("description");
+    expect(unknown[0].path).toBe(
+      "/command_sets/tool/commands/build/arguments/0/descriptn",
+    );
+  });
+
+  it("warns on a typo'd (unknown non-x-) key on an option, naming key and path", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: force
+            descriptn: Typo of description.
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].severity).toBe("warning");
+    expect(unknown[0].message).toContain("descriptn");
+    expect(unknown[0].message).toContain("description");
+    expect(unknown[0].path).toBe(
+      "/command_sets/tool/commands/build/options/0/descriptn",
+    );
+  });
+
+  it("warns on a typo'd (unknown non-x-) key on a command-set global option, naming key and path", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    global_options:
+      - name: verbose
+        descriptn: Typo of description.
+    commands:
+      build:
+        summary: Build.
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].path).toBe(
+      "/command_sets/tool/global_options/0/descriptn",
+    );
+  });
+
+  it("warns on a typo'd (unknown non-x-) key on an exit, naming key and path", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        exits:
+          '0':
+            description: OK.
+            descriptn: Typo of description.
+`);
+    const result = validateContract(doc);
+    const unknown = result.warnings.filter((w) => w.rule === "unknown-key");
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0].severity).toBe("warning");
+    expect(unknown[0].message).toContain("descriptn");
+    expect(unknown[0].message).toContain("description");
+    expect(unknown[0].path).toBe(
+      "/command_sets/tool/commands/build/exits/0/descriptn",
+    );
+  });
+
+  it("does not flag x--prefixed extension keys on arguments / options / exits", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+            x-arg-ext: allowed
+        options:
+          - name: force
+            x-opt-ext: allowed
+        exits:
+          '0':
+            description: OK.
+            x-exit-ext: allowed
+`);
+    const result = validateContract(doc);
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
+  it("does not flag known fields on fully-populated arguments / options / exits", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+            index: 0
+            required: true
+            description: The build target.
+            variadic: false
+        options:
+          - name: force
+            aliases: [f]
+            required: false
+            value_name: FORCE
+            description: Force the build.
+            repeatable: false
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: text
+`);
+    const result = validateContract(doc);
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
+  it("does not leak unknown / x- keys from arguments or options into normalized output", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    global_options:
+      - name: verbose
+        x-glob: kept-in-yaml-only
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+            descriptn: typo
+            x-arg-ext: ext
+        options:
+          - name: force
+            descriptn: typo
+            x-opt-ext: ext
+        exits:
+          '0':
+            description: OK.
+`);
+    const ctx = normalizeContract(doc);
+    const cmd = ctx.command_sets[0].commands[0];
+    expect(cmd.arguments[0]).toEqual({ name: "target" });
+    expect(cmd.options[0]).toEqual({ name: "force" });
+    expect(cmd.all_options).toEqual([{ name: "verbose" }, { name: "force" }]);
+    expect(ctx.command_sets[0].global_options[0]).toEqual({ name: "verbose" });
+  });
+
+  // ── Constraints reference-integrity (#81) ───────────────────
+
+  it("accepts a constraints block whose names all reference real options/arguments", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+        options:
+          - name: json
+          - name: yaml
+        constraints:
+          mutuallyExclusive: [[json, yaml]]
+          requiredOneOf: [json, yaml, target]
+          requiredTogether: [[json, target]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(
+      result.errors.filter((e) => e.rule === "constraint-unknown-reference"),
+    ).toHaveLength(0);
+  });
+
+  it("errors when mutuallyExclusive references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+        constraints:
+          mutuallyExclusive: [[json, yaml]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].severity).toBe("error");
+    expect(errs[0].message).toContain("yaml");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/mutuallyExclusive/0/1",
+    );
+  });
+
+  it("errors when requiredOneOf references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+        constraints:
+          requiredOneOf: [json, nope]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("nope");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/requiredOneOf/1",
+    );
+  });
+
+  it("errors when requiredTogether references an unknown name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: cert
+        constraints:
+          requiredTogether: [[cert, key]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("key");
+    expect(errs[0].path).toBe(
+      "/command_sets/tool/commands/build/constraints/requiredTogether/0/1",
+    );
+  });
+
+  it("errors when a constraint references an unknown argument name", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        arguments:
+          - name: target
+        constraints:
+          requiredOneOf: [target, ghost]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    const errs = result.errors.filter(
+      (e) => e.rule === "constraint-unknown-reference",
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toContain("ghost");
+  });
+
+  it("resolves constraint references against option aliases and global options", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    global_options:
+      - name: verbose
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: json
+            aliases: [j]
+        constraints:
+          mutuallyExclusive: [[j, verbose]]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    expect(
+      result.errors.filter((e) => e.rule === "constraint-unknown-reference"),
+    ).toHaveLength(0);
+  });
+
   it("warns when a groups entry references a path with no commands under it", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0

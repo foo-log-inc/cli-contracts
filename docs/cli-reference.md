@@ -1110,8 +1110,8 @@ cli-contracts generate custom-go
 #### Extensions
 
 ```yaml
-x-agent: 
-  recommended_before_use: 
+x-agent:
+  recommended_before_use:
     - Run with --dry-run first to preview generated files
 ```
 
@@ -2161,6 +2161,12 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
 | `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
+#### Constraints
+
+| Rule | Members |
+|---|---|
+| Mutually exclusive | `contract`, `file` |
+
 #### Exit Codes
 
 **Exit 0:** Completed without blocking findings.
@@ -2791,16 +2797,16 @@ cli-contracts propose-agent-policy --file cli-contract.yaml --adapter gemini --f
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -2845,6 +2851,12 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
 | `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
+#### Constraints
+
+| Rule | Members |
+|---|---|
+| Mutually exclusive | `contract`, `file` |
+
 #### Exit Codes
 
 **Exit 0:** Completed without blocking findings.
@@ -3475,16 +3487,16 @@ cli-contracts audit --file cli-contract.yaml --adapter claude --show-prompt
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -3960,6 +3972,12 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 | `--report-format` |  | No | `"json"` | Output format for the audit report. |
 | `--log-file` | -l | No |  | Write agent progress log to this file path. |
 
+#### Constraints
+
+| Rule | Members |
+|---|---|
+| Mutually exclusive | `contract`, `file` |
+
 #### Exit Codes
 
 **Exit 0:** Completed without blocking findings.
@@ -4590,16 +4608,16 @@ cli-contracts propose-tests --file cli-contract.yaml --show-prompt
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -5276,16 +5294,16 @@ cli-contracts explain-diff old.yaml new.yaml --show-prompt
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -5329,6 +5347,12 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 | `--scope` |  | No | `"contract"` | What to check. "contract" checks the contract definition against the reference spec (default). "implementation" checks that source code conforms to the contract. "all" checks both. |
 | `--report-format` |  | No | `"json"` | Output format for the conformance report. |
 | `--log-file` | -l | No |  | Write agent progress log to this file path. |
+
+#### Constraints
+
+| Rule | Members |
+|---|---|
+| Mutually exclusive | `contract`, `file` |
 
 #### Exit Codes
 
@@ -5960,16 +5984,16 @@ cli-contracts check-reference --file path/to/cli-contract.yaml --show-prompt
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -6011,6 +6035,12 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 | `--output` | -o | No |  | Write result to a file instead of stdout. |
 | `--report-format` |  | No | `"json"` | Output format for the suggestion report. |
 | `--log-file` | -l | No |  | Write agent progress log to this file path. |
+
+#### Constraints
+
+| Rule | Members |
+|---|---|
+| Required one of | `from-readme`, `from-help`, `from-source` |
 
 #### Exit Codes
 
@@ -6642,16 +6672,16 @@ cli-contracts suggest --from-readme README.md --adapter gemini
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -7282,16 +7312,16 @@ cli-contracts bundle --adapter claude --output esbuild.bundle.mjs
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
     - network
   sideEffectNote: Makes network calls to the configured LLM provider when adapter is not mock. Filesystem write only when --output is specified.
   safeDryRunOption: show-prompt
   expectedDurationMs: 120000
-  retryableExitCodes: 
+  retryableExitCodes:
     - 1
     - 12
 ```
@@ -7329,11 +7359,11 @@ cli-contracts agents [--format]
 #### Extensions
 
 ```yaml
-x-agent: 
+x-agent:
   riskLevel: low
   requiresConfirmation: false
   idempotent: true
-  sideEffects: 
+  sideEffects:
 
 ```
 

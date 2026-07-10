@@ -58,15 +58,17 @@ export const FileContractSchema = z.object({
   csv: CsvMetadataSchema.optional(),
 });
 
-export const ArgumentSchema = z.object({
-  name: z.string().min(1, "Argument name must not be empty"),
-  index: z.number().int().nonnegative().optional(),
-  required: z.boolean().optional(),
-  description: z.string().optional(),
-  schema: JsonSchemaSchema.optional(),
-  file: FileContractSchema.optional(),
-  variadic: z.boolean().optional(),
-});
+export const ArgumentSchema = z
+  .object({
+    name: z.string().min(1, "Argument name must not be empty"),
+    index: z.number().int().nonnegative().optional(),
+    required: z.boolean().optional(),
+    description: z.string().optional(),
+    schema: JsonSchemaSchema.optional(),
+    file: FileContractSchema.optional(),
+    variadic: z.boolean().optional(),
+  })
+  .passthrough(); // keep unknown keys so the validator can warn on typos (#83); x-* extensions
 
 // ─── Effects Schema ─────────────────────────────────────────────
 
@@ -131,24 +133,26 @@ export const EffectsSchema = z.object({
 
 // ─── Option / Output Schemas ────────────────────────────────────
 
-export const OptionSchema = z.object({
-  name: z.string().min(1, "Option name must not be empty"),
-  aliases: z.array(z.string()).optional(),
-  required: z.boolean().optional(),
-  value_name: z.string().optional(),
-  description: z.string().optional(),
-  schema: JsonSchemaSchema.optional(),
-  file: FileContractSchema.optional(),
-  effects: EffectsSchema.optional(),
-  repeatable: z.boolean().optional(),
-  deprecated: z
-    .object({
-      since: z.string().optional(),
-      message: z.string().optional(),
-      alternative: z.string().optional(),
-    })
-    .optional(),
-});
+export const OptionSchema = z
+  .object({
+    name: z.string().min(1, "Option name must not be empty"),
+    aliases: z.array(z.string()).optional(),
+    required: z.boolean().optional(),
+    value_name: z.string().optional(),
+    description: z.string().optional(),
+    schema: JsonSchemaSchema.optional(),
+    file: FileContractSchema.optional(),
+    effects: EffectsSchema.optional(),
+    repeatable: z.boolean().optional(),
+    deprecated: z
+      .object({
+        since: z.string().optional(),
+        message: z.string().optional(),
+        alternative: z.string().optional(),
+      })
+      .optional(),
+  })
+  .passthrough(); // keep unknown keys so the validator can warn on typos (#83); x-* extensions
 
 export const OutputContractSchema = z.object({
   required: z.boolean().optional(),
@@ -168,12 +172,14 @@ export const GeneratedFileSchema = z.object({
 
 const exitCodeKey = z.string().regex(/^\d{1,3}$/, "Exit code must be 0-255");
 
-export const ExitSchema = z.object({
-  description: z.string().min(1, "Exit description is required"),
-  stdout: OutputContractSchema.optional(),
-  stderr: OutputContractSchema.optional(),
-  files: z.array(GeneratedFileSchema).optional(),
-});
+export const ExitSchema = z
+  .object({
+    description: z.string().min(1, "Exit description is required"),
+    stdout: OutputContractSchema.optional(),
+    stderr: OutputContractSchema.optional(),
+    files: z.array(GeneratedFileSchema).optional(),
+  })
+  .passthrough(); // keep unknown keys so the validator can warn on typos (#83); x-* extensions
 
 export const FramingSchema = z.object({
   type: z.string(),
@@ -274,11 +280,17 @@ export const XAgentSchema = z.object({
 // ─── Constraints Schema ─────────────────────────────────────────
 
 // Declarative input constraints between a command's options/arguments.
-// Declaration only; enforcement (checking these at validate/runtime) is a
-// separate concern and intentionally not implemented here.
 //   - mutuallyExclusive: groups of names; at most one per group may be given.
 //   - requiredOneOf: at least one of these names must be given.
 //   - requiredTogether: groups of names that must all be given together.
+//
+// Enforcement layer: the *references* here (the names listed in each field) are
+// checked at contract-validation time by validateConstraints() in validator.ts —
+// every name must resolve to a real option/alias/argument on the same command
+// (or a command-set global option), else a `constraint-unknown-reference` error
+// is emitted. The *behavioral* enforcement of a constraint against a live CLI
+// invocation is the target CLI's own runtime responsibility; cli-contracts only
+// declares and reference-checks it.
 export const ConstraintsSchema = z.object({
   mutuallyExclusive: z.array(z.array(z.string())).optional(),
   requiredOneOf: z.array(z.string()).optional(),

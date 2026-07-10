@@ -14,6 +14,18 @@
  *  - stream schema vs framing conflict
  *  - unresolved $ref targets
  *  - empty command set warnings
+ *  - constraint references to unknown option / argument names
+ *
+ * Enforcement layer note (see also README "Constraints" section):
+ * The `constraints` block (mutuallyExclusive / requiredOneOf / requiredTogether)
+ * is enforced HERE, at contract-validation time, only as a *reference integrity*
+ * check: every name it lists must resolve to a real option, alias, or argument
+ * declared on the same command (or a global option of its command set). It is a
+ * static check on the contract document. cli-contracts does NOT itself parse
+ * end-user CLI invocations, so the *behavioral* semantics of the constraints
+ * (rejecting a runtime invocation that supplies two mutually-exclusive options,
+ * etc.) are the responsibility of the target CLI's own argument parser at
+ * runtime; the contract merely declares them.
  */
 
 import type {
@@ -25,7 +37,15 @@ import type {
   Diagnostic,
   ValidateResult,
 } from "./types.js";
-import { XAgentSchema, EffectsSchema, CommandSchema, CommandSetSchema } from "./schema.js";
+import {
+  XAgentSchema,
+  EffectsSchema,
+  CommandSchema,
+  CommandSetSchema,
+  ArgumentSchema,
+  OptionSchema,
+  ExitSchema,
+} from "./schema.js";
 import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
 import { derivePolicy, isOptionActive } from "./policy.js";
@@ -35,14 +55,18 @@ import { derivePolicy, isOptionActive } from "./policy.js";
 // CommandSetSchema is automatically recognized here without touching this file.
 const KNOWN_COMMAND_KEYS = new Set(Object.keys(CommandSchema.shape));
 const KNOWN_COMMAND_SET_KEYS = new Set(Object.keys(CommandSetSchema.shape));
+const KNOWN_ARGUMENT_KEYS = new Set(Object.keys(ArgumentSchema.shape));
+const KNOWN_OPTION_KEYS = new Set(Object.keys(OptionSchema.shape));
+const KNOWN_EXIT_KEYS = new Set(Object.keys(ExitSchema.shape));
 
 /**
- * Flags keys on a command / command-set object that are neither a known schema
- * field nor an `x-`-prefixed extension. Because both schemas use `.passthrough()`,
- * such keys are silently accepted by Zod and then dropped by the normalizer —
- * a typo (`descriptio:`) or undocumented field silently no-ops. Surfacing it as
- * a warning (never an error) keeps existing contracts valid while giving authors
- * feedback. `x-*` extensions remain silently allowed.
+ * Flags keys on a command / command-set / argument / option / exit object that
+ * are neither a known schema field nor an `x-`-prefixed extension. Because those
+ * schemas use `.passthrough()`, such keys are silently accepted by Zod and then
+ * dropped by the normalizer — a typo (`descriptio:`) or undocumented field
+ * silently no-ops. Surfacing it as a warning (never an error) keeps existing
+ * contracts valid while giving authors feedback. `x-*` extensions remain
+ * silently allowed.
  */
 function validateUnknownKeys(
   obj: Record<string, unknown>,
@@ -249,6 +273,7 @@ function validateCommands(
       cmd,
       cmdId,
       `${basePath}/commands/${cmdId}`,
+      cs.global_options ?? [],
       diagnostics,
     );
   }
@@ -295,6 +320,7 @@ function validateCommand(
   cmd: Command,
   _cmdId: string,
   basePath: string,
+  globalOptions: Option[],
   diagnostics: Diagnostic[],
 ): void {
   validateUnknownKeys(
@@ -305,6 +331,10 @@ function validateCommand(
   );
 
   validateExits(cmd, basePath, diagnostics);
+
+  if (cmd.constraints) {
+    validateConstraints(cmd, globalOptions, basePath, diagnostics);
+  }
 
   if (cmd.arguments) {
     validateArguments(cmd.arguments, basePath, diagnostics);
@@ -478,7 +508,7 @@ function validateExits(
   basePath: string,
   diagnostics: Diagnostic[],
 ): void {
-  for (const [code] of Object.entries(cmd.exits)) {
+  for (const [code, exit] of Object.entries(cmd.exits)) {
     const numCode = Number(code);
     if (!Number.isInteger(numCode) || numCode < 0 || numCode > 255) {
       diagnostics.push({
@@ -488,6 +518,82 @@ function validateExits(
         severity: "error",
       });
     }
+
+    validateUnknownKeys(
+      exit as unknown as Record<string, unknown>,
+      KNOWN_EXIT_KEYS,
+      `${basePath}/exits/${code}`,
+      diagnostics,
+    );
+  }
+}
+
+/**
+ * Validates a command's `constraints` block at contract-validation time.
+ *
+ * This is a static reference-integrity check: every name listed in
+ * `mutuallyExclusive`, `requiredOneOf`, or `requiredTogether` must resolve to a
+ * real option name, option alias, or argument name declared on the same command
+ * (or a global option of the command set). An unresolvable name is almost always
+ * a typo or a renamed field and would make the declared constraint meaningless,
+ * so it is reported as an error.
+ *
+ * The *behavioral* enforcement of constraints (rejecting an actual CLI
+ * invocation) is out of scope: cli-contracts describes the interface, it does
+ * not execute it. See the module header and README "Constraints" section.
+ */
+function validateConstraints(
+  cmd: Command,
+  globalOptions: Option[],
+  basePath: string,
+  diagnostics: Diagnostic[],
+): void {
+  const constraints = cmd.constraints;
+  if (!constraints) return;
+
+  // Build the set of names a constraint may legally reference.
+  const known = new Set<string>();
+  for (const arg of cmd.arguments ?? []) {
+    known.add(arg.name);
+  }
+  for (const opt of [...(cmd.options ?? []), ...globalOptions]) {
+    known.add(opt.name);
+    for (const alias of opt.aliases ?? []) {
+      known.add(alias);
+    }
+  }
+
+  const checkName = (name: string, subPath: string): void => {
+    if (!known.has(name)) {
+      diagnostics.push({
+        path: subPath,
+        message: `Constraint references unknown option/argument name "${name}"; it does not match any option, alias, or argument on this command`,
+        rule: "constraint-unknown-reference",
+        severity: "error",
+      });
+    }
+  };
+
+  if (constraints.mutuallyExclusive) {
+    constraints.mutuallyExclusive.forEach((group, gi) => {
+      group.forEach((name, ni) => {
+        checkName(name, `${basePath}/constraints/mutuallyExclusive/${gi}/${ni}`);
+      });
+    });
+  }
+
+  if (constraints.requiredOneOf) {
+    constraints.requiredOneOf.forEach((name, ni) => {
+      checkName(name, `${basePath}/constraints/requiredOneOf/${ni}`);
+    });
+  }
+
+  if (constraints.requiredTogether) {
+    constraints.requiredTogether.forEach((group, gi) => {
+      group.forEach((name, ni) => {
+        checkName(name, `${basePath}/constraints/requiredTogether/${gi}/${ni}`);
+      });
+    });
   }
 }
 
@@ -500,6 +606,13 @@ function validateArguments(
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const argPath = `${basePath}/arguments/${i}`;
+
+    validateUnknownKeys(
+      arg as unknown as Record<string, unknown>,
+      KNOWN_ARGUMENT_KEYS,
+      argPath,
+      diagnostics,
+    );
 
     if (argNames.has(arg.name)) {
       diagnostics.push({
@@ -533,6 +646,13 @@ function validateOptions(
   for (let i = 0; i < opts.length; i++) {
     const opt = opts[i];
     const optPath = `${basePath}/${i}`;
+
+    validateUnknownKeys(
+      opt as unknown as Record<string, unknown>,
+      KNOWN_OPTION_KEYS,
+      optPath,
+      diagnostics,
+    );
 
     if (optNames.has(opt.name)) {
       diagnostics.push({
