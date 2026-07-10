@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { resolve } from "node:path";
 import { parseContractFile, parseContractString } from "../../src/parser.js";
 import { validateContract } from "../../src/validator.js";
+import { normalizeContract } from "../../src/normalizer.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../fixtures");
 
@@ -258,8 +259,8 @@ command_sets:
         summary: Build.
         x-agent:
           risk_level: low
-        x-constraints:
-          mutuallyExclusive: [[a, b]]
+        x-custom:
+          anything: goes
         exits:
           '0':
             description: OK.
@@ -299,6 +300,9 @@ command_sets:
           - name: force
         effects:
           risk_level: low
+        constraints:
+          mutuallyExclusive: [[force, target]]
+          requiredOneOf: [force, target]
         streams:
           stdout:
             format: text
@@ -316,6 +320,38 @@ command_sets:
 `);
     const result = validateContract(doc);
     expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+  });
+
+  it("treats a valid constraints block as a known field and round-trips it", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 1.0.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        constraints:
+          mutuallyExclusive: [[contract, file]]
+          requiredOneOf: [from-readme, from-help]
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+    // constraints is now a first-class field, not an unknown key.
+    expect(result.warnings.filter((w) => w.rule === "unknown-key")).toHaveLength(0);
+
+    // It is carried through normalization as a real field (not via extensions).
+    const ctx = normalizeContract(doc);
+    const cmd = ctx.command_sets[0].commands[0];
+    expect(cmd.constraints).toEqual({
+      mutuallyExclusive: [["contract", "file"]],
+      requiredOneOf: ["from-readme", "from-help"],
+    });
+    expect(cmd.extensions).toEqual({});
   });
 
   it("emits no unknown-key warnings for the repository's own contract", async () => {

@@ -614,6 +614,36 @@
                   },
                   "additionalProperties": false
                 },
+                "constraints": {
+                  "type": "object",
+                  "properties": {
+                    "mutuallyExclusive": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "requiredOneOf": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "requiredTogether": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "memory_ref": {
                   "type": "object",
                   "properties": {

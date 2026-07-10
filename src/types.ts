@@ -8,6 +8,7 @@ export type {
   Info,
   CommandSet,
   Command,
+  Constraints,
   Argument,
   Option,
   FileContract,
@@ -81,6 +82,7 @@ export interface NormalizedCommand {
   options: import("./schema.js").Option[];
   all_options: import("./schema.js").Option[];
   effects?: import("./schema.js").Effects;
+  constraints?: import("./schema.js").Constraints;
   streams?: import("./schema.js").Streams;
   signals?: Record<string, import("./schema.js").Signal>;
   exits: NormalizedExit[];

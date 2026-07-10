@@ -271,6 +271,20 @@ export const XAgentSchema = z.object({
   { message: "dsl_task and dsl_workflow are mutually exclusive — specify one or the other" },
 );
 
+// ─── Constraints Schema ─────────────────────────────────────────
+
+// Declarative input constraints between a command's options/arguments.
+// Declaration only; enforcement (checking these at validate/runtime) is a
+// separate concern and intentionally not implemented here.
+//   - mutuallyExclusive: groups of names; at most one per group may be given.
+//   - requiredOneOf: at least one of these names must be given.
+//   - requiredTogether: groups of names that must all be given together.
+export const ConstraintsSchema = z.object({
+  mutuallyExclusive: z.array(z.array(z.string())).optional(),
+  requiredOneOf: z.array(z.string()).optional(),
+  requiredTogether: z.array(z.array(z.string())).optional(),
+});
+
 // ─── Command Schema ─────────────────────────────────────────────
 
 export const CommandSchema = z
@@ -282,6 +296,7 @@ export const CommandSchema = z
     arguments: z.array(ArgumentSchema).optional(),
     options: z.array(OptionSchema).optional(),
     effects: EffectsSchema.optional(),
+    constraints: ConstraintsSchema.optional(),
     memory_ref: MemoryRefSpecSchema.optional(),
     streams: StreamsSchema.optional(),
     signals: z.record(z.string(), SignalSchema).optional(),
@@ -412,6 +427,7 @@ export type Info = z.infer<typeof InfoSchema>;
 export type CommandSet = z.infer<typeof CommandSetSchema>;
 export type Group = z.infer<typeof GroupSchema>;
 export type Command = z.infer<typeof CommandSchema>;
+export type Constraints = z.infer<typeof ConstraintsSchema>;
 export type Argument = z.infer<typeof ArgumentSchema>;
 export type Option = z.infer<typeof OptionSchema>;
 export type FileContract = z.infer<typeof FileContractSchema>;
