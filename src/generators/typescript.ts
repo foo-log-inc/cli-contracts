@@ -552,6 +552,13 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   // Commands (nested paths register parent subcommands once)
   const cmdRegistrationState: CommandRegistrationState = {
     createdPrefixes: new Set(),
+    ancestorPrefixes: new Set(
+      ctx.command_sets.flatMap((cs) =>
+        cs.commands.flatMap((cmd) =>
+          cmd.path.slice(0, -1).map((_, i) => prefixKey(cmd.path.slice(0, i + 1))),
+        ),
+      ),
+    ),
     groups: {},
   };
   for (const cs of ctx.command_sets) {
@@ -581,7 +588,7 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
   }
 
   const optFields = cmd.options.map((o) => {
-    const type = o.schema?.type === "boolean" ? "boolean" : "string";
+    const type = o.schema?.type === "boolean" ? "boolean" : optionTakesManyValues(o) ? "string[]" : "string";
     return `${toCamelCase(o.name)}?: ${type}`;
   });
   if (commandIsLlmPowered(cmd) && !commandHasManualShowPrompt(cmd)) {
@@ -602,7 +609,10 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
 }
 
 interface CommandRegistrationState {
+  /** Paths whose commander command is already held in a `__cmd_*` variable. */
   createdPrefixes: Set<string>;
+  /** Paths some command is nested under; their commander command must be held in a variable. */
+  ancestorPrefixes: Set<string>;
   /** Parent command-group metadata for the active command set, keyed by dotted-path prefix. */
   groups: Record<string, import("../schema.js").Group>;
 }
@@ -663,7 +673,7 @@ function generateProgramCommand(
 ): void {
   const handlerName = toCamelCase(cmd.id);
   const path = cmd.path;
-  const state = registrationState ?? { createdPrefixes: new Set(), groups: {} };
+  const state = registrationState ?? { createdPrefixes: new Set(), ancestorPrefixes: new Set(), groups: {} };
   const receiver =
     path.length === 1 ? "program" : ensureCommandAncestors(path, state, lines);
   // An empty path means the command is invoked without a subcommand name.
@@ -680,8 +690,22 @@ function generateProgramCommand(
     ? `${JSON.stringify(commandName)}, { isDefault: true, hidden: true }`
     : JSON.stringify(commandName);
 
-  lines.push(`  ${receiver}`);
-  lines.push(`    .command(${commandArgs})`);
+  // A command other commands are nested under is one commander command with
+  // both its own action and its subcommands, so it is held in the same
+  // variable ensureCommandAncestors uses — whichever of the two comes first
+  // creates it, the other attaches to it.
+  const key = prefixKey(path);
+  if (isDefaultCommand || !state.ancestorPrefixes.has(key)) {
+    lines.push(`  ${receiver}`);
+    lines.push(`    .command(${commandArgs})`);
+  } else {
+    const varName = commandParentVarName(path);
+    if (!state.createdPrefixes.has(key)) {
+      lines.push(`  const ${varName} = ${receiver}.command(${commandArgs});`);
+      state.createdPrefixes.add(key);
+    }
+    lines.push(`  ${varName}`);
+  }
   lines.push(`    .description(${JSON.stringify(cmd.summary)})`);
 
   // Arguments
@@ -886,17 +910,21 @@ function generatePolicyModule(ctx: NormalizedContext): string {
   return lines.join("\n");
 }
 
+/** Whether commander collects the option's values into an array (`<name...>`). */
+function optionTakesManyValues(opt: Option): boolean {
+  return opt.schema?.type !== "boolean" && opt.repeatable === true;
+}
+
 function buildOptionFlag(opt: Option): string {
   const parts: string[] = [];
   if (opt.aliases && opt.aliases.length > 0) {
     parts.push(`-${opt.aliases[0]}`);
   }
-  const isBoolean = opt.schema?.type === "boolean";
-  if (isBoolean) {
+  if (opt.schema?.type === "boolean") {
     parts.push(`--${opt.name}`);
   } else {
     const valueName = opt.value_name ?? "value";
-    if (opt.repeatable) {
+    if (optionTakesManyValues(opt)) {
       parts.push(`--${opt.name} <${valueName}...>`);
     } else {
       parts.push(`--${opt.name} <${valueName}>`);

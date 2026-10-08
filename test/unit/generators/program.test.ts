@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
+import { build } from "esbuild";
 import { parseContractFile, parseContractString } from "../../../src/parser.js";
 import { normalizeContract } from "../../../src/normalizer.js";
 import { generateTypeScript } from "../../../src/generators/typescript.js";
@@ -102,6 +106,92 @@ command_sets:
     expect(program).toMatch(/__cmd_providers\s*\n\s*\.command\("test"\)/);
     expect(program).not.toContain('.command("providers list")');
     expect(program).not.toContain('.command("providers test")');
+  });
+
+  function leafAndChildrenProgram(commands: string): string {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+${commands}`);
+    return generateTypeScript(normalizeContract(doc))["program.ts"];
+  }
+
+  const reviewLeaf = `      review:
+        summary: Run the review.
+        exits:
+          '0':
+            description: OK.
+`;
+  const reviewChild = `      review.ingest:
+        summary: Ingest results.
+        exits:
+          '0':
+            description: OK.
+`;
+
+  for (const [order, commands] of [
+    ["before", reviewLeaf + reviewChild],
+    ["after", reviewChild + reviewLeaf],
+  ] as const) {
+    it(`a command with its own action and subcommands is registered once when it comes ${order} its subcommands`, () => {
+      const program = leafAndChildrenProgram(commands);
+
+      expect(program.match(/\.command\("review"\)/g)).toHaveLength(1);
+      expect(program).toContain('const __cmd_review = program.command("review");');
+      expect(program).toMatch(/__cmd_review\s*\n\s*\.description\("Run the review\."\)/);
+      expect(program).toMatch(/__cmd_review\s*\n\s*\.command\("ingest"\)/);
+    });
+  }
+
+  it("a command with its own action and subcommands dispatches to both through commander", async () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+${reviewLeaf}${reviewChild}`);
+    const output = generateTypeScript(normalizeContract(doc));
+    const dir = await mkdtemp(join(tmpdir(), "cli-contracts-nested-leaf-"));
+    try {
+      for (const [file, content] of Object.entries(output)) {
+        await writeFile(join(dir, file), content, "utf-8");
+      }
+      const bundle = join(dir, "program.mjs");
+      await build({
+        entryPoints: [join(dir, "program.ts")],
+        outfile: bundle,
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        nodePaths: [resolve(import.meta.dirname, "../../../node_modules")],
+        logLevel: "silent",
+      });
+      const { createProgram } = (await import(pathToFileURL(bundle).href)) as {
+        createProgram: (handlers: Record<string, () => Promise<void>>, version: string) => {
+          parseAsync(argv: string[]): Promise<unknown>;
+        };
+      };
+      const calls: string[] = [];
+      const handlers = {
+        review: async () => { calls.push("review"); },
+        reviewIngest: async () => { calls.push("ingest"); },
+      };
+
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review"]);
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review", "ingest"]);
+
+      expect(calls).toEqual(["review", "ingest"]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("single-segment commands register directly on program", () => {
@@ -327,6 +417,40 @@ command_sets:
     );
     expect(program).toContain(
       "await handlers.build(opts, cmd.optsWithGlobals())",
+    );
+  });
+
+  it("handler signature types a repeatable option as string[], the array commander collects", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      run:
+        summary: Run.
+        options:
+          - name: target
+            value_name: id
+            repeatable: true
+            schema:
+              type: array
+              items:
+                type: string
+          - name: name
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const program = generateTypeScript(normalizeContract(doc))["program.ts"];
+
+    expect(program).toContain('.option("--target <id...>", "")');
+    expect(program).toContain(
+      "run: (options: { target?: string[]; name?: string }, parentOpts: Record<string, unknown>) => Promise<void>",
     );
   });
 
