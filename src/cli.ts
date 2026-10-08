@@ -65,7 +65,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -87,7 +87,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -134,7 +134,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -167,7 +167,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -197,7 +197,7 @@ const handlers: CommandHandlers = {
       const files = getContractFiles(config);
       const result = await runContractTests(files, {
         profile: options.profile ?? config?.contract_tests?.profile,
-        caseIds: options.case ? [options.case] : undefined,
+        caseIds: options.case,
         casesDir: options.casesDir ?? config?.contract_tests?.cases_dir,
         timeoutMs: options.timeout ? Number(options.timeout) : 30000,
         bail: options.bail,

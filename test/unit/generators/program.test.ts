@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
+import { build } from "esbuild";
 import { parseContractFile, parseContractString } from "../../../src/parser.js";
 import { normalizeContract } from "../../../src/normalizer.js";
 import { generateTypeScript } from "../../../src/generators/typescript.js";
@@ -102,6 +106,189 @@ command_sets:
     expect(program).toMatch(/__cmd_providers\s*\n\s*\.command\("test"\)/);
     expect(program).not.toContain('.command("providers list")');
     expect(program).not.toContain('.command("providers test")');
+  });
+
+  function leafAndChildrenProgram(commands: string): string {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+${commands}`);
+    return generateTypeScript(normalizeContract(doc))["program.ts"];
+  }
+
+  const reviewLeaf = `      review:
+        summary: Run the review.
+        exits:
+          '0':
+            description: OK.
+`;
+  const reviewChild = `      review.ingest:
+        summary: Ingest results.
+        exits:
+          '0':
+            description: OK.
+`;
+
+  for (const [order, commands] of [
+    ["before", reviewLeaf + reviewChild],
+    ["after", reviewChild + reviewLeaf],
+  ] as const) {
+    it(`a command with its own action and subcommands is registered once when it comes ${order} its subcommands`, () => {
+      const program = leafAndChildrenProgram(commands);
+
+      expect(program.match(/program\.command\("review"\)/g)).toHaveLength(1);
+      expect(program).toContain('const __cmd_review = program.command("review");');
+      expect(program).toContain('const __self_review = __cmd_review.command("review", { isDefault: true, hidden: true });');
+      expect(program).toMatch(/__self_review\s*\n\s*\.description\("Run the review\."\)/);
+      expect(program).toMatch(/__cmd_review\s*\n\s*\.command\("ingest"\)/);
+    });
+  }
+
+  /** Bundle the generated program and load its createProgram, to run it through commander */
+  async function loadGeneratedProgram(contractCommands: string): Promise<{
+    createProgram: (handlers: Record<string, () => Promise<void>>, version: string) => {
+      exitOverride(): unknown;
+      configureOutput(output: { writeErr: (s: string) => void; writeOut: (s: string) => void }): unknown;
+      parseAsync(argv: string[]): Promise<unknown>;
+    };
+    cleanup: () => Promise<void>;
+  }> {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+${contractCommands}`);
+    const output = generateTypeScript(normalizeContract(doc));
+    const dir = await mkdtemp(join(tmpdir(), "cli-contracts-program-"));
+    for (const [file, content] of Object.entries(output)) {
+      await writeFile(join(dir, file), content, "utf-8");
+    }
+    const bundle = join(dir, "program.mjs");
+    await build({
+      entryPoints: [join(dir, "program.ts")],
+      outfile: bundle,
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      nodePaths: [resolve(import.meta.dirname, "../../../node_modules")],
+      logLevel: "silent",
+    });
+    const { createProgram } = await import(pathToFileURL(bundle).href);
+    return { createProgram, cleanup: () => rm(dir, { recursive: true, force: true }) };
+  }
+
+  /** Parse argv with commander's exits turned into throws; returns what commander wrote */
+  async function runCapturing(program: unknown, argv: string[]): Promise<string> {
+    type Cmd = {
+      commands: Cmd[];
+      exitOverride(): unknown;
+      configureOutput(o: { writeErr: (s: string) => void; writeOut: (s: string) => void }): unknown;
+      parseAsync(argv: string[]): Promise<unknown>;
+    };
+    let output = "";
+    const capture = (cmd: Cmd): void => {
+      cmd.exitOverride();
+      cmd.configureOutput({ writeErr: (s) => { output += s; }, writeOut: (s) => { output += s; } });
+      cmd.commands.forEach(capture);
+    };
+    capture(program as Cmd);
+    try {
+      await (program as Cmd).parseAsync(["node", "tool", ...argv]);
+    } catch {
+      // exitOverride turns commander's exit into a throw
+    }
+    return output;
+  }
+
+  it("a command with its own action and subcommands dispatches to both through commander", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(reviewLeaf + reviewChild);
+    try {
+      const calls: string[] = [];
+      const handlers = {
+        review: async () => { calls.push("review"); },
+        reviewIngest: async () => { calls.push("ingest"); },
+      };
+
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review"]);
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review", "ingest"]);
+
+      expect(calls).toEqual(["review", "ingest"]);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("a subcommand's option of the same name as its parent's reaches the subcommand", async () => {
+    const withDryRun = (id: string, summary: string) => `      ${id}:
+        summary: ${summary}
+        options:
+          - name: dry-run
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: OK.
+`;
+    const { createProgram, cleanup } = await loadGeneratedProgram(
+      withDryRun("review", "Run the review.") + withDryRun("review.rebaseline", "Rebaseline."),
+    );
+    try {
+      const received: Array<[string, unknown]> = [];
+      const handlers = {
+        review: async (opts: { dryRun?: boolean }) => { received.push(["review", opts.dryRun]); },
+        reviewRebaseline: async (opts: { dryRun?: boolean }) => { received.push(["rebaseline", opts.dryRun]); },
+      } as unknown as Record<string, () => Promise<void>>;
+
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review", "rebaseline", "--dry-run"]);
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "review", "--dry-run"]);
+
+      expect(received).toEqual([["rebaseline", true], ["review", true]]);
+      expect(await runCapturing(createProgram(handlers, "0.0.0"), ["review", "--help"])).toMatch(
+        /Usage: tool review \[options\] \[command\][\s\S]*--dry-run[\s\S]*rebaseline/,
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("a required option is demanded by its own command only, not by its subcommands", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      review:
+        summary: Run the review.
+        options:
+          - name: source
+            value_name: path
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+${reviewChild}`);
+    try {
+      const calls: string[] = [];
+      const handlers = {
+        review: async () => { calls.push("review"); },
+        reviewIngest: async () => { calls.push("ingest"); },
+      };
+      const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
+
+      expect(await run(["review", "ingest"])).toBe("");
+      expect(await run(["review", "--source", "a.md"])).toBe("");
+      expect(await run(["review"])).toContain("error: required option '--source <path>' not specified");
+      expect(calls).toEqual(["ingest", "review"]);
+    } finally {
+      await cleanup();
+    }
   });
 
   it("single-segment commands register directly on program", () => {
@@ -327,6 +514,72 @@ command_sets:
     );
     expect(program).toContain(
       "await handlers.build(opts, cmd.optsWithGlobals())",
+    );
+  });
+
+  it("handler signature types a repeatable option as string[], the array commander collects", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      run:
+        summary: Run.
+        options:
+          - name: target
+            value_name: id
+            repeatable: true
+            schema:
+              type: array
+              items:
+                type: string
+          - name: name
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const program = generateTypeScript(normalizeContract(doc))["program.ts"];
+
+    expect(program).toContain('.option("--target <id...>", "")');
+    expect(program).toContain(
+      "run: (options: { target?: string[]; name?: string }, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+  });
+
+  it("a required option is checked in its command's action and typed as present", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      scaffold:
+        summary: Scaffold.
+        options:
+          - name: source
+            value_name: path
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const program = generateTypeScript(normalizeContract(doc))["program.ts"];
+
+    expect(program).toContain('.option("--source <path>", "")');
+    expect(program).toContain(
+      'if (opts.source === undefined) {\n        cmd.error("error: required option \'--source <path>\' not specified", { code: "commander.missingMandatoryOptionValue" });',
+    );
+    expect(program).toContain(
+      "scaffold: (options: { source: string }, parentOpts: Record<string, unknown>) => Promise<void>",
     );
   });
 
