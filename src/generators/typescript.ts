@@ -589,7 +589,7 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
 
   const optFields = cmd.options.map((o) => {
     const type = o.schema?.type === "boolean" ? "boolean" : optionTakesManyValues(o) ? "string[]" : "string";
-    return `${toCamelCase(o.name)}?: ${type}`;
+    return `${toCamelCase(o.name)}${o.required ? "" : "?"}: ${type}`;
   });
   if (commandIsLlmPowered(cmd) && !commandHasManualShowPrompt(cmd)) {
     optFields.push("showPrompt?: boolean");
@@ -721,13 +721,15 @@ function generateProgramCommand(
     const flag = buildOptionFlag(opt);
     const desc = JSON.stringify(opt.description ?? "");
     const def = opt.schema?.default;
+    // A required option is registered as one, so commander rejects a missing value
+    const method = opt.required ? "requiredOption" : "option";
     if (def !== undefined) {
       const defValue = commanderDefaultValue(def, opt.schema?.type);
       lines.push(
-        `    .option(${JSON.stringify(flag)}, ${desc}, ${defValue})`,
+        `    .${method}(${JSON.stringify(flag)}, ${desc}, ${defValue})`,
       );
     } else {
-      lines.push(`    .option(${JSON.stringify(flag)}, ${desc})`);
+      lines.push(`    .${method}(${JSON.stringify(flag)}, ${desc})`);
     }
   }
 

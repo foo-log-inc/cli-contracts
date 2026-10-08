@@ -454,6 +454,35 @@ command_sets:
     );
   });
 
+  it("a required option is registered with requiredOption and typed as present", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      scaffold:
+        summary: Scaffold.
+        options:
+          - name: source
+            value_name: path
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+`);
+    const program = generateTypeScript(normalizeContract(doc))["program.ts"];
+
+    expect(program).toContain('.requiredOption("--source <path>", "")');
+    expect(program).toContain(
+      "scaffold: (options: { source: string }, parentOpts: Record<string, unknown>) => Promise<void>",
+    );
+  });
+
   it("minimal contract (no args, no options) generates compilable program", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "minimal-contract.yaml"),

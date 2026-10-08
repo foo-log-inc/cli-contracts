@@ -4,15 +4,15 @@ import { deriveCommandPolicy } from "./policy.js";
 
 export interface CommandHandlers {
   init: (options: { name?: string; multiCommandSet?: boolean; output?: string; withConfig?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  versionSync: (options: { file?: string; packageFile?: string; check?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  validate: (options: { file?: string; strict?: boolean; resolveRefs?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  versionSync: (options: { file?: string[]; packageFile?: string; check?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  validate: (options: { file?: string[]; strict?: boolean; resolveRefs?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   resolve: (options: { file?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
-  generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  docs: (options: { file?: string; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
-  test: (options: { profile?: string; case?: string; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  generate: (generators: string[], options: { file?: string[]; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  docs: (options: { file?: string[]; output?: string; dryRun?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  test: (options: { profile?: string; case?: string[]; casesDir?: string; timeout?: string; bail?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   diff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; breakingOnly?: boolean; text?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   proposeAgentPolicy: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string; logFile?: string }, parentOpts: Record<string, unknown>) => Promise<void | string>;
-  audit: (contract: string | undefined, options: { file?: string; checks?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string; logFile?: string }, parentOpts: Record<string, unknown>) => Promise<void | string>;
+  audit: (contract: string | undefined, options: { file?: string; checks?: string[]; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string; logFile?: string }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   extract: (commands: string[], options: { file?: string; all?: boolean; includeMeta?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   proposeTests: (contract: string | undefined, options: { file?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string; logFile?: string }, parentOpts: Record<string, unknown>) => Promise<void | string>;
   explainDiff: (old: string | undefined, newArg: string | undefined, options: { base?: string; head?: string; contractPath?: string; adapter?: string; model?: string; showPrompt?: boolean; failOn?: string; output?: string; reportFormat?: string; logFile?: string }, parentOpts: Record<string, unknown>) => Promise<void | string>;
