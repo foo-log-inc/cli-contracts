@@ -47,14 +47,15 @@ const handlers: CommandHandlers = {
         withConfig: options.withConfig,
       });
       writeOut(result, fmt);
-      process.exit(0);
+      process.exitCode = 0;
     } catch (err) {
       if (err instanceof FileExistsError) {
         writeError("FILE_EXISTS", err.message);
-        process.exit(4);
+        process.exitCode = 4;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -73,10 +74,10 @@ const handlers: CommandHandlers = {
         packageFile: options.packageFile,
       });
       writeOut(result, fmt);
-      process.exit(result.checked && !result.inSync ? 9 : 0);
+      process.exitCode = result.checked && !result.inSync ? 9 : 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -95,10 +96,10 @@ const handlers: CommandHandlers = {
         resolveRefs: options.resolveRefs,
       });
       writeOut(result, fmt);
-      process.exit(result.valid ? 0 : 9);
+      process.exitCode = result.valid ? 0 : 9;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -113,16 +114,17 @@ const handlers: CommandHandlers = {
         : getContractFiles(configResult?.config);
       if (files.length === 0) {
         writeError("INVALID_ARGS", "No contract file specified");
-        process.exit(2);
+        process.exitCode = 2;
+        return;
       }
       const result = await runResolve(files[0], {
         format: options.format as "yaml" | "json" | undefined,
       });
       process.stdout.write(result.output);
-      process.exit(0);
+      process.exitCode = 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -146,15 +148,16 @@ const handlers: CommandHandlers = {
 
       if ("validationFailed" in result) {
         writeOut(result.result, fmt);
-        process.exit(3);
+        process.exitCode = 3;
+        return;
       }
 
       writeOut(result, fmt);
       const hasFailed = result.generators.some((g) => g.status === "failed");
-      process.exit(hasFailed ? 5 : 0);
+      process.exitCode = hasFailed ? 5 : 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -172,14 +175,15 @@ const handlers: CommandHandlers = {
 
       if ("validationFailed" in result) {
         writeOut(result.result, fmt);
-        process.exit(3);
+        process.exitCode = 3;
+        return;
       }
 
       writeOut(result, fmt);
-      process.exit(0);
+      process.exitCode = 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -202,10 +206,10 @@ const handlers: CommandHandlers = {
       });
 
       writeOut(result, fmt);
-      process.exit(result.failed > 0 ? 6 : 0);
+      process.exitCode = result.failed > 0 ? 6 : 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -214,17 +218,17 @@ const handlers: CommandHandlers = {
     try {
       if (!old || !newArg) {
         writeError("INVALID_ARGS", "Both old and new contract files are required");
-        process.exit(2);
+        process.exitCode = 2;
         return;
       }
       const result = await runDiff(old, newArg, {
         breakingOnly: options.breakingOnly,
       });
       writeOut(result, fmt);
-      process.exit(result.has_breaking_changes ? 7 : 0);
+      process.exitCode = result.has_breaking_changes ? 7 : 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -249,19 +253,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -286,19 +292,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -323,19 +331,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -351,19 +361,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -391,19 +403,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -422,19 +436,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -450,19 +466,21 @@ const handlers: CommandHandlers = {
       } else {
         process.stdout.write(JSON.stringify(result, null, 2) + "\n");
       }
-      process.exit(exitCode);
+      process.exitCode = exitCode;
     } catch (err) {
       const exitCode = (err as { exitCode?: number }).exitCode;
       if (exitCode === EXIT_RUNTIME_MISSING) {
         writeError("RUNTIME_MISSING", (err as Error).message);
-        process.exit(11);
+        process.exitCode = 11;
+        return;
       }
       if (exitCode === EXIT_ADAPTER_ERROR) {
         writeError("ADAPTER_ERROR", (err as Error).message);
-        process.exit(12);
+        process.exitCode = 12;
+        return;
       }
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -477,7 +495,7 @@ const handlers: CommandHandlers = {
       }
     } catch (err) {
       process.stderr.write(`Failed to output DSL: ${(err as Error).message}\n`);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 
@@ -486,7 +504,7 @@ const handlers: CommandHandlers = {
     try {
       if (commands.length === 0 && !options.all) {
         writeError("INVALID_ARGS", "Specify command IDs or use --all");
-        process.exit(2);
+        process.exitCode = 2;
         return;
       }
       const configResult = await loadConfig(
@@ -501,10 +519,10 @@ const handlers: CommandHandlers = {
 
       const result = await runExtract(files, cmdIds, { format: fmt });
       process.stdout.write(result.output);
-      process.exit(0);
+      process.exitCode = 0;
     } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   },
 };

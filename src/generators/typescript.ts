@@ -955,7 +955,8 @@ function generateBuiltinExtractCommand(
   lines.push("    .action(async (commands: string[], opts: { all?: boolean; includeMeta?: boolean; format?: string }) => {");
   lines.push("      if (commands.length === 0 && !opts.all) {");
   lines.push('        process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", message: "Specify command IDs or use --all" }) + "\\n");');
-  lines.push("        process.exit(2);");
+  lines.push("        process.exitCode = 2;");
+  lines.push("        return;");
   lines.push("      }");
   lines.push("");
   lines.push("      const format = opts.format || \"yaml\";");
@@ -1025,6 +1026,6 @@ function generateBuiltinExtractCommand(
   lines.push("        if (doc.components) filtered.components = doc.components;");
   lines.push('        process.stdout.write(JSON.stringify(filtered, null, 2) + "\\n");');
   lines.push("      }");
-  lines.push("      process.exit(0);");
+  lines.push("      process.exitCode = 0;");
   lines.push("    });");
 }

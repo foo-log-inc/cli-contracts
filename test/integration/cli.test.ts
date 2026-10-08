@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { mkdtemp, rm, readFile, access } from "node:fs/promises";
+import { mkdtemp, rm, readFile, writeFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import {
+  LARGE_CONTRACT_COMMAND_SET,
+  largeContractYaml,
+} from "../fixtures/large-contract.js";
 
 const execFileAsync = promisify(execFile);
 const CLI = resolve(import.meta.dirname, "../../dist/cli.js");
@@ -193,6 +197,39 @@ describe("CLI integration", () => {
       const result = JSON.parse(stdout);
       expect(result.has_breaking_changes).toBe(true);
       expect(result.breaking_count).toBeGreaterThan(0);
+    });
+  });
+
+  // ── output larger than a pipe buffer ───────────────────
+  describe("output through a pipe", () => {
+    let tmpDir: string;
+
+    beforeEach(async () => {
+      tmpDir = await mkdtemp(join(tmpdir(), "cli-contracts-pipe-"));
+    });
+
+    afterEach(async () => {
+      await rm(tmpDir, { recursive: true, force: true });
+    });
+
+    it("delivers the whole of an extract larger than one pipe buffer", async () => {
+      const commandCount = 3000;
+      const contractPath = join(tmpDir, "cli-contract.yaml");
+      await writeFile(contractPath, largeContractYaml(commandCount), "utf-8");
+
+      const { exitCode, stdout } = await runCli([
+        "extract",
+        "--all",
+        "-f",
+        contractPath,
+      ]);
+
+      expect(exitCode).toBe(0);
+      expect(stdout.length).toBeGreaterThan(256 * 1024);
+      const doc = JSON.parse(stdout);
+      expect(
+        Object.keys(doc.command_sets[LARGE_CONTRACT_COMMAND_SET].commands),
+      ).toHaveLength(commandCount);
     });
   });
 });
