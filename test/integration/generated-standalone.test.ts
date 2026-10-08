@@ -7,6 +7,11 @@ import { promisify } from "node:util";
 import { parseContractFile } from "../../src/parser.js";
 import { normalizeContract } from "../../src/normalizer.js";
 import { generateTypeScript } from "../../src/generators/typescript.js";
+import { build } from "esbuild";
+import {
+  LARGE_CONTRACT_COMMAND_SET,
+  largeContractYaml,
+} from "../fixtures/large-contract.js";
 
 const execFileAsync = promisify(execFile);
 const FIXTURES = resolve(import.meta.dirname, "../fixtures");
@@ -111,4 +116,46 @@ describe("generated code standalone compilation", () => {
     expect(output).not.toHaveProperty("policy.ts");
     expect(output).not.toHaveProperty("policy-runtime.ts");
   });
+
+  it("generated extract delivers the whole of an output larger than one pipe buffer", async () => {
+    const commandCount = 3000;
+    const contractPath = join(tmpDir, "cli-contract.yaml");
+    const contractYaml = largeContractYaml(commandCount);
+    await writeFile(contractPath, contractYaml, "utf-8");
+    const ctx = normalizeContract(await parseContractFile(contractPath));
+    const output = generateTypeScript(ctx, { contractYaml });
+
+    const srcDir = join(tmpDir, "src");
+    await mkdir(srcDir, { recursive: true });
+    for (const [filename, content] of Object.entries(output)) {
+      await writeFile(join(srcDir, filename), content, "utf-8");
+    }
+    await writeFile(
+      join(srcDir, "main.ts"),
+      'import { createProgram } from "./program.js";\ncreateProgram({} as never, "1.0.0").parse();\n',
+      "utf-8",
+    );
+    const bin = join(tmpDir, "main.cjs");
+    await build({
+      entryPoints: [join(srcDir, "main.ts")],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile: bin,
+      nodePaths: [resolve(import.meta.dirname, "../../node_modules")],
+      logLevel: "silent",
+    });
+
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [bin, "extract", "--all", "-F", "json"],
+      { timeout: 30000, maxBuffer: 16 * 1024 * 1024 },
+    );
+
+    expect(stdout.length).toBeGreaterThan(256 * 1024);
+    const doc = JSON.parse(stdout);
+    expect(
+      Object.keys(doc.command_sets[LARGE_CONTRACT_COMMAND_SET].commands),
+    ).toHaveLength(commandCount);
+  }, 60000);
 });
