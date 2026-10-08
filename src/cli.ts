@@ -65,7 +65,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -87,7 +87,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -134,7 +134,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);
@@ -167,7 +167,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as unknown as string[] | undefined;
+      const fileOpt = options.file;
       const files = fileOpt && fileOpt.length > 0
         ? fileOpt
         : getContractFiles(configResult?.config);

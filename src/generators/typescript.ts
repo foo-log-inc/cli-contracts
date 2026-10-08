@@ -690,21 +690,31 @@ function generateProgramCommand(
     ? `${JSON.stringify(commandName)}, { isDefault: true, hidden: true }`
     : JSON.stringify(commandName);
 
-  // A command other commands are nested under is one commander command with
-  // both its own action and its subcommands, so it is held in the same
-  // variable ensureCommandAncestors uses — whichever of the two comes first
-  // creates it, the other attaches to it.
   const key = prefixKey(path);
   if (isDefaultCommand || !state.ancestorPrefixes.has(key)) {
     lines.push(`  ${receiver}`);
     lines.push(`    .command(${commandArgs})`);
   } else {
-    const varName = commandParentVarName(path);
+    // A command other commands are nested under is a group (the variable
+    // ensureCommandAncestors uses, created by whichever comes first) whose own
+    // action runs as its hidden default subcommand. The group itself declares
+    // no options, so an option a subcommand shares with it by name reaches the
+    // subcommand, and one only the parent declares is unknown to the
+    // subcommand. The group's help lists the default subcommand's options.
+    const groupVar = commandParentVarName(path);
+    const selfVar = `__self_${path.join("_")}`;
     if (!state.createdPrefixes.has(key)) {
-      lines.push(`  const ${varName} = ${receiver}.command(${commandArgs});`);
+      lines.push(`  const ${groupVar} = ${receiver}.command(${JSON.stringify(commandName)});`);
       state.createdPrefixes.add(key);
     }
-    lines.push(`  ${varName}`);
+    lines.push(`  ${groupVar}.description(${JSON.stringify(cmd.summary)});`);
+    lines.push(
+      `  const ${selfVar} = ${groupVar}.command(${JSON.stringify(commandName)}, { isDefault: true, hidden: true });`,
+    );
+    lines.push(
+      `  ${groupVar}.configureHelp({ visibleOptions: () => ${selfVar}.createHelp().visibleOptions(${selfVar}) });`,
+    );
+    lines.push(`  ${selfVar}`);
   }
   lines.push(`    .description(${JSON.stringify(cmd.summary)})`);
 
@@ -721,15 +731,13 @@ function generateProgramCommand(
     const flag = buildOptionFlag(opt);
     const desc = JSON.stringify(opt.description ?? "");
     const def = opt.schema?.default;
-    // A required option is registered as one, so commander rejects a missing value
-    const method = opt.required ? "requiredOption" : "option";
     if (def !== undefined) {
       const defValue = commanderDefaultValue(def, opt.schema?.type);
       lines.push(
-        `    .${method}(${JSON.stringify(flag)}, ${desc}, ${defValue})`,
+        `    .option(${JSON.stringify(flag)}, ${desc}, ${defValue})`,
       );
     } else {
-      lines.push(`    .${method}(${JSON.stringify(flag)}, ${desc})`);
+      lines.push(`    .option(${JSON.stringify(flag)}, ${desc})`);
     }
   }
 
@@ -758,6 +766,16 @@ function generateProgramCommand(
     lines.push(`        const policy = deriveCommandPolicy(${JSON.stringify(cmd.id)}, opts);`);
     lines.push("        console.log(JSON.stringify(policy, null, 2));");
     lines.push("        return;");
+    lines.push("      }");
+  }
+
+  // A required option belongs to its own command. commander's requiredOption
+  // would also demand it whenever a subcommand runs (it checks every ancestor),
+  // so the command checks its own required options, with commander's message.
+  for (const opt of cmd.options.filter((o) => o.required)) {
+    const message = `error: required option '${buildOptionFlag(opt)}' not specified`;
+    lines.push(`      if (opts.${toCamelCase(opt.name)} === undefined) {`);
+    lines.push(`        cmd.error(${JSON.stringify(message)}, { code: "commander.missingMandatoryOptionValue" });`);
     lines.push("      }");
   }
 
