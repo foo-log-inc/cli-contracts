@@ -48,7 +48,6 @@ import {
 } from "./schema.js";
 import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
-import { derivePolicy, isOptionActive } from "./policy.js";
 
 // Known-key allow-lists derived directly from the Zod schema shapes so they
 // cannot drift from the schema. Any object field added to CommandSchema /
