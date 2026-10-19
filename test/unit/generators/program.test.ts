@@ -621,6 +621,10 @@ command_sets:
             required: true
             schema:
               type: string
+          - name: region
+            required: false
+            schema:
+              type: string
         exits:
           '0':
             description: OK.
@@ -629,11 +633,13 @@ command_sets:
     const output = generateTypeScript(ctx);
     const program = output["program.ts"];
 
+    // commander stops before the action when a required argument is missing,
+    // so only the optional one is typed as possibly absent.
     expect(program).toContain(
-      "deploy: (target: string | undefined, options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
+      "deploy: (target: string, region: string | undefined, options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
     );
     expect(program).toContain(
-      "await handlers.deploy(target, {}, cmd.optsWithGlobals())",
+      "await handlers.deploy(target, region, {}, cmd.optsWithGlobals())",
     );
   });
 

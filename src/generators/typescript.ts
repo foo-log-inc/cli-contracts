@@ -648,8 +648,10 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
 function buildHandlerSignature(cmd: NormalizedCommand): string {
   const params: string[] = [];
 
+  // commander rejects an invocation that leaves out a required argument before
+  // the action runs, so only an optional one can arrive undefined.
   for (const arg of cmd.arguments) {
-    const type = arg.variadic ? "string[]" : "string | undefined";
+    const type = arg.variadic ? "string[]" : arg.required ? "string" : "string | undefined";
     params.push(`${safeIdentifier(arg.name)}: ${type}`);
   }
 
