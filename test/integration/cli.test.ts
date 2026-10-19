@@ -284,6 +284,22 @@ command_sets:
     }, 30000);
   });
 
+  // ── values outside a declared enum ─────────────────────
+  describe("a value outside the enum the contract declares", () => {
+    it("ends with exit 2 and an Error JSON", async () => {
+      const results = await Promise.all([
+        runCli(["validate", "-f", resolve(FIXTURES, "valid-contract.yaml")], { format: "xml" as "json" }),
+        runCli(["agents", "--format", "xml"]),
+        runCli(["propose-tests", resolve(FIXTURES, "valid-contract.yaml"), "--show-prompt", "--fail-on", "bogus"]),
+      ]);
+
+      for (const result of results) {
+        expect([result.exitCode, JSON.parse(result.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      }
+      expect(JSON.parse(results[2].stderr).message).toContain("'bogus'");
+    }, 30000);
+  });
+
   // ── output larger than a pipe buffer ───────────────────
   describe("output through a pipe", () => {
     let tmpDir: string;
