@@ -133,12 +133,12 @@ function levenshtein(a: string, b: string): number {
 
 export function validateContract(
   doc: CliContractsDocument,
-  options: { basePath?: string } = {},
+  options: { basePath?: string; resolveExternalRefs?: boolean } = {},
 ): ValidateResult {
   const diagnostics: Diagnostic[] = [];
 
   validateCommandSets(doc, diagnostics);
-  validateRefsIntegrity(doc, diagnostics, options.basePath);
+  validateRefsIntegrity(doc, diagnostics, options);
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -795,9 +795,9 @@ export function validateEffectsConsistency(
 function validateRefsIntegrity(
   doc: CliContractsDocument,
   diagnostics: Diagnostic[],
-  basePath?: string,
+  options: { basePath?: string; resolveExternalRefs?: boolean },
 ): void {
-  const { unresolvedRefs } = validateRefs(doc, { basePath });
+  const { unresolvedRefs } = validateRefs(doc, options);
   for (const ref of unresolvedRefs) {
     diagnostics.push({
       path: ref,

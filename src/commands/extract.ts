@@ -15,6 +15,8 @@ import { formatOutput } from "../output.js";
 export interface ExtractOptions {
   commandSet?: string;
   format?: OutputFormat;
+  /** Whether the output carries the extraction metadata. Defaults to true. */
+  includeMeta?: boolean;
 }
 
 export interface ExtractResult {
@@ -40,8 +42,8 @@ export async function runExtract(
   const subset = buildSubset(doc, matched);
 
   const format = options.format ?? "yaml";
-  const meta = buildMeta(filePath, commandIds, matched);
-  const output = renderWithMeta(meta, subset, format);
+  const meta = options.includeMeta === false ? undefined : buildMeta(filePath, commandIds, matched);
+  const output = renderExtract(meta, subset, format);
 
   return {
     output,
@@ -192,20 +194,22 @@ function buildMeta(
   };
 }
 
-function renderWithMeta(
-  meta: ExtractMeta,
+function renderExtract(
+  meta: ExtractMeta | undefined,
   subset: Record<string, unknown>,
   format: OutputFormat,
 ): string {
   if (format === "json") {
-    return JSON.stringify({ _meta: meta, ...subset }, null, 2) + "\n";
+    return JSON.stringify(meta === undefined ? subset : { _meta: meta, ...subset }, null, 2) + "\n";
   }
 
-  // YAML: multi-document format
+  const subsetYaml = yamlStringify(subset, { lineWidth: 120 });
+  if (meta === undefined) return subsetYaml;
+
+  // YAML with metadata: multi-document format
   //   Document 1: metadata
   //   Document 2: contract subset
   const metaYaml = yamlStringify(meta, { lineWidth: 120 });
-  const subsetYaml = yamlStringify(subset, { lineWidth: 120 });
 
   const lines: string[] = [];
   lines.push("# cli-contracts extract");

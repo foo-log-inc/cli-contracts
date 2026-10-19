@@ -200,6 +200,62 @@ describe("CLI integration", () => {
     });
   });
 
+  // ── options whose default is true ──────────────────────
+  describe("--no-<name> of an option whose default is true", () => {
+    let tmpDir: string;
+
+    beforeEach(async () => {
+      tmpDir = await mkdtemp(join(tmpdir(), "cli-contracts-negated-"));
+    });
+
+    afterEach(async () => {
+      await rm(tmpDir, { recursive: true, force: true });
+    });
+
+    it("validate --no-resolve-refs leaves external $ref targets unchecked and still checks the document's own", async () => {
+      const contractPath = join(tmpDir, "cli-contract.yaml");
+      await writeFile(contractPath, `cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  t:
+    commands:
+      a:
+        summary: A.
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                $ref: './missing.yaml#/X'
+          '1':
+            description: Failed.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Missing'
+`, "utf-8");
+      const unresolved = async (...flags: string[]) =>
+        JSON.parse((await runCli(["validate", "-f", contractPath, ...flags])).stdout)
+          .errors.map((e: { path: string }) => e.path);
+
+      expect(await unresolved()).toEqual(["./missing.yaml#/X", "#/components/schemas/Missing"]);
+      expect(await unresolved("--no-resolve-refs")).toEqual(["#/components/schemas/Missing"]);
+    });
+
+    it("extract --no-include-meta leaves out the extraction metadata", async () => {
+      const extract = (format: "json" | "yaml", ...flags: string[]) =>
+        runCli(["extract", "--all", "-f", resolve(FIXTURES, "minimal-contract.yaml"), ...flags], { format });
+
+      expect(JSON.parse((await extract("json")).stdout)).toHaveProperty("_meta");
+      expect(JSON.parse((await extract("json", "--no-include-meta")).stdout)).not.toHaveProperty("_meta");
+      expect((await extract("yaml")).stdout).toContain("extractedAt:");
+      expect((await extract("yaml", "--no-include-meta")).stdout).toMatch(/^cli_contracts: 0\.1\.0\n/);
+    });
+  });
+
   // ── output larger than a pipe buffer ───────────────────
   describe("output through a pipe", () => {
     let tmpDir: string;
