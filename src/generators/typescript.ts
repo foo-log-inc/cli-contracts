@@ -12,6 +12,7 @@ import type {
   JsonSchema,
   Components,
 } from "../types.js";
+import { optionFlags, optionTakesManyValues } from "./option-flags.js";
 
 export interface TypeScriptGeneratorOptions {
   emitTypes?: boolean;
@@ -247,11 +248,13 @@ function generateCommandFunction(
     lines.push("  if (options) {");
     for (const opt of cmd.options) {
       const name = toCamelCase(opt.name);
-      const flag = `--${opt.name}`;
-      if (opt.schema?.type === "boolean") {
-        lines.push(`    if (options.${name}) cmdArgs.push("${flag}");`);
+      const { long, negated } = optionFlags(opt);
+      if (negated) {
+        lines.push(`    if (options.${name} !== undefined) cmdArgs.push(options.${name} ? "${long}" : "${negated}");`);
+      } else if (opt.schema?.type === "boolean") {
+        lines.push(`    if (options.${name}) cmdArgs.push("${long}");`);
       } else {
-        lines.push(`    if (options.${name} !== undefined) cmdArgs.push("${flag}", String(options.${name}));`);
+        lines.push(`    if (options.${name} !== undefined) cmdArgs.push("${long}", String(options.${name}));`);
       }
     }
     lines.push("  }");
@@ -527,18 +530,8 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   for (const opt of primaryCs.global_options) {
     const skipBuiltins = ["version", "help"];
     if (skipBuiltins.includes(opt.name)) continue;
-    const optFlag = buildOptionFlag(opt);
-    const desc = JSON.stringify(opt.description ?? "");
-    const def = opt.schema?.default;
-    if (def !== undefined) {
-      const defValue = commanderDefaultValue(def, opt.schema?.type);
-      lines.push(
-        `  program.option(${JSON.stringify(optFlag)}, ${desc}, ${defValue});`,
-      );
-    } else {
-      lines.push(
-        `  program.option(${JSON.stringify(optFlag)}, ${desc});`,
-      );
+    for (const args of optionRegistrationArgs(opt)) {
+      lines.push(`  program.option(${args});`);
     }
   }
 
@@ -728,16 +721,8 @@ function generateProgramCommand(
   }
 
   for (const opt of cmd.options) {
-    const flag = buildOptionFlag(opt);
-    const desc = JSON.stringify(opt.description ?? "");
-    const def = opt.schema?.default;
-    if (def !== undefined) {
-      const defValue = commanderDefaultValue(def, opt.schema?.type);
-      lines.push(
-        `    .option(${JSON.stringify(flag)}, ${desc}, ${defValue})`,
-      );
-    } else {
-      lines.push(`    .option(${JSON.stringify(flag)}, ${desc})`);
+    for (const args of optionRegistrationArgs(opt)) {
+      lines.push(`    .option(${args})`);
     }
   }
 
@@ -773,7 +758,7 @@ function generateProgramCommand(
   // would also demand it whenever a subcommand runs (it checks every ancestor),
   // so the command checks its own required options, with commander's message.
   for (const opt of cmd.options.filter((o) => o.required)) {
-    const message = `error: required option '${buildOptionFlag(opt)}' not specified`;
+    const message = `error: required option '${optionFlags(opt).flags}' not specified`;
     lines.push(`      if (opts.${toCamelCase(opt.name)} === undefined) {`);
     lines.push(`        cmd.error(${JSON.stringify(message)}, { code: "commander.missingMandatoryOptionValue" });`);
     lines.push("      }");
@@ -800,6 +785,24 @@ function generateProgramCommand(
   );
   lines.push("    });");
   lines.push("");
+}
+
+/**
+ * The arguments of the commander `.option(...)` calls that register an option.
+ * A boolean whose default is true also registers its `--no-<name>` form, so the
+ * value false can be given; commander keeps the default of the positive form.
+ */
+function optionRegistrationArgs(opt: Option): string[] {
+  const { flags, negated } = optionFlags(opt);
+  const desc = JSON.stringify(opt.description ?? "");
+  const def = opt.schema?.default;
+  const registrations = [
+    def === undefined
+      ? `${JSON.stringify(flags)}, ${desc}`
+      : `${JSON.stringify(flags)}, ${desc}, ${commanderDefaultValue(def, opt.schema?.type)}`,
+  ];
+  if (negated) registrations.push(JSON.stringify(negated));
+  return registrations;
 }
 
 function commanderDefaultValue(
@@ -930,29 +933,6 @@ function generatePolicyModule(ctx: NormalizedContext): string {
   return lines.join("\n");
 }
 
-/** Whether commander collects the option's values into an array (`<name...>`). */
-function optionTakesManyValues(opt: Option): boolean {
-  return opt.schema?.type !== "boolean" && opt.repeatable === true;
-}
-
-function buildOptionFlag(opt: Option): string {
-  const parts: string[] = [];
-  if (opt.aliases && opt.aliases.length > 0) {
-    parts.push(`-${opt.aliases[0]}`);
-  }
-  if (opt.schema?.type === "boolean") {
-    parts.push(`--${opt.name}`);
-  } else {
-    const valueName = opt.value_name ?? "value";
-    if (optionTakesManyValues(opt)) {
-      parts.push(`--${opt.name} <${valueName}...>`);
-    } else {
-      parts.push(`--${opt.name} <${valueName}>`);
-    }
-  }
-  return parts.join(", ");
-}
-
 // ─── contract.ts generator ──────────────────────────────────────
 
 function generateContractModule(
@@ -982,6 +962,12 @@ function buildContractJson(
 
 // ─── built-in extract command injection ─────────────────────────
 
+const BUILTIN_EXTRACT_OPTIONS: Option[] = [
+  { name: "all", aliases: ["a"], description: "Extract all commands.", schema: { type: "boolean", default: false } },
+  { name: "include-meta", description: "Include extraction metadata.", schema: { type: "boolean", default: true } },
+  { name: "format", aliases: ["F"], value_name: "format", description: "Output format (yaml or json).", schema: { type: "string", default: "yaml" } },
+];
+
 function generateBuiltinExtractCommand(
   ctx: NormalizedContext,
   lines: string[],
@@ -997,9 +983,11 @@ function generateBuiltinExtractCommand(
   lines.push('    .command("extract")');
   lines.push('    .description("Extract contract specification for this CLI tool.")');
   lines.push('    .argument("[commands...]", "Command IDs to extract. Use dot notation.")');
-  lines.push('    .option("-a, --all", "Extract all commands.", false)');
-  lines.push('    .option("--include-meta", "Include extraction metadata.", true)');
-  lines.push('    .option("-F, --format <format>", "Output format (yaml or json).", "yaml")');
+  for (const opt of BUILTIN_EXTRACT_OPTIONS) {
+    for (const args of optionRegistrationArgs(opt)) {
+      lines.push(`    .option(${args})`);
+    }
+  }
   lines.push("    .action(async (commands: string[], opts: { all?: boolean; includeMeta?: boolean; format?: string }) => {");
   lines.push("      if (commands.length === 0 && !opts.all) {");
   lines.push('        process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", message: "Specify command IDs or use --all" }) + "\\n");');

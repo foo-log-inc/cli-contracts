@@ -77,6 +77,7 @@ export function createProgram(
     .option("-f, --file <file...>", "Contract file(s) to validate. Defaults to config input.files.")
     .option("--strict", "Treat warnings as errors.", false)
     .option("--resolve-refs", "Resolve and validate external $ref targets.", true)
+    .option("--no-resolve-refs")
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
@@ -236,6 +237,7 @@ export function createProgram(
     .option("-f, --file <file>", "Contract file to extract from. Defaults to config input.files.")
     .option("-a, --all", "Extract all commands.", false)
     .option("--include-meta", "Include extraction metadata (source, timestamp, etc.).", true)
+    .option("--no-include-meta")
     .action(async (commands, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {

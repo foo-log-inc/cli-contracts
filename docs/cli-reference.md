@@ -495,7 +495,7 @@ cli-contracts validate --strict
 |---|---|---|---|---|
 | `--file` | -f | No |  | Contract file(s) to validate. Defaults to config input.files. |
 | `--strict` |  | No | `false` | Treat warnings as errors. |
-| `--resolve-refs` |  | No | `true` | Resolve and validate external $ref targets. |
+| `--resolve-refs`, `--no-resolve-refs` |  | No | `true` | Resolve and validate external $ref targets. |
 
 #### Exit Codes
 
@@ -3776,7 +3776,7 @@ cli-contracts extract --all
 |---|---|---|---|---|
 | `--file` | -f | No |  | Contract file to extract from. Defaults to config input.files. |
 | `--all` | -a | No | `false` | Extract all commands. |
-| `--include-meta` |  | No | `true` | Include extraction metadata (source, timestamp, etc.). |
+| `--include-meta`, `--no-include-meta` |  | No | `true` | Include extraction metadata (source, timestamp, etc.). |
 
 #### Exit Codes
 

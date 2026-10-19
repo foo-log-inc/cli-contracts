@@ -67,7 +67,7 @@ export async function cliContractsValidate(
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.strict) cmdArgs.push("--strict");
-    if (options.resolveRefs) cmdArgs.push("--resolve-refs");
+    if (options.resolveRefs !== undefined) cmdArgs.push(options.resolveRefs ? "--resolve-refs" : "--no-resolve-refs");
   }
 
   try {
@@ -285,7 +285,7 @@ export async function cliContractsExtract(
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
     if (options.all) cmdArgs.push("--all");
-    if (options.includeMeta) cmdArgs.push("--include-meta");
+    if (options.includeMeta !== undefined) cmdArgs.push(options.includeMeta ? "--include-meta" : "--no-include-meta");
   }
 
   try {

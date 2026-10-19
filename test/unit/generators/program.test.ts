@@ -291,6 +291,55 @@ ${reviewChild}`);
     }
   });
 
+  it("a boolean option whose default is true is turned off with --no-<name>, and other booleans keep their forms", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      build:
+        summary: Build.
+        options:
+          - name: manifest
+            schema:
+              type: boolean
+              default: true
+          - name: dry-run
+            schema:
+              type: boolean
+              default: false
+          - name: verbose
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: OK.
+    global_options:
+      - name: color
+        schema:
+          type: boolean
+          default: true
+`);
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>, parentOpts: Record<string, unknown>) => {
+          received.push({ manifest: opts.manifest, dryRun: opts.dryRun, verbose: opts.verbose, color: parentOpts.color });
+        },
+      } as unknown as Record<string, () => Promise<void>>;
+      const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
+
+      expect(await run(["build"])).toBe("");
+      expect(await run(["build", "--no-manifest", "--no-color"])).toBe("");
+      expect(await run(["build", "--manifest", "--dry-run", "--verbose", "--color"])).toBe("");
+      expect(received).toEqual([
+        { manifest: true, dryRun: false, verbose: undefined, color: true },
+        { manifest: false, dryRun: false, verbose: undefined, color: false },
+        { manifest: true, dryRun: true, verbose: true, color: true },
+      ]);
+      expect(await run(["build", "--no-dry-run"])).toContain("error: unknown option '--no-dry-run'");
+      expect(await run(["build", "--no-verbose"])).toContain("error: unknown option '--no-verbose'");
+      expect(await run(["build", "--help"])).toMatch(/--manifest +\(default: true\)\n +--no-manifest\n/);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("single-segment commands register directly on program", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
