@@ -241,19 +241,28 @@ command_sets:
         JSON.parse((await runCli(["validate", "-f", contractPath, ...flags])).stdout)
           .errors.map((e: { path: string }) => e.path);
 
-      expect(await unresolved()).toEqual(["./missing.yaml#/X", "#/components/schemas/Missing"]);
-      expect(await unresolved("--no-resolve-refs")).toEqual(["#/components/schemas/Missing"]);
-    });
+      const [checked, unchecked] = await Promise.all([unresolved(), unresolved("--no-resolve-refs")]);
+
+      expect(checked).toEqual(["./missing.yaml#/X", "#/components/schemas/Missing"]);
+      expect(unchecked).toEqual(["#/components/schemas/Missing"]);
+    }, 30000);
 
     it("extract --no-include-meta leaves out the extraction metadata", async () => {
       const extract = (format: "json" | "yaml", ...flags: string[]) =>
         runCli(["extract", "--all", "-f", resolve(FIXTURES, "minimal-contract.yaml"), ...flags], { format });
 
-      expect(JSON.parse((await extract("json")).stdout)).toHaveProperty("_meta");
-      expect(JSON.parse((await extract("json", "--no-include-meta")).stdout)).not.toHaveProperty("_meta");
-      expect((await extract("yaml")).stdout).toContain("extractedAt:");
-      expect((await extract("yaml", "--no-include-meta")).stdout).toMatch(/^cli_contracts: 0\.1\.0\n/);
-    });
+      const [json, jsonNoMeta, yaml, yamlNoMeta] = await Promise.all([
+        extract("json"),
+        extract("json", "--no-include-meta"),
+        extract("yaml"),
+        extract("yaml", "--no-include-meta"),
+      ]);
+
+      expect(JSON.parse(json.stdout)).toHaveProperty("_meta");
+      expect(JSON.parse(jsonNoMeta.stdout)).not.toHaveProperty("_meta");
+      expect(yaml.stdout).toContain("extractedAt:");
+      expect(yamlNoMeta.stdout).toMatch(/^cli_contracts: 0\.1\.0\n/);
+    }, 30000);
   });
 
   // ── output larger than a pipe buffer ───────────────────

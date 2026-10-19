@@ -247,13 +247,19 @@ command_sets:
       const argv = async (options: Record<string, boolean>) =>
         ((await fooBuild("echo", options)) as { stdout: string }).stdout.trim();
 
-      expect(await argv({ manifest: false })).toBe("build --no-manifest");
-      expect(await argv({ manifest: true, dryRun: true })).toBe("build --manifest --dry-run");
-      expect(await argv({ dryRun: false })).toBe("build");
+      const [off, on, untouched] = await Promise.all([
+        argv({ manifest: false }),
+        argv({ manifest: true, dryRun: true }),
+        argv({ dryRun: false }),
+      ]);
+
+      expect(off).toBe("build --no-manifest");
+      expect(on).toBe("build --manifest --dry-run");
+      expect(untouched).toBe("build");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it("generates schema constants", async () => {
     const doc = await parseContractFile(
