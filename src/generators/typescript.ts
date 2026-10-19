@@ -865,8 +865,11 @@ function generatePolicyModule(ctx: NormalizedContext): string {
 
       const optionDefs: Record<string, unknown>[] = [];
       for (const opt of cmd.options) {
+        // key: the option's property in the parsed options the program hands
+        // to deriveCommandPolicy, named as in the handlers' option types.
         const optDef: Record<string, unknown> = {
           name: opt.name,
+          key: toCamelCase(opt.name),
         };
         if (opt.schema) optDef.schema = opt.schema;
         if (opt.file) optDef.file = opt.file;
@@ -911,8 +914,8 @@ function generatePolicyModule(ctx: NormalizedContext): string {
   lines.push("  const active_options: string[] = [];");
   lines.push("");
   lines.push("  for (const optDef of cmdDef.options ?? []) {");
-  lines.push("    const value = optionValues[optDef.name];");
-  lines.push("    const specified = optDef.name in optionValues && value !== undefined;");
+  lines.push("    const value = optionValues[optDef.key];");
+  lines.push("    const specified = optDef.key in optionValues && value !== undefined;");
   lines.push("    options[optDef.name] = { value, specified, definition: optDef };");
   lines.push("    if (isOptionActive(optDef, value, specified)) {");
   lines.push("      active_options.push(optDef.name);");

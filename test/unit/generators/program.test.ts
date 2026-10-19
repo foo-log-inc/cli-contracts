@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { join, resolve } from "node:path";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -336,6 +336,37 @@ ${reviewChild}`);
       expect(await run(["build", "--no-verbose"])).toContain("error: unknown option '--no-verbose'");
       expect(await run(["build", "--help"])).toMatch(/--manifest +\(default: true\)\n +--no-manifest\n/);
     } finally {
+      await cleanup();
+    }
+  });
+
+  it("--introspect finds the value of an option whose name has a hyphen", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      deploy:
+        summary: Deploy.
+        options:
+          - name: force-push
+            schema:
+              type: boolean
+              default: false
+            effects:
+              risk_level: high
+              writes:
+                - target: remote
+                  destructive: true
+        exits:
+          '0':
+            description: OK.
+`);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const handlers = { deploy: async () => {} };
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "deploy", "--force-push", "--introspect"]);
+      const introspection = JSON.parse(String(log.mock.calls[0]?.[0]));
+
+      expect(introspection.active_options).toEqual(["force-push"]);
+      expect(introspection.policy.risk_level).toBe("high");
+    } finally {
+      log.mockRestore();
       await cleanup();
     }
   });

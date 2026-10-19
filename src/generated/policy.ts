@@ -15,12 +15,14 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "name",
+        "key": "name",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "multi-command-set",
+        "key": "multiCommandSet",
         "schema": {
           "type": "boolean",
           "default": false
@@ -28,6 +30,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string",
           "default": "."
@@ -35,6 +38,7 @@ export const commandDefinitions = {
       },
       {
         "name": "with-config",
+        "key": "withConfig",
         "schema": {
           "type": "boolean",
           "default": false
@@ -57,6 +61,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -69,6 +74,7 @@ export const commandDefinitions = {
       },
       {
         "name": "package-file",
+        "key": "packageFile",
         "schema": {
           "type": "string",
           "default": "package.json"
@@ -82,6 +88,7 @@ export const commandDefinitions = {
       },
       {
         "name": "check",
+        "key": "check",
         "schema": {
           "type": "boolean",
           "default": false
@@ -104,6 +111,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -117,6 +125,7 @@ export const commandDefinitions = {
       },
       {
         "name": "strict",
+        "key": "strict",
         "schema": {
           "type": "boolean",
           "default": false
@@ -124,6 +133,7 @@ export const commandDefinitions = {
       },
       {
         "name": "resolve-refs",
+        "key": "resolveRefs",
         "schema": {
           "type": "boolean",
           "default": true
@@ -146,6 +156,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -158,6 +169,7 @@ export const commandDefinitions = {
       },
       {
         "name": "format",
+        "key": "format",
         "schema": {
           "type": "string",
           "enum": [
@@ -191,6 +203,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -204,12 +217,14 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "dry-run",
+        "key": "dryRun",
         "schema": {
           "type": "boolean",
           "default": false
@@ -217,6 +232,7 @@ export const commandDefinitions = {
       },
       {
         "name": "clean",
+        "key": "clean",
         "schema": {
           "type": "boolean",
           "default": false
@@ -255,6 +271,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -268,6 +285,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -279,6 +297,7 @@ export const commandDefinitions = {
       },
       {
         "name": "dry-run",
+        "key": "dryRun",
         "schema": {
           "type": "boolean",
           "default": false
@@ -312,12 +331,14 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "profile",
+        "key": "profile",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "case",
+        "key": "case",
         "schema": {
           "type": "string"
         },
@@ -325,12 +346,14 @@ export const commandDefinitions = {
       },
       {
         "name": "cases-dir",
+        "key": "casesDir",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "timeout",
+        "key": "timeout",
         "schema": {
           "type": "integer",
           "default": 30000
@@ -338,6 +361,7 @@ export const commandDefinitions = {
       },
       {
         "name": "bail",
+        "key": "bail",
         "schema": {
           "type": "boolean",
           "default": false
@@ -360,18 +384,21 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "base",
+        "key": "base",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "head",
+        "key": "head",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "contract-path",
+        "key": "contractPath",
         "schema": {
           "type": "string",
           "default": "cli-contract.yaml"
@@ -379,6 +406,7 @@ export const commandDefinitions = {
       },
       {
         "name": "breaking-only",
+        "key": "breakingOnly",
         "schema": {
           "type": "boolean",
           "default": false
@@ -386,6 +414,7 @@ export const commandDefinitions = {
       },
       {
         "name": "text",
+        "key": "text",
         "schema": {
           "type": "boolean",
           "default": false
@@ -425,6 +454,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -437,6 +467,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -449,12 +480,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -462,6 +495,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -474,6 +508,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -485,6 +520,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -497,6 +533,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -535,6 +572,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -547,6 +585,7 @@ export const commandDefinitions = {
       },
       {
         "name": "checks",
+        "key": "checks",
         "schema": {
           "type": "string",
           "enum": [
@@ -561,6 +600,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -573,12 +613,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -586,6 +628,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -598,6 +641,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -609,6 +653,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -621,6 +666,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -642,6 +688,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -654,6 +701,7 @@ export const commandDefinitions = {
       },
       {
         "name": "all",
+        "key": "all",
         "schema": {
           "type": "boolean",
           "default": false
@@ -661,6 +709,7 @@ export const commandDefinitions = {
       },
       {
         "name": "include-meta",
+        "key": "includeMeta",
         "schema": {
           "type": "boolean",
           "default": true
@@ -700,6 +749,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -712,6 +762,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -724,12 +775,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -737,6 +790,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -749,6 +803,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -760,6 +815,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -772,6 +828,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -810,18 +867,21 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "base",
+        "key": "base",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "head",
+        "key": "head",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "contract-path",
+        "key": "contractPath",
         "schema": {
           "type": "string",
           "default": "cli-contract.yaml"
@@ -829,6 +889,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -841,12 +902,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -854,6 +917,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -866,6 +930,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -877,6 +942,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -889,6 +955,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -928,6 +995,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "file",
+        "key": "file",
         "schema": {
           "type": "string"
         },
@@ -940,6 +1008,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -952,12 +1021,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -965,6 +1036,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -977,6 +1049,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -988,6 +1061,7 @@ export const commandDefinitions = {
       },
       {
         "name": "scope",
+        "key": "scope",
         "schema": {
           "type": "string",
           "enum": [
@@ -1000,6 +1074,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -1012,6 +1087,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -1051,6 +1127,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "from-readme",
+        "key": "fromReadme",
         "schema": {
           "type": "string"
         },
@@ -1062,6 +1139,7 @@ export const commandDefinitions = {
       },
       {
         "name": "from-help",
+        "key": "fromHelp",
         "schema": {
           "type": "string"
         },
@@ -1073,6 +1151,7 @@ export const commandDefinitions = {
       },
       {
         "name": "from-source",
+        "key": "fromSource",
         "schema": {
           "type": "string"
         },
@@ -1084,6 +1163,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -1096,12 +1176,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -1109,6 +1191,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -1121,6 +1204,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -1132,6 +1216,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -1144,6 +1229,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -1184,6 +1270,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "project-dir",
+        "key": "projectDir",
         "schema": {
           "type": "string",
           "default": "."
@@ -1191,6 +1278,7 @@ export const commandDefinitions = {
       },
       {
         "name": "adapter",
+        "key": "adapter",
         "schema": {
           "type": "string",
           "enum": [
@@ -1203,12 +1291,14 @@ export const commandDefinitions = {
       },
       {
         "name": "model",
+        "key": "model",
         "schema": {
           "type": "string"
         }
       },
       {
         "name": "show-prompt",
+        "key": "showPrompt",
         "schema": {
           "type": "boolean",
           "default": false
@@ -1216,6 +1306,7 @@ export const commandDefinitions = {
       },
       {
         "name": "fail-on",
+        "key": "failOn",
         "schema": {
           "type": "string",
           "enum": [
@@ -1228,6 +1319,7 @@ export const commandDefinitions = {
       },
       {
         "name": "output",
+        "key": "output",
         "schema": {
           "type": "string"
         },
@@ -1239,6 +1331,7 @@ export const commandDefinitions = {
       },
       {
         "name": "report-format",
+        "key": "reportFormat",
         "schema": {
           "type": "string",
           "enum": [
@@ -1251,6 +1344,7 @@ export const commandDefinitions = {
       },
       {
         "name": "log-file",
+        "key": "logFile",
         "schema": {
           "type": "string"
         }
@@ -1272,6 +1366,7 @@ export const commandDefinitions = {
     "options": [
       {
         "name": "format",
+        "key": "format",
         "schema": {
           "type": "string",
           "enum": [
@@ -1309,8 +1404,8 @@ export function deriveCommandPolicy(
   const active_options: string[] = [];
 
   for (const optDef of cmdDef.options ?? []) {
-    const value = optionValues[optDef.name];
-    const specified = optDef.name in optionValues && value !== undefined;
+    const value = optionValues[optDef.key];
+    const specified = optDef.key in optionValues && value !== undefined;
     options[optDef.name] = { value, specified, definition: optDef };
     if (isOptionActive(optDef, value, specified)) {
       active_options.push(optDef.name);
