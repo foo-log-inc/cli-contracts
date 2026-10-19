@@ -357,9 +357,12 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
 
 // ─── Introspection ─────────────────────────────────────────────
 
-// commander keeps a `--<name>` option's value under its name in camelCase
-// (`dry-run` → `dryRun`).
-function parsedOptionKey(name: string): string {
+/**
+ * Joins the `-`-separated words of a name in camelCase, the way commander
+ * names the key it keeps a `--<name>` option's value under (`dry-run` →
+ * `dryRun`).
+ */
+export function camelCase(name: string): string {
   return name
     .split("-")
     .map((word, i) => (i === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
@@ -376,7 +379,7 @@ export function introspectCommand(
   const active_options: string[] = [];
 
   for (const opt of definition.options ?? []) {
-    const key = parsedOptionKey(opt.name);
+    const key = camelCase(opt.name);
     const value = optionValues[key];
     const specified = key in optionValues && value !== undefined;
     options[opt.name] = { value, specified, definition: opt };

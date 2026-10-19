@@ -35,6 +35,27 @@ command_sets:
             description: OK.
 `;
 
+// A second contract file: an LLM-powered command (it has `adapter`) with effects.
+const ASSIST_CONTRACT = `cli_contracts: 0.1.0
+info:
+  title: Assist
+  version: 0.1.0
+command_sets:
+  assist:
+    commands:
+      review:
+        summary: Review.
+        options:
+          - name: adapter
+            schema:
+              type: string
+        effects:
+          network: true
+        exits:
+          '0':
+            description: OK.
+`;
+
 describe("runContractTests", () => {
   let dir: string;
 
@@ -42,6 +63,7 @@ describe("runContractTests", () => {
     dir = await mkdtemp(join(tmpdir(), "cli-contracts-runner-"));
     await mkdir(join(dir, "cases"));
     await writeFile(join(dir, "cli-contract.yaml"), CONTRACT, "utf-8");
+    await writeFile(join(dir, "assist-contract.yaml"), ASSIST_CONTRACT, "utf-8");
     // The CLI under test prints the argv the runner hands it.
     await writeFile(join(dir, "argv.mjs"), "process.stdout.write(JSON.stringify(process.argv.slice(2)));\n", "utf-8");
   });
@@ -50,14 +72,14 @@ describe("runContractTests", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  const run = (caseId: string) =>
-    runContractTests([join(dir, "cli-contract.yaml")], {
+  const run = (caseId: string) => {
+    const argv = { command: `${process.execPath} ${join(dir, "argv.mjs")}` };
+    return runContractTests([join(dir, "cli-contract.yaml"), join(dir, "assist-contract.yaml")], {
       casesDir: join(dir, "cases"),
       caseIds: [caseId],
-      executionProfiles: {
-        local: { command_sets: { tool: { command: `${process.execPath} ${join(dir, "argv.mjs")}` } } },
-      },
+      executionProfiles: { local: { command_sets: { tool: argv, assist: argv } } },
     });
+  };
 
   it("spells each option as the contract declares it, false for a default-true boolean as --no-<name>", async () => {
     await writeFile(join(dir, "cases", "spelled.yaml"), `id: spelled
@@ -77,6 +99,51 @@ expect:
     const result = await run("spelled");
 
     expect(result.cases).toEqual([expect.objectContaining({ id: "spelled", status: "passed" })]);
+  }, 30000);
+
+  it("finds a case's command set in any of the contract files", async () => {
+    await writeFile(join(dir, "cases", "second-file.yaml"), `id: second-file
+commandSet: assist
+command: review
+options:
+  adapter: mock
+expect:
+  exitCode: 0
+  stdout:
+    contains: '["review","--adapter","mock"]'
+`, "utf-8");
+
+    const result = await run("second-file");
+
+    expect(result.cases).toEqual([expect.objectContaining({ id: "second-file", status: "passed" })]);
+  }, 30000);
+
+  it("spells the options the generated program adds to the contract's", async () => {
+    await writeFile(join(dir, "cases", "show-prompt.yaml"), `id: show-prompt
+commandSet: assist
+command: review
+options:
+  show-prompt: true
+  introspect: true
+expect:
+  exitCode: 0
+  stdout:
+    contains: '["review","--show-prompt","--introspect"]'
+`, "utf-8");
+    await writeFile(join(dir, "cases", "extract.yaml"), `id: extract
+commandSet: assist
+command: extract
+options:
+  all: true
+  include-meta: false
+expect:
+  exitCode: 0
+  stdout:
+    contains: '["extract","--all","--no-include-meta"]'
+`, "utf-8");
+
+    expect((await run("show-prompt")).cases).toEqual([expect.objectContaining({ status: "passed" })]);
+    expect((await run("extract")).cases).toEqual([expect.objectContaining({ status: "passed" })]);
   }, 30000);
 
   it("rejects a case whose option the contract does not declare", async () => {

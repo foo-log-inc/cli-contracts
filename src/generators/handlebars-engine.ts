@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve, dirname, basename } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { NormalizedContext } from "../types.js";
+import { toCamelCase, toPascalCase } from "./typescript.js";
 
 export interface GeneratorManifest {
   name: string;
@@ -79,20 +80,8 @@ function registerHelpers(hbs: typeof Handlebars): void {
   hbs.registerHelper("ne", (a, b) => a !== b);
   hbs.registerHelper("json", (obj) => JSON.stringify(obj, null, 2));
 
-  hbs.registerHelper("pascalCase", (str: string) =>
-    str
-      .split(/[.\-_]/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(""),
-  );
-
-  hbs.registerHelper("camelCase", (str: string) => {
-    const pascal = str
-      .split(/[.\-_]/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join("");
-    return pascal.charAt(0).toLowerCase() + pascal.slice(1);
-  });
+  hbs.registerHelper("pascalCase", (str: string) => toPascalCase(str));
+  hbs.registerHelper("camelCase", (str: string) => toCamelCase(str));
 
   hbs.registerHelper("snakeCase", (str: string) =>
     str.replace(/[.\-]/g, "_").replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase(),

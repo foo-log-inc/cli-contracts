@@ -109,6 +109,42 @@ command_sets: {}
     expect(dupOpt.length).toBeGreaterThan(0);
   });
 
+  it("rejects an option whose flag another option of the same command already uses", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: cache
+            schema:
+              type: boolean
+              default: true
+          - name: no-cache
+            schema:
+              type: boolean
+          - name: no-color
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+
+    expect(result.errors.filter((e) => e.rule === "conflicting-option-flag")).toEqual([
+      expect.objectContaining({
+        path: "/command_sets/tool/commands/build/options/1",
+        message: 'Option "no-cache" uses --no-cache, which option "cache" already uses',
+      }),
+    ]);
+  });
+
   it("detects duplicate option aliases", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "invalid-contract.yaml"),

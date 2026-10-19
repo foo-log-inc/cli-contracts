@@ -12,7 +12,7 @@ import type {
   GeneratedFile,
 } from "../types.js";
 import type { Constraints } from "../schema.js";
-import { optionFlags } from "../option-flags.js";
+import { optionSpellings } from "../option-flags.js";
 
 export interface MarkdownGeneratorOptions {
   includeExamples?: boolean;
@@ -239,8 +239,7 @@ function renderOptionsTable(opts: Option[], lines: string[]): void {
       ? `\`${JSON.stringify(opt.schema.default)}\``
       : "";
     const desc = opt.description ?? "";
-    const { long, negated } = optionFlags(opt);
-    const spellings = [long, negated].filter((f) => f !== undefined).map((f) => `\`${f}\``).join(", ");
+    const spellings = optionSpellings(opt).map((f) => `\`${f}\``).join(", ");
     lines.push(`| ${spellings} | ${aliases} | ${req} | ${def} | ${desc} |`);
   }
 }
@@ -597,8 +596,7 @@ function buildUsageLine(cmd: NormalizedCommand): string {
     }
   }
   for (const opt of cmd.options) {
-    const { long, negated } = optionFlags(opt);
-    const forms = negated === undefined ? long : `${long} | ${negated}`;
+    const forms = optionSpellings(opt).join(" | ");
     parts.push(opt.required ? forms : `[${forms}]`);
   }
   return parts.join(" ");

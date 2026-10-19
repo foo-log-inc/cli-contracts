@@ -371,6 +371,78 @@ ${reviewChild}`);
     }
   });
 
+  it("an option declared under a no- name reaches the handler under that name, set by its own flag", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      build:
+        summary: Build.
+        options:
+          - name: no-cache
+            description: Disable the cache.
+            schema:
+              type: boolean
+              default: false
+            effects:
+              risk_level: medium
+        exits:
+          '0':
+            description: OK.
+    global_options:
+      - name: no-color
+        schema:
+          type: boolean
+          default: false
+`);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>, parentOpts: Record<string, unknown>) => {
+          received.push({ noCache: opts.noCache, cache: opts.cache, noColor: parentOpts.noColor, color: parentOpts.color });
+        },
+      } as unknown as Record<string, () => Promise<void>>;
+      const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
+
+      expect(await run(["build"])).toBe("");
+      expect(await run(["build", "--no-cache", "--no-color"])).toBe("");
+      expect(received).toEqual([
+        { noCache: false, cache: undefined, noColor: false, color: undefined },
+        { noCache: true, cache: undefined, noColor: true, color: undefined },
+      ]);
+      expect(await run(["build", "--help"])).toMatch(/--no-cache +Disable the cache\. \(default: false\)/);
+
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "build", "--no-cache", "--introspect"]);
+      expect(JSON.parse(String(log.mock.calls.at(-1)?.[0])).active_options).toEqual(["no-cache"]);
+    } finally {
+      log.mockRestore();
+      await cleanup();
+    }
+  });
+
+  it("types an option's value under the key commander gives it", async () => {
+    const contract = `      build:
+        summary: Build.
+        options:
+          - name: dry_run
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: OK.
+`;
+    const { createProgram, cleanup } = await loadGeneratedProgram(contract);
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>) => { received.push(opts); },
+      } as unknown as Record<string, () => Promise<void>>;
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "build", "--dry_run"]);
+
+      expect(received).toEqual([{ dry_run: true }]);
+      expect(leafAndChildrenProgram(contract)).toContain("build: (options: { dry_run?: boolean }");
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("single-segment commands register directly on program", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
