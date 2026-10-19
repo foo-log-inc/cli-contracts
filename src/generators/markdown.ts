@@ -12,7 +12,7 @@ import type {
   GeneratedFile,
 } from "../types.js";
 import type { Constraints } from "../schema.js";
-import { optionFlags } from "./option-flags.js";
+import { optionFlags } from "../option-flags.js";
 
 export interface MarkdownGeneratorOptions {
   includeExamples?: boolean;

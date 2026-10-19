@@ -7,7 +7,8 @@ import _Ajv from "ajv";
 const Ajv = _Ajv.default ?? _Ajv;
 import { parseContractFile } from "../parser.js";
 import { resolveRefs } from "../ref-resolver.js";
-import type { CliContractsDocument, ExecutionProfile } from "../types.js";
+import { optionFlags } from "../option-flags.js";
+import type { CliContractsDocument, ExecutionProfile, Option } from "../types.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -188,11 +189,20 @@ async function executeTestCase(
   }
 
   if (testCase.options) {
+    const declared = declaredOptions(doc, testCase);
     for (const [key, val] of Object.entries(testCase.options)) {
-      if (typeof val === "boolean") {
-        if (val) allArgs.push(`--${key}`);
+      const definition = declared.find((o) => o.name === key);
+      if (!definition) {
+        throw new Error(
+          `Test case "${testCase.id}": option "${key}" is not declared for ${testCase.commandSet}.${testCase.command}`,
+        );
+      }
+      const { long, negated } = optionFlags(definition);
+      if (definition.schema?.type === "boolean") {
+        if (val) allArgs.push(long);
+        else if (negated) allArgs.push(negated);
       } else {
-        allArgs.push(`--${key}`, String(val));
+        allArgs.push(long, String(val));
       }
     }
   }
@@ -287,6 +297,15 @@ async function executeTestCase(
     durationMs: Date.now() - startTime,
     violations: violations.length > 0 ? violations : undefined,
   };
+}
+
+/** The options a test case's command accepts: its command set's global options and its own. */
+function declaredOptions(
+  doc: CliContractsDocument | undefined,
+  testCase: ContractTestCase,
+): Option[] {
+  const cs = doc?.command_sets[testCase.commandSet];
+  return [...(cs?.global_options ?? []), ...(cs?.commands[testCase.command]?.options ?? [])];
 }
 
 function validateAgainstSchema(

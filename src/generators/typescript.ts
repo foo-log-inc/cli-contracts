@@ -12,7 +12,7 @@ import type {
   JsonSchema,
   Components,
 } from "../types.js";
-import { optionFlags, optionTakesManyValues } from "./option-flags.js";
+import { optionFlags, optionTakesManyValues } from "../option-flags.js";
 
 export interface TypeScriptGeneratorOptions {
   emitTypes?: boolean;

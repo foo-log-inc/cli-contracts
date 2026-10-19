@@ -1,4 +1,4 @@
-import type { Option } from "../types.js";
+import type { Option } from "./types.js";
 
 /** How an option is spelled on the command line. */
 export interface OptionFlags {
