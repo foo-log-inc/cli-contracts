@@ -203,14 +203,19 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
   let executionMode: ExecutionMode | undefined;
   let explicitConfirmation: boolean | undefined;
 
+  // Every derived write, and only a write, puts file_write among the side effects.
+  const addWrite = (write: DerivedWriteEffect): void => {
+    sideEffects.add("file_write");
+    writes.push(write);
+  };
+
   if (input.command_effects) {
     const ce = input.command_effects;
     riskLevels.push(ce.risk_level ?? "low");
 
     if (ce.writes) {
-      sideEffects.add("file_write");
       for (const w of ce.writes) {
-        writes.push(semanticWrite(w, `command:${input.command_id}`));
+        addWrite(semanticWrite(w, `command:${input.command_id}`));
       }
     }
 
@@ -262,8 +267,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
         });
       }
       if (mode === "write" || mode === "append" || mode === "readWrite") {
-        sideEffects.add("file_write");
-        writes.push({
+        addWrite({
           kind: "option-file",
           option: optName,
           path: filePath,
@@ -278,9 +282,8 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
       riskLevels.push(eff.risk_level ?? "low");
 
       if (eff.writes) {
-        sideEffects.add("file_write");
         for (const w of eff.writes) {
-          writes.push(semanticWrite(w, `option:${optName}`));
+          addWrite(semanticWrite(w, `option:${optName}`));
         }
       }
 

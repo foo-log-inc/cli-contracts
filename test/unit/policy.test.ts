@@ -769,6 +769,24 @@ describe("slot references in effects", () => {
   });
 });
 
+describe("empty writes", () => {
+  it("add no file_write, from the command's effects or an active option's", () => {
+    const policy = derivePolicy({
+      command_id: "review",
+      command_effects: { reads: ["spec-source"], writes: [], network: { description: "LLM API calls" } },
+      options: makeInput(
+        "fix",
+        makeOption({ name: "fix", schema: { type: "boolean" }, effects: { writes: [] } }),
+        true,
+        true,
+      ),
+    });
+
+    expect(policy.side_effects).toEqual(["network"]);
+    expect(policy.writes).toEqual([]);
+  });
+});
+
 describe("buildIntrospection", () => {
   it("builds correct introspection result", () => {
     const cmd: Command = {
