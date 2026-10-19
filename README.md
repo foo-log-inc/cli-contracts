@@ -744,6 +744,8 @@ const program = createProgram({
 program.parse();
 ```
 
+The program passes each option to the handler as given. As with [constraints](#constraints), rejecting an invocation that leaves out a `required` option is the handler's, with the exit the contract declares for it; the handler's option type marks every option as possibly absent.
+
 ### Markdown (`builtin:markdown`)
 
 Generates human-readable CLI reference documentation with command tables, option tables, exit code contracts, schema property tables, and collapsible JSON Schema details.
