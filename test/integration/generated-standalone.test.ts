@@ -242,6 +242,91 @@ components:
     expect(JSON.parse(failure.stderr)).toEqual({ code: "INVALID_ARGS", message: "Missing required option --entry." });
   }, 60000);
 
+  it("an onUsageError given to createProgram ends commander's argument errors with the exit and stderr it gives them", async () => {
+    const contractYaml = `cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      docs.build:
+        summary: Build docs.
+        arguments:
+          - name: input
+            required: true
+            schema:
+              type: string
+        options:
+          - name: entry
+            value_name: file
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+`;
+    const contractPath = join(tmpDir, "cli-contract.yaml");
+    await writeFile(contractPath, contractYaml, "utf-8");
+    const output = generateTypeScript(normalizeContract(await parseContractFile(contractPath)), { contractYaml });
+    const srcDir = join(tmpDir, "src");
+    await mkdir(srcDir, { recursive: true });
+    for (const [filename, content] of Object.entries(output)) {
+      await writeFile(join(srcDir, filename), content, "utf-8");
+    }
+    const bin = async (name: string, programOptions: string) => {
+      await writeFile(
+        join(srcDir, `${name}.ts`),
+        [
+          'import { createProgram } from "./program.js";',
+          `createProgram({ async docsBuild() {} }, "1.0.0"${programOptions}).parse();`,
+          "",
+        ].join("\n"),
+        "utf-8",
+      );
+      const file = join(tmpDir, `${name}.cjs`);
+      await build({
+        entryPoints: [join(srcDir, `${name}.ts`)],
+        bundle: true,
+        platform: "node",
+        format: "cjs",
+        outfile: file,
+        nodePaths: [resolve(import.meta.dirname, "../../node_modules")],
+        logLevel: "silent",
+      });
+      return (...args: string[]) =>
+        execFileAsync(process.execPath, [file, ...args]).then(
+          ({ stdout, stderr }) => ({ code: 0, stdout, stderr }),
+          (err: { code: number; stdout: string; stderr: string }) => err,
+        );
+    };
+    // The application writes the contract's exit 2 JSON and names the command.
+    const withHook = await bin(
+      "with-hook",
+      ', { onUsageError: (error, command) => { process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", command: command.name(), commander: error.code }) + "\\n"); return 2; } }',
+    );
+    const withoutHook = await bin("without-hook", "");
+
+    const [unknown, noValue, noArgument, help, plain] = await Promise.all([
+      withHook("docs", "build", "in.md", "--bogus"),
+      withHook("docs", "build", "in.md", "--entry"),
+      withHook("docs", "build"),
+      withHook("docs", "build", "--help"),
+      withoutHook("docs", "build", "in.md", "--bogus"),
+    ]);
+
+    expect([unknown.code, JSON.parse(unknown.stderr)]).toEqual([2, { code: "INVALID_ARGS", command: "build", commander: "commander.unknownOption" }]);
+    expect([noValue.code, JSON.parse(noValue.stderr)]).toEqual([2, { code: "INVALID_ARGS", command: "build", commander: "commander.optionMissingArgument" }]);
+    expect([noArgument.code, JSON.parse(noArgument.stderr)]).toEqual([2, { code: "INVALID_ARGS", command: "build", commander: "commander.missingArgument" }]);
+    expect([help.code, help.stderr]).toEqual([0, ""]);
+    expect(help.stdout).toContain("Usage: tool docs build");
+    expect([plain.code, plain.stderr]).toEqual([1, "error: unknown option '--bogus'\n"]);
+  }, 60000);
+
   it("generated extract leaves out its metadata with --no-include-meta", async () => {
     const contractYaml = await readFile(resolve(FIXTURES, "minimal-contract.yaml"), "utf-8");
     const ctx = normalizeContract(await parseContractFile(resolve(FIXTURES, "minimal-contract.yaml")));

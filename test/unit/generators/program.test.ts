@@ -51,7 +51,7 @@ describe("generateTypeScript program.ts", () => {
     const output = generateTypeScript(ctx, { emitProgram: true });
 
     expect(output["index.ts"]).toContain('export { createProgram }');
-    expect(output["index.ts"]).toContain('export type { CommandHandlers }');
+    expect(output["index.ts"]).toContain('export type { CommandHandlers, ProgramOptions }');
   });
 
   it("registers all commands from the contract", async () => {

@@ -265,6 +265,21 @@ command_sets:
     }, 30000);
   });
 
+  // ── arguments commander rejects ────────────────────────
+  describe("arguments commander rejects", () => {
+    it("end with the command's declared exit 2 and an Error JSON, or commander's own exit where none is declared", async () => {
+      const [unknown, noValue, undeclared] = await Promise.all([
+        runCli(["validate", "--bogus"]),
+        runCli(["validate", "--file"]),
+        runCli(["version-sync", "--bogus"]),
+      ]);
+
+      expect([unknown.exitCode, JSON.parse(unknown.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      expect([noValue.exitCode, JSON.parse(noValue.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      expect([undeclared.exitCode, undeclared.stderr]).toEqual([1, "error: unknown option '--bogus'\n"]);
+    }, 30000);
+  });
+
   // ── output larger than a pipe buffer ───────────────────
   describe("output through a pipe", () => {
     let tmpDir: string;

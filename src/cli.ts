@@ -2,6 +2,7 @@
 
 import { VERSION } from "./index.js";
 import { createProgram } from "./generated/program.js";
+import { CONTRACT_JSON_STR } from "./generated/contract.js";
 import type { CommandHandlers } from "./generated/program.js";
 import { loadConfig, getContractFiles } from "./config.js";
 import { runInit, FileExistsError } from "./commands/init.js";
@@ -530,5 +531,28 @@ const handlers: CommandHandlers = {
   },
 };
 
-const program = createProgram(handlers, VERSION);
+/**
+ * Whether the contract declares exit 2 (invalid arguments, with an Error JSON
+ * on stderr) for the command commander rejected the arguments of.
+ */
+function declaresInvalidArgumentsExit(commandName: string): boolean {
+  const contract = JSON.parse(CONTRACT_JSON_STR) as {
+    command_sets: Record<string, { commands: Record<string, { exits: Record<string, unknown> }> }>;
+  };
+  return Object.values(contract.command_sets).some(
+    (cs) => cs.commands[commandName]?.exits["2"] !== undefined,
+  );
+}
+
+const program = createProgram(handlers, VERSION, {
+  onUsageError(error, command) {
+    if (declaresInvalidArgumentsExit(command.name())) {
+      writeError("INVALID_ARGS", error.message);
+      return 2;
+    }
+    // No exit declared for it: commander's own message and exit.
+    process.stderr.write(`${error.message}\n`);
+    return error.exitCode;
+  },
+});
 program.parse();

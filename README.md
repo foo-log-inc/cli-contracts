@@ -90,7 +90,7 @@ src/generated/
   types.ts       # argument/option interfaces, exit code unions, result types
   commands.ts    # typed CLI execution wrappers
   schemas.ts     # JSON Schema constants and exit code arrays
-  program.ts     # Commander program definition (createProgram + CommandHandlers + --introspect)
+  program.ts     # Commander program definition (createProgram + CommandHandlers + ProgramOptions + --introspect)
   policy.ts      # deterministic policy derivation engine (when effects are declared)
 docs/
   cli-reference.md  # human-readable CLI reference documentation
@@ -715,7 +715,7 @@ src/generated/
   types.ts       # argument/option interfaces, exit code unions, result types
   commands.ts    # typed CLI execution wrappers
   schemas.ts     # JSON Schema constants and exit code arrays
-  program.ts     # Commander program definition (createProgram + CommandHandlers + --introspect)
+  program.ts     # Commander program definition (createProgram + CommandHandlers + ProgramOptions + --introspect)
   policy.ts      # deterministic policy derivation engine (when effects are declared)
 ```
 
@@ -745,6 +745,17 @@ program.parse();
 ```
 
 The program passes each option to the handler as given. As with [constraints](#constraints), rejecting an invocation that leaves out a `required` option is the handler's, with the exit the contract declares for it; the handler's option type marks every option as possibly absent.
+
+Arguments commander rejects before any handler runs (an unknown option, an option without its value, a missing argument) end with commander's message and exit 1, unless `createProgram` is given `onUsageError`. It receives commander's error and the command it arose in, writes what the contract declares for invalid arguments, and returns the exit code; commander then writes nothing of its own. Help and version are not errors and keep commander's behavior.
+
+```typescript
+const program = createProgram(handlers, "1.0.0", {
+  onUsageError(error) {
+    process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", message: error.message }) + "\n");
+    return 2;
+  },
+});
+```
 
 ### Markdown (`builtin:markdown`)
 
