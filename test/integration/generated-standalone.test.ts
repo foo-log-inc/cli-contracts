@@ -159,6 +159,89 @@ describe("generated code standalone compilation", () => {
     ).toHaveLength(commandCount);
   }, 60000);
 
+  it("a missing required option ends with the exit and stderr the handler gives it, as the contract declares", async () => {
+    const contractYaml = `cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      docs:
+        summary: Generate docs.
+        options:
+          - name: entry
+            aliases: [e]
+            value_name: file
+            required: true
+            schema:
+              type: string
+        exits:
+          '0':
+            description: OK.
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+`;
+    const contractPath = join(tmpDir, "cli-contract.yaml");
+    await writeFile(contractPath, contractYaml, "utf-8");
+    const output = generateTypeScript(normalizeContract(await parseContractFile(contractPath)), { contractYaml });
+
+    const srcDir = join(tmpDir, "src");
+    await mkdir(srcDir, { recursive: true });
+    for (const [filename, content] of Object.entries(output)) {
+      await writeFile(join(srcDir, filename), content, "utf-8");
+    }
+    // The handler implements the contract's exit 2 for invalid arguments.
+    await writeFile(
+      join(srcDir, "main.ts"),
+      [
+        'import { createProgram } from "./program.js";',
+        "createProgram({",
+        "  async docs(options) {",
+        "    if (!options.entry) {",
+        '      process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", message: "Missing required option --entry." }) + "\\n");',
+        "      process.exitCode = 2;",
+        "    }",
+        "  },",
+        '}, "1.0.0").parse();',
+        "",
+      ].join("\n"),
+      "utf-8",
+    );
+    const bin = join(tmpDir, "main.cjs");
+    await build({
+      entryPoints: [join(srcDir, "main.ts")],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile: bin,
+      nodePaths: [resolve(import.meta.dirname, "../../node_modules")],
+      logLevel: "silent",
+    });
+
+    const failure = await execFileAsync(process.execPath, [bin, "docs"]).then(
+      () => ({ code: 0, stderr: "" }),
+      (err: { code: number; stderr: string }) => err,
+    );
+
+    expect(failure.code).toBe(2);
+    expect(JSON.parse(failure.stderr)).toEqual({ code: "INVALID_ARGS", message: "Missing required option --entry." });
+  }, 60000);
+
   it("generated extract leaves out its metadata with --no-include-meta", async () => {
     const contractYaml = await readFile(resolve(FIXTURES, "minimal-contract.yaml"), "utf-8");
     const ctx = normalizeContract(await parseContractFile(resolve(FIXTURES, "minimal-contract.yaml")));

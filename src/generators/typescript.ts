@@ -623,9 +623,12 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
     params.push(`${safeIdentifier(arg.name)}: ${type}`);
   }
 
+  // The program passes each option as given. Rejecting an invocation that
+  // leaves out a required one, with the exit the contract declares for it, is
+  // the handler's, so a required option is typed as possibly absent too.
   const optFields = commandOptions(cmd).map((o) => {
     const type = o.schema?.type === "boolean" ? "boolean" : optionTakesManyValues(o) ? "string[]" : "string";
-    return `${propertyName(optionFlags(o).key)}${o.required ? "" : "?"}: ${type}`;
+    return `${propertyName(optionFlags(o).key)}?: ${type}`;
   });
 
   if (optFields.length > 0) {
@@ -786,16 +789,6 @@ function generateProgramCommand(
     lines.push(`        const policy = deriveCommandPolicy(${JSON.stringify(cmd.id)}, opts);`);
     lines.push("        console.log(JSON.stringify(policy, null, 2));");
     lines.push("        return;");
-    lines.push("      }");
-  }
-
-  // A required option belongs to its own command. commander's requiredOption
-  // would also demand it whenever a subcommand runs (it checks every ancestor),
-  // so the command checks its own required options, with commander's message.
-  for (const opt of cmd.options.filter((o) => o.required)) {
-    const message = `error: required option '${optionFlags(opt).flags}' not specified`;
-    lines.push(`      if (${propertyAccess("opts", optionFlags(opt).key)} === undefined) {`);
-    lines.push(`        cmd.error(${JSON.stringify(message)}, { code: "commander.missingMandatoryOptionValue" });`);
     lines.push("      }");
   }
 
