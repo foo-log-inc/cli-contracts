@@ -268,15 +268,19 @@ command_sets:
   // ── arguments commander rejects ────────────────────────
   describe("arguments commander rejects", () => {
     it("end with the command's declared exit 2 and an Error JSON, or commander's own exit where none is declared", async () => {
-      const [unknown, noValue, undeclared] = await Promise.all([
+      const [unknown, noValue, versionSync, agents, topLevel] = await Promise.all([
         runCli(["validate", "--bogus"]),
         runCli(["validate", "--file"]),
         runCli(["version-sync", "--bogus"]),
+        runCli(["agents", "--bogus"]),
+        runCli(["bogus"]),
       ]);
 
-      expect([unknown.exitCode, JSON.parse(unknown.stderr).code]).toEqual([2, "INVALID_ARGS"]);
-      expect([noValue.exitCode, JSON.parse(noValue.stderr).code]).toEqual([2, "INVALID_ARGS"]);
-      expect([undeclared.exitCode, undeclared.stderr]).toEqual([1, "error: unknown option '--bogus'\n"]);
+      for (const result of [unknown, noValue, versionSync, agents]) {
+        expect([result.exitCode, JSON.parse(result.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      }
+      // The top level declares no exits.
+      expect([topLevel.exitCode, topLevel.stderr]).toEqual([1, "error: unknown command 'bogus'\n"]);
     }, 30000);
   });
 

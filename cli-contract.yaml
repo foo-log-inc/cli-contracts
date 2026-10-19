@@ -262,6 +262,13 @@ command_sets:
               schema:
                 $ref: '#/components/schemas/Error'
 
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
           '9':
             description: A contract file is out of sync (--check only).
             stdout:
@@ -2134,6 +2141,12 @@ command_sets:
             description: Failed to load embedded DSL.
             stderr:
               format: text
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
 
         x-agent:
           riskLevel: low

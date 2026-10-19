@@ -678,7 +678,7 @@ export const schemas = {
 } as const;
 
 export const initExitCodes = [0, 1, 2, 4] as const;
-export const versionSyncExitCodes = [0, 1, 9] as const;
+export const versionSyncExitCodes = [0, 1, 2, 9] as const;
 export const validateExitCodes = [0, 1, 2, 9] as const;
 export const resolveExitCodes = [0, 1, 2] as const;
 export const generateExitCodes = [0, 1, 2, 3, 5] as const;
@@ -693,4 +693,4 @@ export const explainDiffExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const checkReferenceExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const suggestExitCodes = [0, 1, 2, 3, 10, 11, 12] as const;
 export const bundleExitCodes = [0, 1, 2, 10, 11, 12] as const;
-export const agentsExitCodes = [0, 1] as const;
+export const agentsExitCodes = [0, 1, 2] as const;
