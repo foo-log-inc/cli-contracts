@@ -284,6 +284,20 @@ command_sets:
     }, 30000);
   });
 
+  // ── --format on resolve and agents ─────────────────────
+  describe("--format json on resolve and agents", () => {
+    it("prints JSON", async () => {
+      const [resolved, agents] = await Promise.all([
+        // No leading global --format: the flag comes after the command name.
+        runCli(["resolve", "-f", resolve(FIXTURES, "minimal-contract.yaml"), "--format", "json"], { format: "" as "json" }),
+        runCli(["agents", "-F", "json"], { format: "" as "json" }),
+      ]);
+
+      expect(JSON.parse(resolved.stdout)).toHaveProperty("cli_contracts");
+      expect(JSON.parse(agents.stdout)).toHaveProperty("agents");
+    }, 30000);
+  });
+
   // ── values outside a declared enum ─────────────────────
   describe("a value outside the enum the contract declares", () => {
     it("ends with exit 2 and an Error JSON", async () => {

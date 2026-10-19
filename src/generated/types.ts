@@ -45,7 +45,6 @@ export type ValidateExitResult =
 
 export interface ResolveOptions {
   file?: string;
-  format?: "yaml" | "json";
 }
 
 export type ResolveExitCode = 0 | 1 | 2;
@@ -325,10 +324,6 @@ export type BundleExitResult =
   | { exitCode: 10; stdout: { summary: string; risk_level: "low" | "medium" | "high" | "critical"; findings: { id?: string; severity: "info" | "warning" | "error" | "critical"; category: string; target?: string; location?: string; message: string; recommendation?: string; confidence?: number; evidence?: { kind: "file" | "command" | "schema" | "diff" | "stdout" | "stderr" | "text"; target?: string; location?: string; excerpt?: string }[]; details?: Record<string, unknown> }[]; recommended_actions?: { kind: "run_command" | "edit_file" | "review" | "confirm" | "block" | "ignore"; title: string; command?: string; target?: string; rationale?: string }[]; metadata?: { tool?: string; command?: string; version?: string; generated_at?: string; adapter?: string; model?: string } } }
   | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
-
-export interface AgentsOptions {
-  format?: "yaml" | "json";
-}
 
 export type AgentsExitCode = 0 | 1 | 2;
 

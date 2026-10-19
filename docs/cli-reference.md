@@ -896,13 +896,12 @@ cli-contracts resolve --file overlay.yaml --format json
 | Option | Aliases | Required | Default | Description |
 |---|---|---|---|---|
 | `--file` | -f | No |  | Contract file to resolve. Defaults to config input.files. |
-| `--format` |  | No | `"yaml"` | Output format for the resolved contract. |
 
 #### Exit Codes
 
 **Exit 0:** Contract resolved successfully.
 
-- **stdout:** format=`{options.format}`
+- **stdout:** format=`{globalOptions.format}`
 
 
   <details>
@@ -7617,14 +7616,8 @@ Outputs the complete resolved agent-contracts DSL (agents, tasks, workflows, han
 **Usage:**
 
 ```
-cli-contracts agents [--format]
+cli-contracts agents
 ```
-
-#### Options
-
-| Option | Aliases | Required | Default | Description |
-|---|---|---|---|---|
-| `--format` | -F | No | `"yaml"` | Output format. |
 
 #### Exit Codes
 

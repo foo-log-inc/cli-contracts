@@ -90,7 +90,6 @@ export async function cliContractsResolve(
   const cmdArgs: string[] = ["resolve"];
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
   }
 
   try {
@@ -460,12 +459,8 @@ export async function cliContractsBundle(
 
 export async function cliContractsAgents(
   executable: string,
-  options?: Partial<import("./types.js").AgentsOptions>,
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["agents"];
-  if (options) {
-    if (options.format !== undefined) cmdArgs.push("--format", String(options.format));
-  }
 
   try {
     const result = await execFileAsync(executable, cmdArgs);

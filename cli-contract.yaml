@@ -385,18 +385,11 @@ command_sets:
               media_type: application/yaml
               encoding: utf-8
 
-          - name: format
-            description: Output format for the resolved contract.
-            schema:
-              type: string
-              enum: [yaml, json]
-              default: yaml
-
         exits:
           '0':
             description: Contract resolved successfully.
             stdout:
-              format: '{options.format}'
+              format: '{globalOptions.format}'
               schema:
                 type: object
                 description: Fully resolved CLI Contracts document (extends field stripped).
@@ -2123,15 +2116,6 @@ command_sets:
           workflows, handoff_types) embedded in this CLI binary.
           Useful for debugging, external tooling integration, and DSL
           inspection.
-        options:
-          - name: format
-            aliases: [F]
-            description: Output format.
-            schema:
-              type: string
-              enum: [yaml, json]
-              default: yaml
-
         exits:
           '0':
             description: DSL output successfully.

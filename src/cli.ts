@@ -112,7 +112,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as string | undefined;
+      const fileOpt = options.file;
       const files = fileOpt
         ? [fileOpt]
         : getContractFiles(configResult?.config);
@@ -122,7 +122,7 @@ const handlers: CommandHandlers = {
         return;
       }
       const result = await runResolve(files[0], {
-        format: options.format as "yaml" | "json" | undefined,
+        format: getFormat(parentOpts),
       });
       process.stdout.write(result.output);
       process.exitCode = 0;
@@ -488,9 +488,9 @@ const handlers: CommandHandlers = {
     }
   },
 
-  async agents(options, _parentOpts) {
+  async agents(_options, parentOpts) {
     const YAML = await import("yaml");
-    const format = options.format ?? "yaml";
+    const format = getFormat(parentOpts);
     try {
       if (format === "json") {
         process.stdout.write(JSON.stringify(resolvedDsl, null, 2) + "\n");
