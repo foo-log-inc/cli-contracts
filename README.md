@@ -540,7 +540,7 @@ contract_tests:
 |---|---|---|---|
 | `--file <files...>` | `-f` | config input | Contract file(s) to validate |
 | `--strict` | | `false` | Treat warnings as errors |
-| `--resolve-refs` | | `true` | Resolve and validate `$ref` targets |
+| `--resolve-refs`, `--no-resolve-refs` | | `true` | Resolve and validate external `$ref` targets |
 
 ### generate
 

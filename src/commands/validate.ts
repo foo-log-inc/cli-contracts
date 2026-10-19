@@ -19,7 +19,10 @@ export async function runValidate(
   for (const file of contractFiles) {
     const filePath = resolve(file);
     const doc = await parseContractFile(filePath);
-    const result = validateContract(doc, { basePath: dirname(filePath) });
+    const result = validateContract(doc, {
+      basePath: dirname(filePath),
+      resolveExternalRefs: options.resolveRefs,
+    });
     allErrors.push(...result.errors);
     allWarnings.push(...result.warnings);
   }

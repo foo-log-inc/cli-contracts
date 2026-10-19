@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
+import { build } from "esbuild";
 import { parseContractFile, parseContractString } from "../../../src/parser.js";
 import { resolveRefs } from "../../../src/ref-resolver.js";
 import { normalizeContract } from "../../../src/normalizer.js";
@@ -200,6 +204,62 @@ command_sets:
     expect(output["commands.ts"]).toContain('["users","list"]');
     expect(output["commands.ts"]).toContain("--limit");
   });
+
+  it("the client passes false for a boolean whose default is true as --no-<name>", async () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: manifest
+            schema:
+              type: boolean
+              default: true
+          - name: dry-run
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: OK.
+`);
+    const output = generateTypeScript(normalizeContract(doc));
+    const dir = await mkdtemp(join(tmpdir(), "cli-contracts-client-"));
+    try {
+      await writeFile(join(dir, "commands.ts"), output["commands.ts"], "utf-8");
+      const bundle = join(dir, "commands.mjs");
+      await build({
+        entryPoints: [join(dir, "commands.ts")],
+        outfile: bundle,
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        logLevel: "silent",
+      });
+      const { fooBuild } = await import(pathToFileURL(bundle).href);
+      // echo prints the argv the client hands to the executable
+      const argv = async (options: Record<string, boolean>) =>
+        ((await fooBuild("echo", options)) as { stdout: string }).stdout.trim();
+
+      const [off, on, untouched] = await Promise.all([
+        argv({ manifest: false }),
+        argv({ manifest: true, dryRun: true }),
+        argv({ dryRun: false }),
+      ]);
+
+      expect(off).toBe("build --no-manifest");
+      expect(on).toBe("build --manifest --dry-run");
+      expect(untouched).toBe("build");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30000);
 
   it("generates schema constants", async () => {
     const doc = await parseContractFile(

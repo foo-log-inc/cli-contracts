@@ -7,7 +7,10 @@ import _Ajv from "ajv";
 const Ajv = _Ajv.default ?? _Ajv;
 import { parseContractFile } from "../parser.js";
 import { resolveRefs } from "../ref-resolver.js";
-import type { CliContractsDocument, ExecutionProfile } from "../types.js";
+import { normalizeContract } from "../normalizer.js";
+import { optionFlags } from "../option-flags.js";
+import { acceptedOptions } from "../program-options.js";
+import type { CliContractsDocument, ExecutionProfile, NormalizedContext } from "../types.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -68,6 +71,12 @@ export interface TestOptions {
   contractFile?: string;
 }
 
+/** A contract file as the test cases read it. */
+interface LoadedContract {
+  doc: CliContractsDocument;
+  ctx: NormalizedContext;
+}
+
 export async function runContractTests(
   contractFiles: string[],
   options: TestOptions = {},
@@ -80,11 +89,11 @@ export async function runContractTests(
     ? cases.filter((c) => options.caseIds!.includes(c.id))
     : cases;
 
-  let contractDoc: CliContractsDocument | undefined;
-  if (contractFiles.length > 0) {
-    const contractPath = resolve(contractFiles[0]);
-    contractDoc = await parseContractFile(contractPath);
-    contractDoc = resolveRefs(contractDoc, { basePath: dirname(contractPath) });
+  const contracts: LoadedContract[] = [];
+  for (const file of contractFiles) {
+    const contractPath = resolve(file);
+    const doc = resolveRefs(await parseContractFile(contractPath), { basePath: dirname(contractPath) });
+    contracts.push({ doc, ctx: normalizeContract(doc) });
   }
 
   const results: TestCaseResult[] = [];
@@ -99,11 +108,9 @@ export async function runContractTests(
       continue;
     }
 
-    const result = await executeTestCase(
-      testCase,
-      contractDoc,
-      options,
-    );
+    // The contract file that declares the case's command set.
+    const contract = contracts.find((c) => c.ctx.command_sets.some((cs) => cs.id === testCase.commandSet));
+    const result = await executeTestCase(testCase, contract, options);
     results.push(result);
 
     if (result.status === "passed") passed++;
@@ -140,9 +147,10 @@ async function loadTestCases(casesDir: string): Promise<ContractTestCase[]> {
 
 async function executeTestCase(
   testCase: ContractTestCase,
-  doc: CliContractsDocument | undefined,
+  contract: LoadedContract | undefined,
   options: TestOptions,
 ): Promise<TestCaseResult> {
+  const doc = contract?.doc;
   const startTime = Date.now();
   const violations: ContractViolation[] = [];
 
@@ -188,11 +196,21 @@ async function executeTestCase(
   }
 
   if (testCase.options) {
+    const accepted =
+      (contract && acceptedOptions(contract.ctx, testCase.commandSet, testCase.command)) ?? [];
     for (const [key, val] of Object.entries(testCase.options)) {
-      if (typeof val === "boolean") {
-        if (val) allArgs.push(`--${key}`);
+      const definition = accepted.find((o) => o.name === key);
+      if (!definition) {
+        throw new Error(
+          `Test case "${testCase.id}": option "${key}" is not declared for ${testCase.commandSet}.${testCase.command}`,
+        );
+      }
+      const { long, negated } = optionFlags(definition);
+      if (definition.schema?.type === "boolean") {
+        if (val) allArgs.push(long);
+        else if (negated) allArgs.push(negated);
       } else {
-        allArgs.push(`--${key}`, String(val));
+        allArgs.push(long, String(val));
       }
     }
   }

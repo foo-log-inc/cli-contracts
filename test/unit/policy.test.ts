@@ -754,6 +754,39 @@ describe("derivePolicy", () => {
   });
 });
 
+describe("slot references in effects", () => {
+  it("derive reads and writes whose target is the slot name", () => {
+    const policy = derivePolicy({
+      command_id: "graph",
+      command_effects: { risk_level: "low", reads: ["project-source"], writes: ["analysis-cache"] },
+      options: {},
+    });
+
+    expect(policy.side_effects).toEqual(["file_write"]);
+    expect(policy.reads).toEqual([{ kind: "semantic", target: "project-source", source: "command:graph" }]);
+    expect(policy.writes).toEqual([{ kind: "semantic", target: "analysis-cache", source: "command:graph" }]);
+    expect(policy.idempotent).toBe(false);
+  });
+});
+
+describe("empty writes", () => {
+  it("add no file_write, from the command's effects or an active option's", () => {
+    const policy = derivePolicy({
+      command_id: "review",
+      command_effects: { reads: ["spec-source"], writes: [], network: { description: "LLM API calls" } },
+      options: makeInput(
+        "fix",
+        makeOption({ name: "fix", schema: { type: "boolean" }, effects: { writes: [] } }),
+        true,
+        true,
+      ),
+    });
+
+    expect(policy.side_effects).toEqual(["network"]);
+    expect(policy.writes).toEqual([]);
+  });
+});
+
 describe("buildIntrospection", () => {
   it("builds correct introspection result", () => {
     const cmd: Command = {
@@ -786,6 +819,25 @@ describe("buildIntrospection", () => {
     expect(result.policy.risk_level).toBe("medium");
     expect(result.policy.reads).toHaveLength(1);
     expect(result.policy.writes).toHaveLength(1);
+  });
+
+  it("finds the value of an option whose name has a hyphen under commander's key", () => {
+    const cmd: Command = {
+      summary: "Deploy.",
+      options: [
+        {
+          name: "force-push",
+          schema: { type: "boolean" },
+          effects: { risk_level: "high", writes: [{ target: "remote", destructive: true }] },
+        },
+      ],
+      exits: { "0": { description: "OK." } },
+    };
+
+    const result = buildIntrospection("deploy", cmd, { forcePush: true });
+
+    expect(result.active_options).toEqual(["force-push"]);
+    expect(result.policy.risk_level).toBe("high");
   });
 
   it("filters inactive options from activeOptions", () => {

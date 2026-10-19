@@ -1,6 +1,7 @@
 import * as yaml from "yaml";
 import type { CliContractsDocument } from "../types.js";
 import type { DiffResult, DiffChange } from "../types.js";
+import { optionSpellings } from "../option-flags.js";
 
 /**
  * Builds the user_request string from a CLI contract document.
@@ -28,7 +29,7 @@ export function buildPolicyAuditContext(
         lines.push(`- Arguments: ${cmd.arguments.map((a) => a.name).join(", ")}`);
       }
       if (cmd.options && cmd.options.length > 0) {
-        lines.push(`- Options: ${cmd.options.map((o) => `--${o.name}`).join(", ")}`);
+        lines.push(`- Options: ${cmd.options.map((o) => optionSpellings(o).join(" | ")).join(", ")}`);
       }
 
       const exitCodes = Object.keys(cmd.exits).join(", ");
@@ -94,7 +95,7 @@ export function buildTestProposalContext(
 
       if (cmd.options && cmd.options.length > 0) {
         const optDetail = cmd.options.map((o) => {
-          const parts = [`--${o.name}`];
+          const parts = [optionSpellings(o).join(" | ")];
           if (o.required) parts.push("(required)");
           if (o.schema?.enum) parts.push(`enum: [${(o.schema.enum as string[]).join(",")}]`);
           if (o.schema?.default !== undefined) parts.push(`default: ${o.schema.default}`);
@@ -277,7 +278,7 @@ export function buildReferenceCheckContext(
 
     lines.push(`**Options** (${a.presentOptions.length}/${REFERENCE_OPTIONS.length})`);
     if (a.missingOptions.length > 0) {
-      lines.push(`- MISSING: ${a.missingOptions.map((o) => `--${o}`).join(", ")}`);
+      lines.push(`- MISSING: ${a.missingOptions.map((name) => optionSpellings({ name }).join(" | ")).join(", ")}`);
     } else {
       lines.push("- All standard options present");
     }

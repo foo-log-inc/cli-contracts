@@ -517,7 +517,10 @@ const handlers: CommandHandlers = {
       const allFlag = options.all;
       const cmdIds = allFlag ? [] : commands;
 
-      const result = await runExtract(files, cmdIds, { format: fmt });
+      const result = await runExtract(files, cmdIds, {
+        format: fmt,
+        includeMeta: options.includeMeta,
+      });
       process.stdout.write(result.output);
       process.exitCode = 0;
     } catch (err) {

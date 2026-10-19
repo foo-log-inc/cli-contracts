@@ -68,6 +68,12 @@ command_sets:
             schema:
               type: boolean
               default: false
+          # A no- name: the generated program registers it under that name.
+          - name: no-cache
+            description: Do not read or write the cache.
+            schema:
+              type: boolean
+              default: false
         exits:
           '0':
             description: Success.

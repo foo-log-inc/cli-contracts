@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { join, resolve } from "node:path";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -286,6 +286,158 @@ ${reviewChild}`);
       expect(await run(["review", "--source", "a.md"])).toBe("");
       expect(await run(["review"])).toContain("error: required option '--source <path>' not specified");
       expect(calls).toEqual(["ingest", "review"]);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("a boolean option whose default is true is turned off with --no-<name>, and other booleans keep their forms", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      build:
+        summary: Build.
+        options:
+          - name: manifest
+            schema:
+              type: boolean
+              default: true
+          - name: dry-run
+            schema:
+              type: boolean
+              default: false
+          - name: verbose
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: OK.
+    global_options:
+      - name: color
+        schema:
+          type: boolean
+          default: true
+`);
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>, parentOpts: Record<string, unknown>) => {
+          received.push({ manifest: opts.manifest, dryRun: opts.dryRun, verbose: opts.verbose, color: parentOpts.color });
+        },
+      } as unknown as Record<string, () => Promise<void>>;
+      const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
+
+      expect(await run(["build"])).toBe("");
+      expect(await run(["build", "--no-manifest", "--no-color"])).toBe("");
+      expect(await run(["build", "--manifest", "--dry-run", "--verbose", "--color"])).toBe("");
+      expect(received).toEqual([
+        { manifest: true, dryRun: false, verbose: undefined, color: true },
+        { manifest: false, dryRun: false, verbose: undefined, color: false },
+        { manifest: true, dryRun: true, verbose: true, color: true },
+      ]);
+      expect(await run(["build", "--no-dry-run"])).toContain("error: unknown option '--no-dry-run'");
+      expect(await run(["build", "--no-verbose"])).toContain("error: unknown option '--no-verbose'");
+      expect(await run(["build", "--help"])).toMatch(/--manifest +\(default: true\)\n +--no-manifest\n/);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("--introspect finds the value of an option whose name has a hyphen", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      deploy:
+        summary: Deploy.
+        options:
+          - name: force-push
+            schema:
+              type: boolean
+              default: false
+            effects:
+              risk_level: high
+              writes:
+                - target: remote
+                  destructive: true
+        exits:
+          '0':
+            description: OK.
+`);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const handlers = { deploy: async () => {} };
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "deploy", "--force-push", "--introspect"]);
+      const introspection = JSON.parse(String(log.mock.calls[0]?.[0]));
+
+      expect(introspection.active_options).toEqual(["force-push"]);
+      expect(introspection.policy.risk_level).toBe("high");
+    } finally {
+      log.mockRestore();
+      await cleanup();
+    }
+  });
+
+  it("an option declared under a no- name reaches the handler under that name, set by its own flag", async () => {
+    const { createProgram, cleanup } = await loadGeneratedProgram(`      build:
+        summary: Build.
+        options:
+          - name: no-cache
+            description: Disable the cache.
+            schema:
+              type: boolean
+              default: false
+            effects:
+              risk_level: medium
+        exits:
+          '0':
+            description: OK.
+    global_options:
+      - name: no-color
+        schema:
+          type: boolean
+          default: false
+`);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>, parentOpts: Record<string, unknown>) => {
+          received.push({ noCache: opts.noCache, cache: opts.cache, noColor: parentOpts.noColor, color: parentOpts.color });
+        },
+      } as unknown as Record<string, () => Promise<void>>;
+      const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
+
+      expect(await run(["build"])).toBe("");
+      expect(await run(["build", "--no-cache", "--no-color"])).toBe("");
+      expect(received).toEqual([
+        { noCache: false, cache: undefined, noColor: false, color: undefined },
+        { noCache: true, cache: undefined, noColor: true, color: undefined },
+      ]);
+      expect(await run(["build", "--help"])).toMatch(/--no-cache +Disable the cache\. \(default: false\)/);
+
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "build", "--no-cache", "--introspect"]);
+      expect(JSON.parse(String(log.mock.calls.at(-1)?.[0])).active_options).toEqual(["no-cache"]);
+    } finally {
+      log.mockRestore();
+      await cleanup();
+    }
+  });
+
+  it("types an option's value under the key commander gives it", async () => {
+    const contract = `      build:
+        summary: Build.
+        options:
+          - name: dry_run
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: OK.
+`;
+    const { createProgram, cleanup } = await loadGeneratedProgram(contract);
+    try {
+      const received: unknown[] = [];
+      const handlers = {
+        build: async (opts: Record<string, unknown>) => { received.push(opts); },
+      } as unknown as Record<string, () => Promise<void>>;
+      await createProgram(handlers, "0.0.0").parseAsync(["node", "tool", "build", "--dry_run"]);
+
+      expect(received).toEqual([{ dry_run: true }]);
+      expect(leafAndChildrenProgram(contract)).toContain("build: (options: { dry_run?: boolean }");
     } finally {
       await cleanup();
     }

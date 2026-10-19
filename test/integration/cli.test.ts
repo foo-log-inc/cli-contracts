@@ -200,6 +200,71 @@ describe("CLI integration", () => {
     });
   });
 
+  // ── options whose default is true ──────────────────────
+  describe("--no-<name> of an option whose default is true", () => {
+    let tmpDir: string;
+
+    beforeEach(async () => {
+      tmpDir = await mkdtemp(join(tmpdir(), "cli-contracts-negated-"));
+    });
+
+    afterEach(async () => {
+      await rm(tmpDir, { recursive: true, force: true });
+    });
+
+    it("validate --no-resolve-refs leaves external $ref targets unchecked and still checks the document's own", async () => {
+      const contractPath = join(tmpDir, "cli-contract.yaml");
+      await writeFile(contractPath, `cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  t:
+    commands:
+      a:
+        summary: A.
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                $ref: './missing.yaml#/X'
+          '1':
+            description: Failed.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Missing'
+`, "utf-8");
+      const unresolved = async (...flags: string[]) =>
+        JSON.parse((await runCli(["validate", "-f", contractPath, ...flags])).stdout)
+          .errors.map((e: { path: string }) => e.path);
+
+      const [checked, unchecked] = await Promise.all([unresolved(), unresolved("--no-resolve-refs")]);
+
+      expect(checked).toEqual(["./missing.yaml#/X", "#/components/schemas/Missing"]);
+      expect(unchecked).toEqual(["#/components/schemas/Missing"]);
+    }, 30000);
+
+    it("extract --no-include-meta leaves out the extraction metadata", async () => {
+      const extract = (format: "json" | "yaml", ...flags: string[]) =>
+        runCli(["extract", "--all", "-f", resolve(FIXTURES, "minimal-contract.yaml"), ...flags], { format });
+
+      const [json, jsonNoMeta, yaml, yamlNoMeta] = await Promise.all([
+        extract("json"),
+        extract("json", "--no-include-meta"),
+        extract("yaml"),
+        extract("yaml", "--no-include-meta"),
+      ]);
+
+      expect(JSON.parse(json.stdout)).toHaveProperty("_meta");
+      expect(JSON.parse(jsonNoMeta.stdout)).not.toHaveProperty("_meta");
+      expect(yaml.stdout).toContain("extractedAt:");
+      expect(yamlNoMeta.stdout).toMatch(/^cli_contracts: 0\.1\.0\n/);
+    }, 30000);
+  });
+
   // ── output larger than a pipe buffer ───────────────────
   describe("output through a pipe", () => {
     let tmpDir: string;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { resolve } from "node:path";
-import { parseContractFile } from "../../../src/parser.js";
+import { parseContractFile, parseContractString } from "../../../src/parser.js";
 import { resolveRefs } from "../../../src/ref-resolver.js";
 import { runDiff } from "../../../src/commands/diff.js";
 import {
@@ -48,6 +48,33 @@ describe("buildPolicyAuditContext", () => {
 
     expect(context).toContain("Arguments: input");
     expect(context).toContain("--dry-run");
+  });
+});
+
+describe("option spellings in the contexts", () => {
+  it("list the --no-<name> form of a boolean option whose default is true", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: manifest
+            schema:
+              type: boolean
+              default: true
+        exits:
+          '0':
+            description: OK.
+`);
+
+    expect(buildPolicyAuditContext(doc)).toContain("- Options: --manifest | --no-manifest");
+    expect(buildTestProposalContext(doc)).toContain("- Options: --manifest | --no-manifest default: true");
   });
 });
 

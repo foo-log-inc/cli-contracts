@@ -171,6 +171,39 @@ command_sets:
     expect(md).toContain("foo bar <input> [--output]");
   });
 
+  it("lists the --no-<name> form of a boolean option whose default is true", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  foo:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: manifest
+            description: Write the manifest.
+            schema:
+              type: boolean
+              default: true
+          - name: dry-run
+            description: Simulate.
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: OK.
+`);
+    const md = generateMarkdown(normalizeContract(doc));
+
+    expect(md).toContain("foo build [--manifest | --no-manifest] [--dry-run]");
+    expect(md).toContain("| `--manifest`, `--no-manifest` |  | No | `true` | Write the manifest. |");
+    expect(md).toContain("| `--dry-run` |  | No | `false` | Simulate. |");
+  });
+
   // ── Schema table rendering ─────────────────────────────
   it("renders inline schema as property table instead of raw JSON", () => {
     const doc = parseContractString(`

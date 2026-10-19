@@ -60,11 +60,12 @@ export function collectRefs(obj: unknown): string[] {
 
 /**
  * Validates that all $ref pointers resolve to existing paths.
- * Checks both internal (`#/`) and external file refs.
+ * Checks internal (`#/`) refs, and external file refs unless
+ * `resolveExternalRefs` is false.
  */
 export function validateRefs(
   doc: CliContractsDocument,
-  options: { basePath?: string } = {},
+  options: { basePath?: string; resolveExternalRefs?: boolean } = {},
 ): { valid: boolean; unresolvedRefs: string[] } {
   const allRefs = collectRefs(doc);
   const unresolved: string[] = [];
@@ -77,7 +78,7 @@ export function validateRefs(
       } catch {
         unresolved.push(ref);
       }
-    } else if (ref.includes("#/")) {
+    } else if (ref.includes("#/") && options.resolveExternalRefs !== false) {
       try {
         resolveExternalRef(ref, basePath, new Map());
       } catch {

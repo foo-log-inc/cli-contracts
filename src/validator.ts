@@ -48,7 +48,7 @@ import {
 } from "./schema.js";
 import type { Effects } from "./schema.js";
 import { validateRefs } from "./ref-resolver.js";
-import { derivePolicy, isOptionActive } from "./policy.js";
+import { optionSpellings } from "./option-flags.js";
 
 // Known-key allow-lists derived directly from the Zod schema shapes so they
 // cannot drift from the schema. Any object field added to CommandSchema /
@@ -133,12 +133,12 @@ function levenshtein(a: string, b: string): number {
 
 export function validateContract(
   doc: CliContractsDocument,
-  options: { basePath?: string } = {},
+  options: { basePath?: string; resolveExternalRefs?: boolean } = {},
 ): ValidateResult {
   const diagnostics: Diagnostic[] = [];
 
   validateCommandSets(doc, diagnostics);
-  validateRefsIntegrity(doc, diagnostics, options.basePath);
+  validateRefsIntegrity(doc, diagnostics, options);
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -642,6 +642,10 @@ function validateOptions(
 ): void {
   const optNames = new Set<string>();
   const aliasMap = new Map<string, string>();
+  // Two options cannot share a long flag: commander refuses the second one,
+  // and the flag could not mean both (e.g. "cache" with default true also
+  // takes --no-cache).
+  const spellingOwners = new Map<string, string>();
 
   for (let i = 0; i < opts.length; i++) {
     const opt = opts[i];
@@ -663,6 +667,20 @@ function validateOptions(
       });
     }
     optNames.add(opt.name);
+
+    for (const spelling of optionSpellings(opt)) {
+      const owner = spellingOwners.get(spelling);
+      if (owner === undefined) {
+        spellingOwners.set(spelling, opt.name);
+      } else if (owner !== opt.name) {
+        diagnostics.push({
+          path: optPath,
+          message: `Option "${opt.name}" uses ${spelling}, which option "${owner}" already uses`,
+          rule: "conflicting-option-flag",
+          severity: "error",
+        });
+      }
+    }
 
     if (opt.aliases) {
       for (const alias of opt.aliases) {
@@ -795,9 +813,9 @@ export function validateEffectsConsistency(
 function validateRefsIntegrity(
   doc: CliContractsDocument,
   diagnostics: Diagnostic[],
-  basePath?: string,
+  options: { basePath?: string; resolveExternalRefs?: boolean },
 ): void {
-  const { unresolvedRefs } = validateRefs(doc, { basePath });
+  const { unresolvedRefs } = validateRefs(doc, options);
   for (const ref of unresolvedRefs) {
     diagnostics.push({
       path: ref,

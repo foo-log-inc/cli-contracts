@@ -158,4 +158,36 @@ describe("generated code standalone compilation", () => {
       Object.keys(doc.command_sets[LARGE_CONTRACT_COMMAND_SET].commands),
     ).toHaveLength(commandCount);
   }, 60000);
+
+  it("generated extract leaves out its metadata with --no-include-meta", async () => {
+    const contractYaml = await readFile(resolve(FIXTURES, "minimal-contract.yaml"), "utf-8");
+    const ctx = normalizeContract(await parseContractFile(resolve(FIXTURES, "minimal-contract.yaml")));
+    const output = generateTypeScript(ctx, { contractYaml });
+
+    const srcDir = join(tmpDir, "src");
+    await mkdir(srcDir, { recursive: true });
+    for (const [filename, content] of Object.entries(output)) {
+      await writeFile(join(srcDir, filename), content, "utf-8");
+    }
+    await writeFile(
+      join(srcDir, "main.ts"),
+      'import { createProgram } from "./program.js";\ncreateProgram({} as never, "1.0.0").parse();\n',
+      "utf-8",
+    );
+    const bin = join(tmpDir, "main.cjs");
+    await build({
+      entryPoints: [join(srcDir, "main.ts")],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile: bin,
+      nodePaths: [resolve(import.meta.dirname, "../../node_modules")],
+      logLevel: "silent",
+    });
+    const extract = async (...flags: string[]) =>
+      JSON.parse((await execFileAsync(process.execPath, [bin, "extract", "--all", "-F", "json", ...flags])).stdout);
+
+    expect(await extract()).toHaveProperty("_meta");
+    expect(await extract("--no-include-meta")).not.toHaveProperty("_meta");
+  }, 60000);
 });
