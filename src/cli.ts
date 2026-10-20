@@ -2,6 +2,10 @@
 
 import { VERSION } from "./index.js";
 import { createProgram } from "./generated/program.js";
+import { CONTRACT_JSON_STR } from "./generated/contract.js";
+import { optionFlags } from "./option-flags.js";
+import type { Option } from "./types.js";
+import type { Command } from "commander";
 import type { CommandHandlers } from "./generated/program.js";
 import { loadConfig, getContractFiles } from "./config.js";
 import { runInit, FileExistsError } from "./commands/init.js";
@@ -108,7 +112,7 @@ const handlers: CommandHandlers = {
       const configResult = await loadConfig(
         parentOpts.config as string | undefined,
       );
-      const fileOpt = options.file as string | undefined;
+      const fileOpt = options.file;
       const files = fileOpt
         ? [fileOpt]
         : getContractFiles(configResult?.config);
@@ -118,7 +122,7 @@ const handlers: CommandHandlers = {
         return;
       }
       const result = await runResolve(files[0], {
-        format: options.format as "yaml" | "json" | undefined,
+        format: getFormat(parentOpts),
       });
       process.stdout.write(result.output);
       process.exitCode = 0;
@@ -484,9 +488,9 @@ const handlers: CommandHandlers = {
     }
   },
 
-  async agents(options, _parentOpts) {
+  async agents(_options, parentOpts) {
     const YAML = await import("yaml");
-    const format = options.format ?? "yaml";
+    const format = getFormat(parentOpts);
     try {
       if (format === "json") {
         process.stdout.write(JSON.stringify(resolvedDsl, null, 2) + "\n");
@@ -530,5 +534,73 @@ const handlers: CommandHandlers = {
   },
 };
 
-const program = createProgram(handlers, VERSION);
+interface DeclaredCommand {
+  options?: Option[];
+  exits: Record<string, unknown>;
+}
+
+interface DeclaredCommandSet {
+  global_options?: Option[];
+  commands: Record<string, DeclaredCommand>;
+}
+
+let embeddedContract: { command_sets: Record<string, DeclaredCommandSet> } | undefined;
+
+/** The command set that declares a command, from the contract embedded in this CLI. */
+function declaringCommandSet(commandName: string): DeclaredCommandSet | undefined {
+  embeddedContract ??= JSON.parse(CONTRACT_JSON_STR) as { command_sets: Record<string, DeclaredCommandSet> };
+  return Object.values(embeddedContract.command_sets).find((cs) => cs.commands[commandName] !== undefined);
+}
+
+/**
+ * Whether the contract declares exit 2 (invalid arguments, with an Error JSON
+ * on stderr) for the command commander rejected the arguments of.
+ */
+function declaresInvalidArgumentsExit(commandName: string): boolean {
+  return declaringCommandSet(commandName)?.commands[commandName].exits["2"] !== undefined;
+}
+
+/**
+ * The first option value outside the enum the contract declares for it,
+ * worded as commander words an invalid argument.
+ */
+function enumViolation(program: Command, actionCommand: Command): string | undefined {
+  const cs = declaringCommandSet(actionCommand.name());
+  if (!cs) return undefined;
+  const scopes: Array<[Option[], Record<string, unknown>]> = [
+    [cs.global_options ?? [], program.opts()],
+    [cs.commands[actionCommand.name()].options ?? [], actionCommand.opts()],
+  ];
+  for (const [options, values] of scopes) {
+    for (const opt of options) {
+      const allowed = opt.schema?.enum;
+      if (!allowed) continue;
+      const value = values[optionFlags(opt).key];
+      const given = value === undefined ? [] : Array.isArray(value) ? value : [value];
+      const outside = given.find((v) => !allowed.includes(v));
+      if (outside !== undefined) {
+        return `error: option '${optionFlags(opt).flags}' argument '${String(outside)}' is invalid. Allowed choices are ${allowed.join(", ")}.`;
+      }
+    }
+  }
+  return undefined;
+}
+
+const program = createProgram(handlers, VERSION, {
+  onUsageError(error, command) {
+    if (declaresInvalidArgumentsExit(command.name())) {
+      writeError("INVALID_ARGS", error.message);
+      return 2;
+    }
+    // No exit declared for it: commander's own message and exit.
+    process.stderr.write(`${error.message}\n`);
+    return error.exitCode;
+  },
+});
+// The contract declares the values an option takes; one outside them is an
+// invalid argument, and ends like the ones commander finds.
+program.hook("preAction", (thisCommand, actionCommand) => {
+  const violation = enumViolation(thisCommand, actionCommand);
+  if (violation) actionCommand.error(violation, { code: "commander.invalidArgument" });
+});
 program.parse();

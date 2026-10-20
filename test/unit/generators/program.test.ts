@@ -51,7 +51,7 @@ describe("generateTypeScript program.ts", () => {
     const output = generateTypeScript(ctx, { emitProgram: true });
 
     expect(output["index.ts"]).toContain('export { createProgram }');
-    expect(output["index.ts"]).toContain('export type { CommandHandlers }');
+    expect(output["index.ts"]).toContain('export type { CommandHandlers, ProgramOptions }');
   });
 
   it("registers all commands from the contract", async () => {
@@ -261,7 +261,7 @@ ${contractCommands}`);
     }
   });
 
-  it("a required option is demanded by its own command only, not by its subcommands", async () => {
+  it("a missing required option reaches its own command's handler, and never its subcommands'", async () => {
     const { createProgram, cleanup } = await loadGeneratedProgram(`      review:
         summary: Run the review.
         options:
@@ -275,17 +275,19 @@ ${contractCommands}`);
             description: OK.
 ${reviewChild}`);
     try {
-      const calls: string[] = [];
+      const calls: unknown[] = [];
       const handlers = {
-        review: async () => { calls.push("review"); },
-        reviewIngest: async () => { calls.push("ingest"); },
-      };
+        review: async (opts: { source?: string }) => { calls.push(["review", opts.source]); },
+        reviewIngest: async () => { calls.push(["ingest"]); },
+      } as unknown as Record<string, () => Promise<void>>;
       const run = (argv: string[]) => runCapturing(createProgram(handlers, "0.0.0"), argv);
 
+      // The handler, which implements the contract's exits, ends an invocation
+      // without the option; the generated program writes nothing of its own.
       expect(await run(["review", "ingest"])).toBe("");
       expect(await run(["review", "--source", "a.md"])).toBe("");
-      expect(await run(["review"])).toContain("error: required option '--source <path>' not specified");
-      expect(calls).toEqual(["ingest", "review"]);
+      expect(await run(["review"])).toBe("");
+      expect(calls).toEqual([["ingest"], ["review", "a.md"], ["review", undefined]]);
     } finally {
       await cleanup();
     }
@@ -619,6 +621,10 @@ command_sets:
             required: true
             schema:
               type: string
+          - name: region
+            required: false
+            schema:
+              type: string
         exits:
           '0':
             description: OK.
@@ -627,11 +633,13 @@ command_sets:
     const output = generateTypeScript(ctx);
     const program = output["program.ts"];
 
+    // commander stops before the action when a required argument is missing,
+    // so only the optional one is typed as possibly absent.
     expect(program).toContain(
-      "deploy: (target: string | undefined, options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
+      "deploy: (target: string, region: string | undefined, options: Record<string, never>, parentOpts: Record<string, unknown>) => Promise<void>",
     );
     expect(program).toContain(
-      "await handlers.deploy(target, {}, cmd.optsWithGlobals())",
+      "await handlers.deploy(target, region, {}, cmd.optsWithGlobals())",
     );
   });
 
@@ -703,7 +711,7 @@ command_sets:
     );
   });
 
-  it("a required option is checked in its command's action and typed as present", () => {
+  it("a required option is passed to the handler as given and typed as possibly absent", () => {
     const doc = parseContractString(`
 cli_contracts: 0.1.0
 info:
@@ -727,11 +735,9 @@ command_sets:
     const program = generateTypeScript(normalizeContract(doc))["program.ts"];
 
     expect(program).toContain('.option("--source <path>", "")');
+    expect(program).not.toContain("cmd.error(");
     expect(program).toContain(
-      'if (opts.source === undefined) {\n        cmd.error("error: required option \'--source <path>\' not specified", { code: "commander.missingMandatoryOptionValue" });',
-    );
-    expect(program).toContain(
-      "scaffold: (options: { source: string }, parentOpts: Record<string, unknown>) => Promise<void>",
+      "scaffold: (options: { source?: string }, parentOpts: Record<string, unknown>) => Promise<void>",
     );
   });
 

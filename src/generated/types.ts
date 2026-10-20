@@ -21,11 +21,12 @@ export interface VersionSyncOptions {
   check?: boolean;
 }
 
-export type VersionSyncExitCode = 0 | 1 | 9;
+export type VersionSyncExitCode = 0 | 1 | 2 | 9;
 
 export type VersionSyncExitResult =
   { exitCode: 0; stdout: { packageVersion: string; checked: boolean; inSync: boolean; files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[] } }
   | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 9; stdout: { packageVersion: string; checked: boolean; inSync: boolean; files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[] } };
 
 export interface ValidateOptions {
@@ -44,7 +45,6 @@ export type ValidateExitResult =
 
 export interface ResolveOptions {
   file?: string;
-  format?: "yaml" | "json";
 }
 
 export type ResolveExitCode = 0 | 1 | 2;
@@ -325,15 +325,12 @@ export type BundleExitResult =
   | { exitCode: 11; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 12; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
-export interface AgentsOptions {
-  format?: "yaml" | "json";
-}
-
-export type AgentsExitCode = 0 | 1;
+export type AgentsExitCode = 0 | 1 | 2;
 
 export type AgentsExitResult =
   { exitCode: 0; stdout: unknown }
-  | { exitCode: 1; stderr: unknown };
+  | { exitCode: 1; stderr: unknown }
+  | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface Error {
   code: string;

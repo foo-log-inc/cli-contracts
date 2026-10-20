@@ -2,7 +2,7 @@
 
 Contract definition for the cli-contracts command line tool itself. This is a self-referential contract: cli-contracts defines its own interface using the CLI Contracts specification.
 
-**Version:** 0.34.12
+**Version:** 0.35.0
 
 ## Table of Contents
 
@@ -339,6 +339,43 @@ cli-contracts version-sync --file cli-contract.yaml --package-file package.json
   </details>
 
 **Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 2:** Invalid arguments.
 
 - **stderr:** format=`json`
 
@@ -859,13 +896,12 @@ cli-contracts resolve --file overlay.yaml --format json
 | Option | Aliases | Required | Default | Description |
 |---|---|---|---|---|
 | `--file` | -f | No |  | Contract file to resolve. Defaults to config input.files. |
-| `--format` |  | No | `"yaml"` | Output format for the resolved contract. |
 
 #### Exit Codes
 
 **Exit 0:** Contract resolved successfully.
 
-- **stdout:** format=`{options.format}`
+- **stdout:** format=`{globalOptions.format}`
 
 
   <details>
@@ -7580,14 +7616,8 @@ Outputs the complete resolved agent-contracts DSL (agents, tasks, workflows, han
 **Usage:**
 
 ```
-cli-contracts agents [--format]
+cli-contracts agents
 ```
-
-#### Options
-
-| Option | Aliases | Required | Default | Description |
-|---|---|---|---|---|
-| `--format` | -F | No | `"yaml"` | Output format. |
 
 #### Exit Codes
 
@@ -7598,6 +7628,43 @@ cli-contracts agents [--format]
 **Exit 1:** Failed to load embedded DSL.
 
 - **stderr:** format=`text`
+
+**Exit 2:** Invalid arguments.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
 
 #### Extensions
 

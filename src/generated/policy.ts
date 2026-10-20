@@ -155,17 +155,6 @@ export const commandDefinitions = {
           "media_type": "application/yaml",
           "encoding": "utf-8"
         }
-      },
-      {
-        "name": "format",
-        "schema": {
-          "type": "string",
-          "enum": [
-            "yaml",
-            "json"
-          ],
-          "default": "yaml"
-        }
       }
     ],
     "env": {
@@ -1269,19 +1258,6 @@ export const commandDefinitions = {
     }
   },
   "agents": {
-    "options": [
-      {
-        "name": "format",
-        "schema": {
-          "type": "string",
-          "enum": [
-            "yaml",
-            "json"
-          ],
-          "default": "yaml"
-        }
-      }
-    ],
     "env": {
       "GEMINI_API_KEY": {
         "sensitive": true

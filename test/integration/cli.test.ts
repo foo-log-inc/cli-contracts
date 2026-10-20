@@ -265,6 +265,55 @@ command_sets:
     }, 30000);
   });
 
+  // ── arguments commander rejects ────────────────────────
+  describe("arguments commander rejects", () => {
+    it("end with the command's declared exit 2 and an Error JSON, or commander's own exit where none is declared", async () => {
+      const [unknown, noValue, versionSync, agents, topLevel] = await Promise.all([
+        runCli(["validate", "--bogus"]),
+        runCli(["validate", "--file"]),
+        runCli(["version-sync", "--bogus"]),
+        runCli(["agents", "--bogus"]),
+        runCli(["bogus"]),
+      ]);
+
+      for (const result of [unknown, noValue, versionSync, agents]) {
+        expect([result.exitCode, JSON.parse(result.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      }
+      // The top level declares no exits.
+      expect([topLevel.exitCode, topLevel.stderr]).toEqual([1, "error: unknown command 'bogus'\n"]);
+    }, 30000);
+  });
+
+  // ── --format on resolve and agents ─────────────────────
+  describe("--format json on resolve and agents", () => {
+    it("prints JSON", async () => {
+      const [resolved, agents] = await Promise.all([
+        // No leading global --format: the flag comes after the command name.
+        runCli(["resolve", "-f", resolve(FIXTURES, "minimal-contract.yaml"), "--format", "json"], { format: "" as "json" }),
+        runCli(["agents", "-F", "json"], { format: "" as "json" }),
+      ]);
+
+      expect(JSON.parse(resolved.stdout)).toHaveProperty("cli_contracts");
+      expect(JSON.parse(agents.stdout)).toHaveProperty("agents");
+    }, 30000);
+  });
+
+  // ── values outside a declared enum ─────────────────────
+  describe("a value outside the enum the contract declares", () => {
+    it("ends with exit 2 and an Error JSON", async () => {
+      const results = await Promise.all([
+        runCli(["validate", "-f", resolve(FIXTURES, "valid-contract.yaml")], { format: "xml" as "json" }),
+        runCli(["agents", "--format", "xml"]),
+        runCli(["propose-tests", resolve(FIXTURES, "valid-contract.yaml"), "--show-prompt", "--fail-on", "bogus"]),
+      ]);
+
+      for (const result of results) {
+        expect([result.exitCode, JSON.parse(result.stderr).code]).toEqual([2, "INVALID_ARGS"]);
+      }
+      expect(JSON.parse(results[2].stderr).message).toContain("'bogus'");
+    }, 30000);
+  });
+
   // ── output larger than a pipe buffer ───────────────────
   describe("output through a pipe", () => {
     let tmpDir: string;
