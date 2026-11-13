@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.35.0",
+  "version": "0.35.1",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -72,26 +72,22 @@
     "url": "https://github.com/foo-log-inc/cli-contracts/issues"
   },
   "devDependencies": {
-    "@openai/agents": "^0.11.6",
+    "@openai/agents": "^0.22.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.19.42",
-    "agent-contracts": "^0.34.11",
-    "agent-contracts-runtime": "^0.36.4",
+    "@types/node": "^20.19.43",
+    "agent-contracts": "^0.34.14",
+    "agent-contracts-runtime": "^0.36.15",
     "ajv": "^8.17.1",
     "commander": "^14.0.3",
-    "esbuild": "^0.28.0",
-    "glob": "^11.0.0",
-    "handlebars": "^4.7.8",
+    "esbuild": "^0.28.2",
+    "handlebars": "^4.7.10",
     "js-yaml": "^4.1.0",
-    "tsx": "^4.19.4",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.8",
-    "yaml": "^2.9.0",
-    "zod": "^4.4.3",
+    "vitest": "^4.1.12",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7",
     "zod-to-json-schema": "^3.24.5"
-  },
-  "overrides": {
-    "@hono/node-server": "^2.0.5"
   },
   "engines": {
     "node": ">=20.0.0"
