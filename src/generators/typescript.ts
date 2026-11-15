@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import jsYaml from "js-yaml";
+import { parse as parseYaml } from "yaml";
 import type {
   NormalizedContext,
   NormalizedCommandSet,
@@ -973,7 +973,7 @@ function buildContractJson(
   _ctx: NormalizedContext,
   contractYaml: string,
 ): Record<string, unknown> {
-  return jsYaml.load(contractYaml) as Record<string, unknown>;
+  return parseYaml(contractYaml) as Record<string, unknown>;
 }
 
 // ─── built-in extract command injection ─────────────────────────
