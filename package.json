@@ -48,7 +48,8 @@
     "bundle": "node esbuild.bundle.mjs",
     "bundle:min": "node esbuild.bundle.mjs --minify",
     "prepublishOnly": "npm run clean && npm run build && npm run bundle:min && npm run generate:schema && npm test",
-    "test:ci": "vitest run"
+    "test:ci": "vitest run",
+    "audit:signatures": "npx --yes npm@11.19.1 audit signatures"
   },
   "keywords": [
     "cli",
