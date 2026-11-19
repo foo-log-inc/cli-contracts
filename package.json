@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.35.2",
+  "version": "0.35.3",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -78,8 +78,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
-    "agent-contracts": "^0.34.14",
-    "agent-contracts-runtime": "^0.36.15",
+    "agent-contracts": "^0.35.13",
+    "agent-contracts-runtime": "^0.36.17",
     "ajv": "^8.17.1",
     "commander": "^14.0.3",
     "esbuild": "^0.28.2",
