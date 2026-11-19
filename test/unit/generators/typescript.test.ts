@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { join, resolve } from "node:path";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -474,5 +474,37 @@ components:
     const output = generateTypeScript(ctx);
 
     expect(output["types.ts"]).toContain("Base & { extra?: string }");
+  });
+
+  it("contract.ts embeds the contract with the same YAML semantics as the contract parser", async () => {
+    const base = await readFile(resolve(FIXTURES, "valid-contract.yaml"), "utf-8");
+    const contractYaml =
+      base +
+      [
+        "",
+        "x-meta:",
+        "  released: 2024-01-01",
+        "  label: 日本語のラベル",
+        "  empty: ~",
+        "  defaults: &defaults { retries: 1 }",
+        "  merged:",
+        "    <<: *defaults",
+        "",
+      ].join("\n");
+    const doc = parseContractString(contractYaml, "inline.yaml");
+    const output = generateTypeScript(normalizeContract(doc), { contractYaml });
+
+    const literal = /export const CONTRACT_JSON_STR: string = (".*");/.exec(output["contract.ts"]);
+    expect(literal).not.toBeNull();
+    const embedded = JSON.parse(JSON.parse(literal![1]));
+
+    expect(embedded.info).toEqual(doc.info);
+    expect(embedded["x-meta"]).toEqual({
+      released: "2024-01-01",
+      label: "日本語のラベル",
+      empty: null,
+      defaults: { retries: 1 },
+      merged: { "<<": { retries: 1 } },
+    });
   });
 });
