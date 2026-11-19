@@ -72,6 +72,10 @@
   "bugs": {
     "url": "https://github.com/foo-log-inc/cli-contracts/issues"
   },
+  "dependencies": {
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
   "devDependencies": {
     "@types/node": "^20.19.43",
     "agent-contracts": "^0.34.14",
@@ -82,9 +86,7 @@
     "handlebars": "^4.7.10",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.12",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.7"
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=20.0.0"
