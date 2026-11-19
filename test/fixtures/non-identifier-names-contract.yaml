@@ -1,0 +1,50 @@
+cli_contracts: 0.1.0
+info:
+  title: Non-identifier names CLI
+  version: 0.1.0
+  description: Names and values that are not TypeScript identifiers or plain string literals.
+command_sets:
+  names-cli:
+    summary: Names that the generated source has to quote or escape.
+    commands:
+      my-group:
+        summary: A group whose name has a hyphen.
+        exits:
+          '0':
+            description: Success.
+      my-group.sub:
+        summary: A command nested under the hyphenated group.
+        options:
+          - name: mode
+            schema:
+              type: string
+              enum: ['say "hi"; then stop', 'C:\temp']
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Header'
+components:
+  schemas:
+    Header:
+      type: object
+      required: [content-type]
+      properties:
+        content-type:
+          type: string
+        nested:
+          type: object
+          properties:
+            x-request-id:
+              type: string
+    Extended:
+      allOf:
+        - $ref: '#/components/schemas/Header'
+        - type: object
+          properties:
+            cache-control:
+              type: string
+    Quoted:
+      enum: ['say "hi"; then stop', 'C:\temp']

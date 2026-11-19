@@ -60,11 +60,7 @@ export async function runProposeTests(
     auditOptions,
   );
 
-  const output = auditResult.data ?? {
-    summary: auditResult.errorMessage ?? "Test proposal completed",
-    risk_level: "low",
-    findings: [],
-  };
+  const output = auditResult.data;
 
   if (options.output) {
     const content = options.reportFormat === "text"

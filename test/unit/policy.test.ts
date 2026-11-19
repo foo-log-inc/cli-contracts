@@ -249,6 +249,34 @@ describe("derivePolicy", () => {
       });
       expect(result.requires_confirmation).toBe(true);
     });
+
+    it("an active option that requires confirmation is not undone by the command's false", () => {
+      const result = derivePolicy({
+        command_id: "cmd",
+        command_effects: { risk_level: "low", requires_confirmation: false },
+        options: makeInput(
+          "delete",
+          makeOption({ name: "delete", schema: { type: "boolean" }, effects: { risk_level: "critical", requires_confirmation: true } }),
+          true,
+          true,
+        ),
+      });
+      expect(result.risk_level).toBe("critical");
+      expect(result.requires_confirmation).toBe(true);
+    });
+
+    it("does not depend on the order the options are declared in", () => {
+      const quiet = makeOption({ name: "quiet", schema: { type: "boolean" }, effects: { requires_confirmation: false } });
+      const force = makeOption({ name: "force", schema: { type: "boolean" }, effects: { risk_level: "critical", requires_confirmation: true } });
+      const derive = (defs: Option[]) =>
+        derivePolicy({
+          command_id: "cmd",
+          options: Object.fromEntries(defs.map((d) => [d.name, { value: true, specified: true, definition: d }])),
+        });
+
+      expect(derive([quiet, force]).requires_confirmation).toBe(derive([force, quiet]).requires_confirmation);
+      expect(derive([quiet, force]).requires_confirmation).toBe(true);
+    });
   });
 
   describe("file contract → option-file effects", () => {

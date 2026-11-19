@@ -60,18 +60,25 @@ export async function runAudit(
     throw Object.assign(err as Error, { exitCode: EXIT_ADAPTER_ERROR });
   }
 
+  // A task that did not complete has no result to report: it ends as the
+  // adapter error the contract declares, not as a run without findings.
   const outcome = result.outcome;
-  return {
-    taskId,
-    data: outcome.status === "success" ? outcome.data : null,
-    raw: (outcome.raw as string) ?? "",
-    prompt: userRequest,
-    status: outcome.status as AuditRunResult["status"],
-    errorMessage:
+  if (outcome.status !== "success") {
+    const reason =
       outcome.status === "error" ? outcome.message :
       outcome.status === "escalation" ? outcome.reason :
       outcome.status === "validation_error" ? outcome.errors?.message :
-      undefined,
+      undefined;
+    throw Object.assign(
+      new Error(`The ${taskId} task ended with ${outcome.status}${reason ? `: ${reason}` : ""}`),
+      { exitCode: EXIT_ADAPTER_ERROR },
+    );
+  }
+  return {
+    taskId,
+    data: outcome.data,
+    raw: (outcome.raw as string) ?? "",
+    prompt: userRequest,
     followUpsUsed: result.follow_ups_used,
     retriesUsed: result.retries_used,
   };

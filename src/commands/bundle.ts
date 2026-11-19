@@ -104,11 +104,7 @@ export async function runBundle(
     auditOptions,
   );
 
-  const output = auditResult.data ?? {
-    summary: auditResult.errorMessage ?? "Bundle configuration generated",
-    risk_level: "low",
-    findings: [],
-  };
+  const output = auditResult.data;
 
   if (options.output) {
     const content = options.reportFormat === "text"

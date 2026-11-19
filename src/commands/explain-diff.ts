@@ -69,11 +69,7 @@ export async function runExplainDiff(
     auditOptions,
   );
 
-  const output = auditResult.data ?? {
-    summary: auditResult.errorMessage ?? "Diff explanation completed",
-    risk_level: diffResult.has_breaking_changes ? "high" : "low",
-    findings: [],
-  };
+  const output = auditResult.data;
 
   if (options.output) {
     const content = options.reportFormat === "text"

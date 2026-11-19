@@ -507,4 +507,37 @@ components:
       merged: { "<<": { retries: 1 } },
     });
   });
+
+  it("fails the generation for a contract name that cannot be a TypeScript identifier", () => {
+    const contract = (schemaName: string, commandId: string) =>
+      normalizeContract(
+        parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      ${JSON.stringify(commandId)}:
+        summary: S.
+        exits:
+          '0':
+            description: OK.
+components:
+  schemas:
+    ${JSON.stringify(schemaName)}:
+      type: string
+`),
+      );
+
+    expect(() => generateTypeScript(contract("Bad Name", "run"))).toThrow(
+      /"Bad Name" is not a TypeScript identifier/,
+    );
+    expect(() => generateTypeScript(contract("Good", "run now"))).toThrow(
+      /"run now" is not a TypeScript identifier/,
+    );
+    // Letters, digits and the separators . _ - keep generating.
+    expect(() => generateTypeScript(contract("Good", "db.run-now_x"))).not.toThrow();
+  });
 });

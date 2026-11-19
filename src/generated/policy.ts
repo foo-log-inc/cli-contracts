@@ -14,6 +14,56 @@ export const commandDefinitions = {
     },
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "name",
         "schema": {
           "type": "string"
@@ -55,6 +105,56 @@ export const commandDefinitions = {
   },
   "version-sync": {
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "file",
         "schema": {
@@ -103,6 +203,56 @@ export const commandDefinitions = {
   "validate": {
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "file",
         "schema": {
           "type": "string"
@@ -145,6 +295,56 @@ export const commandDefinitions = {
   "resolve": {
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "file",
         "schema": {
           "type": "string"
@@ -178,6 +378,56 @@ export const commandDefinitions = {
       ]
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "file",
         "schema": {
@@ -243,6 +493,56 @@ export const commandDefinitions = {
     },
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "file",
         "schema": {
           "type": "string"
@@ -300,6 +600,56 @@ export const commandDefinitions = {
     },
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "profile",
         "schema": {
           "type": "string"
@@ -347,6 +697,56 @@ export const commandDefinitions = {
   },
   "diff": {
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "base",
         "schema": {
@@ -412,6 +812,56 @@ export const commandDefinitions = {
       }
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "file",
         "schema": {
@@ -523,6 +973,56 @@ export const commandDefinitions = {
     },
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "file",
         "schema": {
           "type": "string"
@@ -630,6 +1130,56 @@ export const commandDefinitions = {
   "extract": {
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "file",
         "schema": {
           "type": "string"
@@ -687,6 +1237,56 @@ export const commandDefinitions = {
       }
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "file",
         "schema": {
@@ -797,6 +1397,56 @@ export const commandDefinitions = {
       }
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "base",
         "schema": {
@@ -915,6 +1565,56 @@ export const commandDefinitions = {
       }
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "file",
         "schema": {
@@ -1038,6 +1738,56 @@ export const commandDefinitions = {
       }
     },
     "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
       {
         "name": "from-readme",
         "schema": {
@@ -1172,6 +1922,56 @@ export const commandDefinitions = {
     },
     "options": [
       {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
         "name": "project-dir",
         "schema": {
           "type": "string",
@@ -1258,6 +2058,58 @@ export const commandDefinitions = {
     }
   },
   "agents": {
+    "options": [
+      {
+        "name": "config",
+        "schema": {
+          "type": "string",
+          "default": "cli-contracts.config.yaml"
+        },
+        "file": {
+          "mode": "read",
+          "exists": false,
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "verbose",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "format",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "yaml",
+            "json"
+          ],
+          "default": "yaml"
+        }
+      },
+      {
+        "name": "quiet",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      {
+        "name": "version",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      {
+        "name": "help",
+        "schema": {
+          "type": "boolean"
+        }
+      }
+    ],
     "env": {
       "GEMINI_API_KEY": {
         "sensitive": true

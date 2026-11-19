@@ -33,7 +33,7 @@ export const BUILTIN_EXTRACT_OPTIONS: Option[] = [
 
 export function contextHasEffects(ctx: NormalizedContext): boolean {
   return ctx.command_sets.some((cs) =>
-    cs.commands.some((cmd) => Boolean(cmd.effects) || cmd.options.some((opt) => Boolean(opt.effects))),
+    cs.commands.some((cmd) => Boolean(cmd.effects) || cmd.all_options.some((opt) => Boolean(opt.effects))),
   );
 }
 

@@ -114,6 +114,7 @@ describe("generated TypeScript compiles under a strict consumer tsconfig", () =>
     "strict-typecheck-contract.yaml",
     "valid-contract.yaml",
     "valid-contract-with-effects.yaml",
+    "non-identifier-names-contract.yaml",
   ];
 
   for (const fixture of FIXTURES_UNDER_TEST) {
@@ -126,6 +127,23 @@ describe("generated TypeScript compiles under a strict consumer tsconfig", () =>
       expect(diagnostics.join("\n")).toBe("");
     });
   }
+
+  it("writes contract names and values that are not identifiers as quoted keys and string literals", async () => {
+    await generateInto(tmpDir, "non-identifier-names-contract.yaml");
+    const types = await readFile(join(tmpDir, "types.ts"), "utf-8");
+
+    // A module of types only: nothing from the contract reaches it as code.
+    const emitted = ts.transpileModule(types, {
+      compilerOptions: { module: ts.ModuleKind.ESNext, removeComments: true },
+    }).outputText;
+    expect(emitted.trim()).toBe("export {};");
+    // Each enum value keeps its exact characters.
+    const quoted = ['say "hi"; then stop', "C:\\temp"].map((v) => JSON.stringify(v)).join(" | ");
+    expect(types).toContain(`export type Quoted = ${quoted};`);
+    expect(types).toContain('  "content-type": string;');
+    expect(types).toContain('"x-request-id"?: string');
+    expect(types).toContain('  "cache-control"?: string;');
+  });
 
   it("merges allOf branches that re-declare a base property", async () => {
     await generateInto(tmpDir, "strict-typecheck-contract.yaml");
