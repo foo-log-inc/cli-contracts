@@ -2,7 +2,7 @@
 
 Contract definition for the cli-contracts command line tool itself. This is a self-referential contract: cli-contracts defines its own interface using the CLI Contracts specification.
 
-**Version:** 0.35.3
+**Version:** 0.35.4
 
 ## Table of Contents
 
