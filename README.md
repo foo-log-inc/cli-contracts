@@ -961,7 +961,7 @@ $ tool lint --fix --introspect
 
 Policy derivation rules:
 - `risk_level` = `max(command.risk_level, ...active_options.risk_level)`
-- `requires_confirmation` = `true` when `risk_level >= high` (with explicit override)
+- `requires_confirmation` = `true` when the command or any active option asks for confirmation; each asks by its own `requires_confirmation`, or by its own `risk_level >= high` when it does not declare one (an explicit `false` lowers only its own part)
 - `side_effects` = union of `file_write` (from writes/file.mode) and `network` (from network effects)
 - `idempotent` = `true` only if all semantic writes AND all network effects are explicitly `idempotent: true`; implicitly `true` for read-only commands
 

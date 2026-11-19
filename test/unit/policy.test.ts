@@ -277,6 +277,26 @@ describe("derivePolicy", () => {
       expect(derive([quiet, force]).requires_confirmation).toBe(derive([force, quiet]).requires_confirmation);
       expect(derive([quiet, force]).requires_confirmation).toBe(true);
     });
+
+    it("an option's false lowers only its own part", () => {
+      const quiet = makeOption({ name: "quiet", schema: { type: "boolean" }, effects: { requires_confirmation: false } });
+      const force = makeOption({ name: "force", schema: { type: "boolean" }, effects: { risk_level: "critical" } });
+      const active = (defs: Option[]) =>
+        Object.fromEntries(defs.map((d) => [d.name, { value: true, specified: true, definition: d }]));
+
+      // force asks by its risk level; quiet's false does not undo it.
+      expect(derivePolicy({ command_id: "cmd", options: active([quiet, force]) }).requires_confirmation).toBe(true);
+      // A critical command asks for confirmation whatever an active option declares.
+      expect(
+        derivePolicy({ command_id: "cmd", command_effects: { risk_level: "critical" }, options: active([quiet]) })
+          .requires_confirmation,
+      ).toBe(true);
+      // A command's explicit false still lowers its own part when nothing else asks.
+      expect(
+        derivePolicy({ command_id: "cmd", command_effects: { risk_level: "high", requires_confirmation: false }, options: active([quiet]) })
+          .requires_confirmation,
+      ).toBe(false);
+    });
   });
 
   describe("file contract → option-file effects", () => {
