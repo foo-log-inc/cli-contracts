@@ -92,11 +92,7 @@ export async function runCheckReference(
       auditOptions,
     );
 
-    const output = (auditResult.data ?? {
-      summary: auditResult.errorMessage ?? `${prompt.scope} check completed`,
-      risk_level: "low",
-      findings: [],
-    }) as Record<string, unknown>;
+    const output = auditResult.data as Record<string, unknown>;
 
     const findings = output.findings as Array<Record<string, unknown>> | undefined;
     if (findings) {

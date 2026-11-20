@@ -60,7 +60,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("init", opts);
+        const policy = deriveCommandPolicy("init", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -76,7 +76,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("version-sync", opts);
+        const policy = deriveCommandPolicy("version-sync", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -93,7 +93,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("validate", opts);
+        const policy = deriveCommandPolicy("validate", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -107,7 +107,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("resolve", opts);
+        const policy = deriveCommandPolicy("resolve", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -125,7 +125,7 @@ export function createProgram(
     .action(async (generators, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("generate", opts);
+        const policy = deriveCommandPolicy("generate", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -141,7 +141,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("docs", opts);
+        const policy = deriveCommandPolicy("docs", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -159,7 +159,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("test", opts);
+        const policy = deriveCommandPolicy("test", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -179,7 +179,7 @@ export function createProgram(
     .action(async (old, newArg, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("diff", opts);
+        const policy = deriveCommandPolicy("diff", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -201,7 +201,7 @@ export function createProgram(
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("propose-agent-policy", opts);
+        const policy = deriveCommandPolicy("propose-agent-policy", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -229,7 +229,7 @@ export function createProgram(
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("audit", opts);
+        const policy = deriveCommandPolicy("audit", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -252,7 +252,7 @@ export function createProgram(
     .action(async (commands, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("extract", opts);
+        const policy = deriveCommandPolicy("extract", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -274,7 +274,7 @@ export function createProgram(
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("propose-tests", opts);
+        const policy = deriveCommandPolicy("propose-tests", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -304,7 +304,7 @@ export function createProgram(
     .action(async (old, newArg, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("explain-diff", opts);
+        const policy = deriveCommandPolicy("explain-diff", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -332,7 +332,7 @@ export function createProgram(
     .action(async (contract, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("check-reference", opts);
+        const policy = deriveCommandPolicy("check-reference", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -360,7 +360,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("suggest", opts);
+        const policy = deriveCommandPolicy("suggest", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -386,7 +386,7 @@ export function createProgram(
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("bundle", opts);
+        const policy = deriveCommandPolicy("bundle", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }
@@ -401,10 +401,10 @@ export function createProgram(
   program
     .command("agents")
     .description("Output the full resolved agent DSL as structured data.")
-    .action(async (opts, cmd) => {
+    .action(async (_opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       if (globalOpts.introspect) {
-        const policy = deriveCommandPolicy("agents", opts);
+        const policy = deriveCommandPolicy("agents", globalOpts);
         console.log(JSON.stringify(policy, null, 2));
         return;
       }

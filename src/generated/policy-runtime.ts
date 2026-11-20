@@ -149,6 +149,15 @@ function maxRiskLevel(...levels: RiskLevel[]): RiskLevel {
   return max;
 }
 
+/**
+ * Whether one source of effects (the command, or an active option) asks for
+ * confirmation: its explicit requires_confirmation, or else its own risk level
+ * at high or above. A source's false lowers only its own part.
+ */
+function sourceRequiresConfirmation(effects: Effects): boolean {
+  return effects.requires_confirmation ?? RISK_ORDER[effects.risk_level ?? "low"] >= RISK_ORDER.high;
+}
+
 // ─── Active Determination ───────────────────────────────────────
 
 export function isOptionActive(
@@ -201,7 +210,8 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
   const networkEffects: DerivedNetworkEffect[] = [];
   const riskLevels: RiskLevel[] = [];
   let executionMode: ExecutionMode | undefined;
-  let explicitConfirmation: boolean | undefined;
+  // The command and each active option ask for confirmation on their own; one that asks is enough.
+  let requiresConfirmation = false;
 
   // Every derived write, and only a write, puts file_write among the side effects.
   const addWrite = (write: DerivedWriteEffect): void => {
@@ -212,6 +222,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
   if (input.command_effects) {
     const ce = input.command_effects;
     riskLevels.push(ce.risk_level ?? "low");
+    if (sourceRequiresConfirmation(ce)) requiresConfirmation = true;
 
     if (ce.writes) {
       for (const w of ce.writes) {
@@ -241,10 +252,6 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
 
     if (ce.execution_mode) {
       executionMode = ce.execution_mode;
-    }
-
-    if (ce.requires_confirmation !== undefined) {
-      explicitConfirmation = ce.requires_confirmation;
     }
   }
 
@@ -280,6 +287,7 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
     if (definition.effects) {
       const eff = definition.effects;
       riskLevels.push(eff.risk_level ?? "low");
+      if (sourceRequiresConfirmation(eff)) requiresConfirmation = true;
 
       if (eff.writes) {
         for (const w of eff.writes) {
@@ -310,19 +318,11 @@ export function derivePolicy(input: PolicyDerivationInput): DerivedPolicy {
       if (eff.execution_mode && !executionMode) {
         executionMode = eff.execution_mode;
       }
-
-      if (eff.requires_confirmation !== undefined && explicitConfirmation === undefined) {
-        explicitConfirmation = eff.requires_confirmation;
-      }
     }
   }
 
   const finalRiskLevel =
     riskLevels.length > 0 ? maxRiskLevel(...riskLevels) : "low";
-
-  const requiresConfirmation =
-    explicitConfirmation ??
-    (finalRiskLevel === "high" || finalRiskLevel === "critical");
 
   let requiresSecrets: string[] | undefined;
   if (input.env) {

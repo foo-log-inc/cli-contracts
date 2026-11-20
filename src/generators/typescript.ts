@@ -111,7 +111,7 @@ function generateTypes(ctx: NormalizedContext): string {
 
   if (ctx.components.schemas) {
     for (const [name, schema] of Object.entries(ctx.components.schemas)) {
-      generateSchemaType(name, schema, lines);
+      generateSchemaType(identifier(name, name), schema, lines);
     }
   }
 
@@ -124,7 +124,7 @@ function generateCommandTypes(
   lines: string[],
   components: Components,
 ): void {
-  const prefix = toPascalCase(cmd.id);
+  const prefix = commandTypeName(cmd);
 
   // Arguments type
   if (cmd.arguments.length > 0) {
@@ -132,7 +132,7 @@ function generateCommandTypes(
     for (const arg of cmd.arguments) {
       const optional = arg.required ? "" : "?";
       const tsType = arg.variadic ? "string[]" : jsonSchemaToTs(arg.schema);
-      lines.push(`  ${toCamelCase(arg.name)}${optional}: ${tsType};`);
+      lines.push(`  ${propertyName(toCamelCase(arg.name))}${optional}: ${tsType};`);
     }
     lines.push("}");
     lines.push("");
@@ -230,8 +230,8 @@ function generateCommandFunction(
   cs: NormalizedCommandSet,
   lines: string[],
 ): void {
-  const funcName = toCamelCase(cmd.full_id);
-  const prefix = toPascalCase(cmd.id);
+  const funcName = identifier(toCamelCase(cmd.full_id), cmd.full_id);
+  const prefix = commandTypeName(cmd);
   const hasArgs = cmd.arguments.length > 0;
   const hasOpts = cmd.options.length > 0;
 
@@ -246,11 +246,11 @@ function generateCommandFunction(
 
   if (hasArgs) {
     for (const arg of cmd.arguments) {
-      const name = toCamelCase(arg.name);
+      const value = propertyAccess("args", toCamelCase(arg.name));
       if (arg.variadic) {
-        lines.push(`  if (args.${name}) cmdArgs.push(...args.${name});`);
+        lines.push(`  if (${value}) cmdArgs.push(...${value});`);
       } else {
-        lines.push(`  if (args.${name} !== undefined) cmdArgs.push(String(args.${name}));`);
+        lines.push(`  if (${value} !== undefined) cmdArgs.push(String(${value}));`);
       }
     }
   }
@@ -260,12 +260,13 @@ function generateCommandFunction(
     for (const opt of cmd.options) {
       const { long, negated, key } = optionFlags(opt);
       const value = propertyAccess("options", key);
+      const longFlag = JSON.stringify(long);
       if (negated) {
-        lines.push(`    if (${value} !== undefined) cmdArgs.push(${value} ? "${long}" : "${negated}");`);
+        lines.push(`    if (${value} !== undefined) cmdArgs.push(${value} ? ${longFlag} : ${JSON.stringify(negated)});`);
       } else if (opt.schema?.type === "boolean") {
-        lines.push(`    if (${value}) cmdArgs.push("${long}");`);
+        lines.push(`    if (${value}) cmdArgs.push(${longFlag});`);
       } else {
-        lines.push(`    if (${value} !== undefined) cmdArgs.push("${long}", String(${value}));`);
+        lines.push(`    if (${value} !== undefined) cmdArgs.push(${longFlag}, String(${value}));`);
       }
     }
     lines.push("  }");
@@ -300,16 +301,16 @@ function generateSchemas(ctx: NormalizedContext): string {
 
   lines.push("export const schemas = {");
   for (const [name, schema] of Object.entries(ctx.components.schemas)) {
-    lines.push(`  ${name}: ${JSON.stringify(schema, null, 2).replace(/\n/g, "\n  ")},`);
+    lines.push(`  ${propertyName(name)}: ${JSON.stringify(schema, null, 2).replace(/\n/g, "\n  ")},`);
   }
   lines.push("} as const;");
   lines.push("");
 
   for (const cs of ctx.command_sets) {
     for (const cmd of cs.commands) {
-      const prefix = toPascalCase(cmd.id);
       const exitCodes = cmd.exits.map((e) => e.exit_code);
-      lines.push(`export const ${toCamelCase(cmd.id)}ExitCodes = [${exitCodes.join(", ")}] as const;`);
+      const constName = identifier(`${toCamelCase(cmd.id)}ExitCodes`, cmd.id);
+      lines.push(`export const ${constName} = [${exitCodes.join(", ")}] as const;`);
     }
   }
   lines.push("");
@@ -330,7 +331,7 @@ function generateSchemaType(
     for (const [prop, propSchema] of Object.entries(schema.properties)) {
       const opt = required.has(prop) ? "" : "?";
       const tsType = jsonSchemaToTs(propSchema);
-      lines.push(`  ${prop}${opt}: ${tsType};`);
+      lines.push(`  ${propertyName(prop)}${opt}: ${tsType};`);
     }
     lines.push("}");
     lines.push("");
@@ -339,7 +340,7 @@ function generateSchemaType(
     lines.push("");
   } else if (schema.enum) {
     const values = schema.enum.map((v) =>
-      typeof v === "string" ? `"${v}"` : String(v),
+      typeof v === "string" ? JSON.stringify(v) : String(v),
     );
     lines.push(`export type ${name} = ${values.join(" | ")};`);
     lines.push("");
@@ -388,7 +389,7 @@ function generateAllOfSchemaType(
         prop.tsTypes.length === 1
           ? prop.tsTypes[0]
           : prop.tsTypes.map((t) => `(${t})`).join(" & ");
-      lines.push(`  ${key}${opt}: ${tsType};`);
+      lines.push(`  ${propertyName(key)}${opt}: ${tsType};`);
     }
     lines.push("}");
     lines.push("");
@@ -417,7 +418,7 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
 
   if (schema.enum) {
     return schema.enum
-      .map((v) => (typeof v === "string" ? `"${v}"` : String(v)))
+      .map((v) => (typeof v === "string" ? JSON.stringify(v) : String(v)))
       .join(" | ");
   }
 
@@ -437,7 +438,7 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
         const props = Object.entries(schema.properties)
           .map(([k, v]) => {
             const opt = required.has(k) ? "" : "?";
-            return `${k}${opt}: ${jsonSchemaToTs(v)}`;
+            return `${propertyName(k)}${opt}: ${jsonSchemaToTs(v)}`;
           })
           .join("; ");
         return `{ ${props} }`;
@@ -456,7 +457,8 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
 
 function refToTypeName(ref: string): string {
   const parts = ref.split("/");
-  return parts[parts.length - 1];
+  const name = parts[parts.length - 1];
+  return identifier(name, name);
 }
 
 // An id or name as an identifier: its `.`-, `-`- and `_`-separated words
@@ -495,7 +497,27 @@ const JS_RESERVED = new Set([
 
 function safeIdentifier(name: string): string {
   const camel = toCamelCase(name);
-  return JS_RESERVED.has(camel) ? `${camel}Arg` : camel;
+  return identifier(JS_RESERVED.has(camel) ? `${camel}Arg` : camel, name);
+}
+
+/** A TypeScript identifier, Unicode letters included. */
+const TS_IDENTIFIER = /^[\p{ID_Start}$_][\p{ID_Continue}$‌‍]*$/u;
+
+/**
+ * The name the generated source declares (a type, function, parameter or
+ * variable) for a contract name. It is written into the source as code, so a
+ * contract name that does not give an identifier fails the generation.
+ */
+function identifier(name: string, contractName: string): string {
+  if (TS_IDENTIFIER.test(name) && !JS_RESERVED.has(name)) return name;
+  throw new Error(
+    `Cannot generate TypeScript: ${JSON.stringify(contractName)} is not a TypeScript identifier (as ${JSON.stringify(name)})`,
+  );
+}
+
+/** The prefix of the types generated for a command. */
+function commandTypeName(cmd: NormalizedCommand): string {
+  return identifier(toPascalCase(cmd.id), cmd.id);
 }
 
 // ─── program.ts generator ───────────────────────────────────────
@@ -552,9 +574,8 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   lines.push("export interface CommandHandlers {");
   for (const cs of ctx.command_sets) {
     for (const cmd of cs.commands) {
-      const handlerName = toCamelCase(cmd.id);
       const sig = buildHandlerSignature(cmd);
-      lines.push(`  ${handlerName}: ${sig};`);
+      lines.push(`  ${propertyName(toCamelCase(cmd.id))}: ${sig};`);
     }
   }
   lines.push("}");
@@ -686,7 +707,15 @@ interface CommandRegistrationState {
 }
 
 function commandParentVarName(prefixSegments: string[]): string {
-  return `__cmd_${prefixSegments.join("_")}`;
+  return commandPathVarName("__cmd_", prefixSegments);
+}
+
+/**
+ * The variable that holds the commander command at a path. Each segment's
+ * hyphens are joined by the same camelCase rule as an option's key.
+ */
+function commandPathVarName(prefix: string, segments: string[]): string {
+  return identifier(`${prefix}${segments.map(camelCase).join("_")}`, segments.join("."));
 }
 
 function prefixKey(segments: string[]): string {
@@ -739,7 +768,7 @@ function generateProgramCommand(
   hasEffects: boolean = false,
   registrationState?: CommandRegistrationState,
 ): void {
-  const handlerName = toCamelCase(cmd.id);
+  const handler = propertyAccess("handlers", toCamelCase(cmd.id));
   const path = cmd.path;
   const state = registrationState ?? { createdPrefixes: new Set(), ancestorPrefixes: new Set(), groups: {} };
   const receiver =
@@ -770,7 +799,7 @@ function generateProgramCommand(
     // subcommand, and one only the parent declares is unknown to the
     // subcommand. The group's help lists the default subcommand's options.
     const groupVar = commandParentVarName(path);
-    const selfVar = `__self_${path.join("_")}`;
+    const selfVar = commandPathVarName("__self_", path);
     if (!state.createdPrefixes.has(key)) {
       lines.push(`  const ${groupVar} = ${receiver}.command(${JSON.stringify(commandName)});`);
       state.createdPrefixes.add(key);
@@ -808,7 +837,7 @@ function generateProgramCommand(
   // commander passes (...args, opts, cmd) positionally, so opts stays declared
   // even when the body reads nothing from it. Underscore keeps that declaration
   // out of the way of the consumer's noUnusedParameters.
-  const optsParam = hasOpts || hasEffects ? "opts" : "_opts";
+  const optsParam = hasOpts ? "opts" : "_opts";
   const actionParams = [...argSafeNames, optsParam, "cmd"];
 
   lines.push(
@@ -818,7 +847,7 @@ function generateProgramCommand(
   if (hasEffects) {
     lines.push("      const globalOpts = cmd.optsWithGlobals();");
     lines.push(`      if (${propertyAccess("globalOpts", optionFlags(INTROSPECT_OPTION).key)}) {`);
-    lines.push(`        const policy = deriveCommandPolicy(${JSON.stringify(cmd.id)}, opts);`);
+    lines.push(`        const policy = deriveCommandPolicy(${JSON.stringify(cmd.id)}, globalOpts);`);
     lines.push("        console.log(JSON.stringify(policy, null, 2));");
     lines.push("        return;");
     lines.push("      }");
@@ -833,7 +862,7 @@ function generateProgramCommand(
   if (isLlm) {
     lines.push(`      if (${propertyAccess("opts", optionFlags(SHOW_PROMPT_OPTION).key)}) {`);
     lines.push(
-      `        const prompt = await handlers.${handlerName}(${callArgs.join(", ")});`,
+      `        const prompt = await ${handler}(${callArgs.join(", ")});`,
     );
     lines.push("        if (typeof prompt === \"string\") process.stdout.write(prompt + \"\\n\");");
     lines.push("        return;");
@@ -841,7 +870,7 @@ function generateProgramCommand(
   }
 
   lines.push(
-    `      await handlers.${handlerName}(${callArgs.join(", ")});`,
+    `      await ${handler}(${callArgs.join(", ")});`,
   );
   lines.push("    });");
   lines.push("");
@@ -901,8 +930,10 @@ function generatePolicyModule(ctx: NormalizedContext): string {
         cmdDef.effects = cmd.effects;
       }
 
+      // An invocation's options are its command set's global options and the
+      // command's own; the policy derives from every one given.
       const optionDefs: Record<string, unknown>[] = [];
-      for (const opt of cmd.options) {
+      for (const opt of cmd.all_options) {
         const optDef: Record<string, unknown> = {
           name: opt.name,
         };
@@ -1027,7 +1058,7 @@ function generateBuiltinExtractCommand(
   lines.push("        } else {");
   lines.push("          // YAML output");
   lines.push("          const yamlLines: string[] = [];");
-  lines.push(`          yamlLines.push("# ${executable} extract");`);
+  lines.push(`          yamlLines.push(${JSON.stringify(`# ${executable} extract`)});`);
   lines.push(`          yamlLines.push("# source: embedded");`);
   lines.push(`          yamlLines.push("# type: cli-contracts/command-extract");`);
   lines.push("          if (opts.includeMeta) {");

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { parseContractFile } from "../../src/parser.js";
+import { parseContractFile, parseContractString } from "../../src/parser.js";
 import { normalizeContract } from "../../src/normalizer.js";
 import { generateTypeScript } from "../../src/generators/typescript.js";
 import { build } from "esbuild";
@@ -357,5 +357,74 @@ command_sets:
 
     expect(await extract()).toHaveProperty("_meta");
     expect(await extract("--no-include-meta")).not.toHaveProperty("_meta");
+  }, 60000);
+
+  it("--introspect derives the policy from the global options given with the command", async () => {
+    const contractYaml = `cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    global_options:
+      - name: force
+        schema:
+          type: boolean
+        effects:
+          risk_level: critical
+          requires_confirmation: true
+      - name: log-file
+        schema:
+          type: string
+        file:
+          mode: write
+    commands:
+      deploy:
+        summary: Deploy.
+        effects:
+          risk_level: low
+        exits:
+          '0':
+            description: OK.
+`;
+    const ctx = normalizeContract(parseContractString(contractYaml));
+    const output = generateTypeScript(ctx, { contractYaml });
+
+    const srcDir = join(tmpDir, "src");
+    await mkdir(srcDir, { recursive: true });
+    for (const [filename, content] of Object.entries(output)) {
+      await writeFile(join(srcDir, filename), content, "utf-8");
+    }
+    await writeFile(
+      join(srcDir, "main.ts"),
+      'import { createProgram } from "./program.js";\ncreateProgram({ async deploy() {} }, "1.0.0").parse();\n',
+      "utf-8",
+    );
+    const bin = join(tmpDir, "main.cjs");
+    await build({
+      entryPoints: [join(srcDir, "main.ts")],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile: bin,
+      nodePaths: [resolve(import.meta.dirname, "../../node_modules")],
+      logLevel: "silent",
+    });
+    const introspect = async (...args: string[]) =>
+      JSON.parse((await execFileAsync(process.execPath, [bin, ...args, "--introspect"])).stdout);
+
+    const forced = await introspect("--force", "--log-file", "out.log", "deploy");
+    expect(forced.active_options).toEqual(["force", "log-file"]);
+    expect(forced.policy.risk_level).toBe("critical");
+    expect(forced.policy.requires_confirmation).toBe(true);
+    expect(forced.policy.side_effects).toEqual(["file_write"]);
+    expect(forced.policy.writes).toEqual([
+      { kind: "option-file", option: "log-file", path: "out.log", mode: "write", source: "option:log-file" },
+    ]);
+
+    const plain = await introspect("deploy");
+    expect(plain.active_options).toEqual([]);
+    expect(plain.policy.risk_level).toBe("low");
+    expect(plain.policy.requires_confirmation).toBe(false);
   }, 60000);
 });

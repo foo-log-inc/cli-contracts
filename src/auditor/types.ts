@@ -15,11 +15,9 @@ export interface AuditOptions {
 export interface AuditRunResult {
   taskId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any | null;
+  data: any;
   raw: string;
   prompt: string;
-  status: "success" | "validation_error" | "escalation" | "error";
-  errorMessage?: string;
   followUpsUsed: number;
   retriesUsed: number;
 }

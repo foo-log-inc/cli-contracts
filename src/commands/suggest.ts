@@ -69,11 +69,7 @@ export async function runSuggest(
     auditOptions,
   );
 
-  const output = auditResult.data ?? {
-    summary: auditResult.errorMessage ?? "Suggestion completed",
-    risk_level: "low",
-    findings: [],
-  };
+  const output = auditResult.data;
 
   if (options.output) {
     const content = options.reportFormat === "yaml"
@@ -84,8 +80,7 @@ export async function runSuggest(
     await writeFile(resolve(options.output), content, "utf8");
   }
 
-  const exitCode = auditResult.status === "error" ? 1 : 0;
-  return { result: output, exitCode };
+  return { result: output, exitCode: 0 };
 }
 
 function formatTextOutput(result: Record<string, unknown>): string {
