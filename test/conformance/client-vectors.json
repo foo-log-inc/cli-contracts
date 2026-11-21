@@ -1,0 +1,175 @@
+[
+  {
+    "contract": "acme.yaml",
+    "command": "users.import",
+    "args": {
+      "file": "a b.csv"
+    },
+    "options": {
+      "dryRun": true,
+      "format": "tsv",
+      "tag": [
+        "x",
+        "y z"
+      ],
+      "color": false,
+      "noCache": true,
+      "limit": 5,
+      "report": "r.txt",
+      "all": false
+    },
+    "exitCode": 3,
+    "stdout": "<users>\n<import>\n<a b.csv>\n<--dry-run>\n<--format>\n<tsv>\n<--tag>\n<x>\n<--tag>\n<y z>\n<--no-color>\n<--no-cache>\n<--limit>\n<5>\n<--report>\n<r.txt>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "users.import",
+    "args": {
+      "file": "b.csv"
+    },
+    "exitCode": 3,
+    "stdout": "<users>\n<import>\n<b.csv>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "users.import",
+    "args": {
+      "file": "c.csv"
+    },
+    "options": {
+      "color": true,
+      "tag": []
+    },
+    "exitCode": 3,
+    "stdout": "<users>\n<import>\n<c.csv>\n<--color>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "users.remove",
+    "args": {
+      "ids": [
+        "1",
+        "-2"
+      ]
+    },
+    "options": {
+      "force": true
+    },
+    "exitCode": 3,
+    "stdout": "<users>\n<remove>\n<1>\n<-2>\n<--force>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "users",
+    "options": {
+      "all": true
+    },
+    "exitCode": 3,
+    "stdout": "<users>\n<--all>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "config.get",
+    "args": {
+      "key": "k"
+    },
+    "exitCode": 3,
+    "stdout": "<config>\n<get>\n<k>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "config.get",
+    "args": {
+      "key": "k",
+      "fallback": "f"
+    },
+    "exitCode": 3,
+    "stdout": "<config>\n<get>\n<k>\n<f>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "db.migrate.up",
+    "options": {
+      "to": "5",
+      "step": 2
+    },
+    "exitCode": 3,
+    "stdout": "<db>\n<migrate>\n<up>\n<--to>\n<5>\n<--step>\n<2>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "command": "ask",
+    "args": {
+      "question": "why?"
+    },
+    "options": {
+      "adapter": "claude"
+    },
+    "exitCode": 3,
+    "stdout": "<ask>\n<why?>\n<--adapter>\n<claude>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "fmt.yaml",
+    "command": "format",
+    "args": {
+      "files": [
+        "a.go"
+      ]
+    },
+    "options": {
+      "check": true,
+      "width": 80,
+      "exclude": [
+        "x"
+      ],
+      "indent": 2.5,
+      "lang": [
+        "go",
+        "rs"
+      ]
+    },
+    "exitCode": 3,
+    "stdout": "<a.go>\n<--check>\n<--width>\n<80>\n<--exclude>\n<x>\n<--indent>\n<2.5>\n<--lang>\n<go>\n<--lang>\n<rs>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "fmt.yaml",
+    "command": "format",
+    "args": {
+      "files": []
+    },
+    "options": {
+      "indent": 0.000001,
+      "width": -3
+    },
+    "exitCode": 3,
+    "stdout": "<--width>\n<-3>\n<--indent>\n<0.000001>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "fmt.yaml",
+    "command": "version-info",
+    "exitCode": 3,
+    "stdout": "<version-info>\n",
+    "stderr": "stderr line\n"
+  },
+  {
+    "contract": "fmt.yaml",
+    "command": "extract",
+    "args": {
+      "source": "s"
+    },
+    "exitCode": 3,
+    "stdout": "<extract>\n<s>\n",
+    "stderr": "stderr line\n"
+  }
+]

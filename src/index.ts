@@ -106,4 +106,8 @@ export { resolveRefs, collectRefs, validateRefs } from "./ref-resolver.js";
 export { normalizeContract } from "./normalizer.js";
 export { generateMarkdown } from "./generators/markdown.js";
 export { generateTypeScript } from "./generators/typescript.js";
+export { generateGo } from "./generators/go.js";
+export { generateRust } from "./generators/rust.js";
+export { generatePython } from "./generators/python.js";
+export { generatePhp } from "./generators/php.js";
 export { derivePolicy, isOptionActive, buildIntrospection } from "./policy.js";

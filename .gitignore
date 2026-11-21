@@ -12,3 +12,8 @@ npm-debug.log*
 .aidev/
 .aidev.json
 .observ/
+test/conformance/out/
+target/
+__pycache__/
+*.egg-info/
+vendor/

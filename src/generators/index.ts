@@ -8,6 +8,10 @@ import type {
 } from "../types.js";
 import { generateMarkdown } from "./markdown.js";
 import { generateTypeScript } from "./typescript.js";
+import { generateGo } from "./go.js";
+import { generateRust } from "./rust.js";
+import { generatePython } from "./python.js";
+import { generatePhp } from "./php.js";
 import {
   loadGeneratorManifest,
   renderCustomTemplates,
@@ -84,12 +88,46 @@ async function runSingleGenerator(
     return runTypeScriptGenerator(ctx, outputPath, options, dryRun, contractYaml);
   }
 
-  if (templates === "builtin:rust") {
-    // Rust generator is a future extension
-    throw new Error("Rust generator is not yet implemented");
+  const language = LANGUAGE_GENERATORS[templates];
+  if (language) {
+    return writeFiles(outputPath, language(ctx, options, contractYaml), dryRun);
   }
 
   return runCustomGenerator(templates, ctx, outputPath, options, dryRun);
+}
+
+function requiredOption(options: Record<string, unknown>, name: string, templates: string): string {
+  const value = options[name];
+  if (typeof value !== "string" || value === "") {
+    throw new Error(`${templates} needs options.${name}`);
+  }
+  return value;
+}
+
+/** The generators of the languages whose programs run on a cli-contracts runtime. */
+const LANGUAGE_GENERATORS: Record<
+  string,
+  (ctx: NormalizedContext, options: Record<string, unknown>, contractYaml?: string) => Record<string, string>
+> = {
+  "builtin:go": (ctx, options, contractYaml) =>
+    generateGo(ctx, { package: requiredOption(options, "package", "builtin:go"), contractYaml }),
+  "builtin:rust": (ctx, _options, contractYaml) => generateRust(ctx, { contractYaml }),
+  "builtin:python": (ctx, _options, contractYaml) => generatePython(ctx, { contractYaml }),
+  "builtin:php": (ctx, options, contractYaml) =>
+    generatePhp(ctx, { namespace: requiredOption(options, "namespace", "builtin:php"), contractYaml }),
+};
+
+async function writeFiles(outputPath: string, output: Record<string, string>, dryRun: boolean): Promise<string[]> {
+  const files: string[] = [];
+  for (const [filename, content] of Object.entries(output)) {
+    const filePath = resolve(outputPath, filename);
+    files.push(filePath);
+    if (!dryRun) {
+      await mkdir(dirname(filePath), { recursive: true });
+      await writeFile(filePath, content, "utf-8");
+    }
+  }
+  return files;
 }
 
 async function runMarkdownGenerator(
@@ -127,17 +165,7 @@ async function runTypeScriptGenerator(
     contractYaml,
   });
 
-  const files: string[] = [];
-  for (const [filename, content] of Object.entries(output)) {
-    const filePath = resolve(outputPath, filename);
-    files.push(filePath);
-    if (!dryRun) {
-      await mkdir(dirname(filePath), { recursive: true });
-      await writeFile(filePath, content, "utf-8");
-    }
-  }
-
-  return files;
+  return writeFiles(outputPath, output, dryRun);
 }
 
 async function runCustomGenerator(

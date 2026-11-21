@@ -1,6 +1,6 @@
 import Handlebars from "handlebars";
 import { readFile } from "node:fs/promises";
-import { resolve, dirname, basename } from "node:path";
+import { resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { NormalizedContext } from "../types.js";
 import { toCamelCase, toPascalCase } from "./typescript.js";

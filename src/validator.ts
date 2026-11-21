@@ -39,7 +39,6 @@ import type {
 } from "./types.js";
 import {
   XAgentSchema,
-  EffectsSchema,
   CommandSchema,
   CommandSetSchema,
   ArgumentSchema,
@@ -677,6 +676,23 @@ function validateOptions(
           path: optPath,
           message: `Option "${opt.name}" uses ${spelling}, which option "${owner}" already uses`,
           rule: "conflicting-option-flag",
+          severity: "error",
+        });
+      }
+    }
+
+    // The program passes a boolean option's value as true or false and any
+    // other option's as the string given, so a default is one of them too.
+    const def = opt.schema?.default;
+    if (def !== undefined) {
+      const isBoolean = opt.schema?.type === "boolean";
+      if (isBoolean !== (typeof def === "boolean")) {
+        diagnostics.push({
+          path: `${optPath}/schema/default`,
+          message: isBoolean
+            ? `The default of boolean option "${opt.name}" must be true or false`
+            : `Option "${opt.name}" takes a value; its default must not be true or false`,
+          rule: "option-default-type",
           severity: "error",
         });
       }

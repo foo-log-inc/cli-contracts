@@ -1,6 +1,6 @@
 import * as yaml from "yaml";
 import type { CliContractsDocument } from "../types.js";
-import type { DiffResult, DiffChange } from "../types.js";
+import type { DiffResult } from "../types.js";
 import { optionSpellings } from "../option-flags.js";
 
 /**

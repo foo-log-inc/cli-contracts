@@ -156,4 +156,26 @@ describe("generate integration", () => {
 
     await expect(readFile(outputPath, "utf-8")).rejects.toThrow();
   });
+
+  it.each([
+    ["builtin:go", { package: "cli" }, ["program.go", "types.go", "commands.go", "schemas.go"]],
+    ["builtin:rust", {}, ["mod.rs", "program.rs", "types.rs", "commands.rs", "schemas.rs"]],
+    ["builtin:python", {}, ["__init__.py", "program.py", "types.py", "commands.py", "schemas.py"]],
+    ["builtin:php", { namespace: "App\\Cli" }, ["CommandHandlers.php", "Program.php", "Types.php", "Commands.php", "Schemas.php"]],
+  ])("%s generates its program, types, command wrappers and schemas", async (templates, options, expected) => {
+    const ctx = normalizeContract(resolveRefs(await parseContractFile(resolve(FIXTURES, "valid-contract.yaml"))));
+    const outputDir = join(tmpDir, "out");
+    const result = await runGenerators(ctx, { cli: { enabled: true, output: outputDir, templates, options } });
+    expect(result.generators[0]).toMatchObject({ status: "success" });
+    expect(await readdir(outputDir)).toEqual(expect.arrayContaining(expected));
+  });
+
+  it.each([
+    ["builtin:go", "package"],
+    ["builtin:php", "namespace"],
+  ])("%s fails without options.%s", async (templates, option) => {
+    const ctx = normalizeContract(resolveRefs(await parseContractFile(resolve(FIXTURES, "valid-contract.yaml"))));
+    const result = await runGenerators(ctx, { cli: { enabled: true, output: join(tmpDir, "out"), templates } });
+    expect(result.generators[0]).toMatchObject({ status: "failed", error: `${templates} needs options.${option}` });
+  });
 });

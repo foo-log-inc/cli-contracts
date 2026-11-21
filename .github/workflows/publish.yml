@@ -17,7 +17,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      # A workflow_run event otherwise checks out the default branch's head at run time,
+      # which is not the Release's commit once main moved on during the release run.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

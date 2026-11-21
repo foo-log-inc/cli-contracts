@@ -39,6 +39,9 @@ export function createProgram(
   options: ProgramOptions = {},
 ): Command {
   const program = new Command();
+  // Help wraps at 80 columns on a terminal too, as the programs generated for
+  // the other languages write it. Subcommands inherit the setting.
+  program.configureOutput({ getOutHelpWidth: () => 80, getErrHelpWidth: () => 80 });
   program
     .name("cli-contracts")
     .version(version, "-V, --version")

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.36.0
+
+### 機能
+
+- Go・Rust・Python・PHP の generator を追加した（`builtin:go`・`builtin:rust`・`builtin:python`・`builtin:php`）。各言語の生成物は、TypeScript の生成物と同じく program（command の tree と handler の interface）・型・command wrapper・JSON Schema の定数・policy の導出・built-in `extract`・契約の埋め込み（`cli-contracts generate` で生成した場合）を持つ。`builtin:go` は `options.package`、`builtin:php` は `options.namespace` を必須とする。
+- 各言語の生成物が使う runtime を追加した。生成した program の argument・option の parse、usage error、help の出力、exit code、`--introspect`・`--show-prompt`・`extract` の出力は、同じ契約から生成した TypeScript の program（commander）と一致する。runtime は third-party の依存関係を持たない。
+  - Go: module `github.com/foo-log-inc/cli-contracts/go`（import path `github.com/foo-log-inc/cli-contracts/go/cli_contracts_runtime`、tag `go/v0.36.0`）
+  - Rust: crate `cli_contracts_runtime`（crates.io）
+  - Python: `cli-contracts-runtime`（PyPI、import 名 `cli_contracts_runtime`）
+  - PHP: `cli-contracts/runtime`（namespace `CliContracts\Runtime`。Packagist に publish しない）
+- 生成の仕様を、言語に依存しない model（`src/generators/cli-model.ts`・`commander-tree.ts`・`runtime-spec.ts`・`type-model.ts`）に集約した。TypeScript の generator もこの model を描画する。
+- `commander` を dependencies に移した（生成時に help を描画するため）。
+
+### 挙動の変更
+
+- TypeScript の generator が出力する `program.ts` は、help を stdout・stderr が端末である場合も 80 桁で折り返す（`program.configureOutput({ getOutHelpWidth: () => 80, getErrHelpWidth: () => 80 })`。subcommand はこの設定を継承する）。これまでは、端末では端末の桁数で折り返していた。stdout・stderr が端末でない場合の出力は変わらない。help の出力を、ほかの言語の生成物と同一にするための変更である。
+- validator は、boolean の option の `schema.default` が true・false でない場合と、値を取る option の `schema.default` が true・false である場合を error（`option-default-type`）とする。該当する既存の契約は `validate`・`generate` で失敗する。これまでは、生成した program の handler が型と異なる値を受け取っていた。
+
+### 修正
+
+- TypeScript の `types.ts` の `<Cmd>Options` は、repeatable な option を要素の型の配列（例: `rule?: ("strict" | "loose")[]`）とし、`commands.ts` の command wrapper は各値を flag と組にして渡す（`--rule strict --rule loose`）。これまでは単一の値の型とし、配列を渡すと `"strict,loose"` という 1 つの値になっていた。
+- TypeScript の型は、配列の要素の型が複数の member を持つ場合に括弧を付ける（`("a" | "b")[]`）。これまでは `"a" | "b"[]` という別の型になっていた。
+- 自身の action を持つ group（ほかの command が入れ子になる path の command）の後に登録した subcommand の help と、未知の option の候補が、その subcommand ではなく group の default subcommand の option を表示していた点を修正した。group の help だけが default subcommand の option を表示する。
+- repeatable な option の `schema.default` を、生成した program は文字列のまま handler に渡していた点を修正した。default は要素が 1 つの配列（例: `["go"]`）として渡り、help は `(default: ["go"])` と表示する。値を指定した場合は、従来どおり指定した値だけが渡る。
+
 ## 0.35.4
 
 ### 挙動の変更（確認を要求する側への変更）

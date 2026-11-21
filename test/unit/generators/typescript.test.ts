@@ -541,3 +541,46 @@ components:
     expect(() => generateTypeScript(contract("Good", "db.run-now_x"))).not.toThrow();
   });
 });
+
+describe("generateTypeScript types and command wrappers", () => {
+  const ctx = normalizeContract(
+    parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      lint:
+        summary: Lint.
+        options:
+          - name: rule
+            repeatable: true
+            schema:
+              type: string
+              enum: [strict, loose]
+        exits:
+          '0':
+            description: OK.
+            stdout:
+              format: json
+              schema:
+                type: array
+                items:
+                  enum: [ok, warn]
+`),
+  );
+  const output = generateTypeScript(ctx);
+
+  it("types a repeatable option as an array of its values and gives each value with the flag", () => {
+    expect(output["types.ts"]).toContain('rule?: ("strict" | "loose")[];');
+    expect(output["commands.ts"]).toContain(
+      'if (options.rule !== undefined) for (const v of options.rule) cmdArgs.push("--rule", String(v));',
+    );
+  });
+
+  it("parenthesizes an array's element type of several members", () => {
+    expect(output["types.ts"]).toContain('stdout: ("ok" | "warn")[]');
+  });
+});

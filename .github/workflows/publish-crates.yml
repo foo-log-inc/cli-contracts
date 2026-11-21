@@ -1,0 +1,70 @@
+name: Publish Runtime to crates.io
+
+# Publishes the Rust runtime crate (`cli_contracts_runtime`) when the GitHub
+# Release of the version is created. A Release created with the default
+# GITHUB_TOKEN does not trigger other workflows, so this chains off the "GitHub
+# Release" workflow. The job publishes only a version crates.io does not have,
+# so a re-run is safe.
+#
+# Requires the repository secret CARGO_REGISTRY_TOKEN (scope publish-update, and
+# publish-new for the first upload).
+
+on:
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["GitHub Release"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      # A workflow_run event otherwise checks out the default branch's head at run time,
+      # which is not the Release's commit once main moved on during the release run.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Decide whether a crates.io publish is needed
+        id: need
+        run: |
+          VERSION=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "cli_contracts_runtime") | .version')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # crates.io requires a User-Agent; without it the API answers 403.
+          CODE=$(curl -s -A "cli-contracts-ci (https://github.com/foo-log-inc/cli-contracts)" \
+            -o /dev/null -w '%{http_code}' "https://crates.io/api/v1/crates/cli_contracts_runtime/$VERSION")
+          if [ "$CODE" = "200" ]; then
+            echo "cli_contracts_runtime $VERSION is already on crates.io"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package check (dry-run)
+        if: steps.need.outputs.publish == 'true'
+        run: cargo publish -p cli_contracts_runtime --dry-run
+
+      - name: Publish cli_contracts_runtime
+        if: steps.need.outputs.publish == 'true'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p cli_contracts_runtime

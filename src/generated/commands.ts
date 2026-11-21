@@ -41,7 +41,7 @@ export async function cliContractsVersionSync(
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["version-sync"];
   if (options) {
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.file !== undefined) for (const v of options.file) cmdArgs.push("--file", String(v));
     if (options.packageFile !== undefined) cmdArgs.push("--package-file", String(options.packageFile));
     if (options.check) cmdArgs.push("--check");
   }
@@ -65,7 +65,7 @@ export async function cliContractsValidate(
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["validate"];
   if (options) {
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.file !== undefined) for (const v of options.file) cmdArgs.push("--file", String(v));
     if (options.strict) cmdArgs.push("--strict");
     if (options.resolveRefs !== undefined) cmdArgs.push(options.resolveRefs ? "--resolve-refs" : "--no-resolve-refs");
   }
@@ -113,7 +113,7 @@ export async function cliContractsGenerate(
   const cmdArgs: string[] = ["generate"];
   if (args.generators) cmdArgs.push(...args.generators);
   if (options) {
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.file !== undefined) for (const v of options.file) cmdArgs.push("--file", String(v));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.dryRun) cmdArgs.push("--dry-run");
     if (options.clean) cmdArgs.push("--clean");
@@ -138,7 +138,7 @@ export async function cliContractsDocs(
 ): Promise<ExecResult> {
   const cmdArgs: string[] = ["docs"];
   if (options) {
-    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.file !== undefined) for (const v of options.file) cmdArgs.push("--file", String(v));
     if (options.output !== undefined) cmdArgs.push("--output", String(options.output));
     if (options.dryRun) cmdArgs.push("--dry-run");
   }
@@ -163,7 +163,7 @@ export async function cliContractsTest(
   const cmdArgs: string[] = ["test"];
   if (options) {
     if (options.profile !== undefined) cmdArgs.push("--profile", String(options.profile));
-    if (options.case !== undefined) cmdArgs.push("--case", String(options.case));
+    if (options.case !== undefined) for (const v of options.case) cmdArgs.push("--case", String(v));
     if (options.casesDir !== undefined) cmdArgs.push("--cases-dir", String(options.casesDir));
     if (options.timeout !== undefined) cmdArgs.push("--timeout", String(options.timeout));
     if (options.bail) cmdArgs.push("--bail");
@@ -251,7 +251,7 @@ export async function cliContractsAudit(
   if (args.contract !== undefined) cmdArgs.push(String(args.contract));
   if (options) {
     if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
-    if (options.checks !== undefined) cmdArgs.push("--checks", String(options.checks));
+    if (options.checks !== undefined) for (const v of options.checks) cmdArgs.push("--checks", String(v));
     if (options.adapter !== undefined) cmdArgs.push("--adapter", String(options.adapter));
     if (options.model !== undefined) cmdArgs.push("--model", String(options.model));
     if (options.showPrompt) cmdArgs.push("--show-prompt");

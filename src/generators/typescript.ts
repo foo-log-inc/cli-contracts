@@ -7,23 +7,30 @@ import type {
   NormalizedCommandSet,
   NormalizedCommand,
   NormalizedExit,
-  Option,
-  Argument,
   JsonSchema,
   Components,
 } from "../types.js";
 import { optionFlags, optionTakesManyValues } from "../option-flags.js";
 import { camelCase } from "../policy-runtime.js";
 import {
-  BUILTIN_EXTRACT_OPTIONS,
   INTROSPECT_OPTION,
   SHOW_PROMPT_OPTION,
   commandIsLlmPowered,
   commandOptions,
   contextHasEffects,
-  hasBuiltinExtract,
-  programGlobalOptions,
 } from "../program-options.js";
+import { schemaType, type TypeExpr } from "./type-model.js";
+import {
+  buildPolicyDefinitions,
+  buildProgramModel,
+  type ArgumentRegistration,
+  type CommandStep,
+  type ExtractStep,
+  type GroupStep,
+  type OptionRegistration,
+  type ProgramModel,
+  HELP_WIDTH,
+} from "./cli-model.js";
 
 export interface TypeScriptGeneratorOptions {
   emitTypes?: boolean;
@@ -60,7 +67,7 @@ export function generateTypeScript(
   };
 
   if (emitProgram) {
-    output["program.ts"] = generateProgram(ctx, contractYaml);
+    output["program.ts"] = generateProgram(ctx, buildProgramModel(ctx, contractYaml !== undefined));
   }
 
   if (hasExtract && contractYaml) {
@@ -143,7 +150,9 @@ function generateCommandTypes(
     lines.push(`export interface ${prefix}Options {`);
     for (const opt of cmd.options) {
       const optional = opt.required ? "" : "?";
-      const tsType = jsonSchemaToTs(opt.schema);
+      // A repeatable option is given once for each of its values.
+      const item = schemaType(opt.schema);
+      const tsType = typeToTs(optionTakesManyValues(opt) ? { kind: "array", items: item } : item);
       lines.push(`  ${propertyName(optionFlags(opt).key)}${optional}: ${tsType};`);
     }
     lines.push("}");
@@ -265,6 +274,8 @@ function generateCommandFunction(
         lines.push(`    if (${value} !== undefined) cmdArgs.push(${value} ? ${longFlag} : ${JSON.stringify(negated)});`);
       } else if (opt.schema?.type === "boolean") {
         lines.push(`    if (${value}) cmdArgs.push(${longFlag});`);
+      } else if (optionTakesManyValues(opt)) {
+        lines.push(`    if (${value} !== undefined) for (const v of ${value}) cmdArgs.push(${longFlag}, String(v));`);
       } else {
         lines.push(`    if (${value} !== undefined) cmdArgs.push(${longFlag}, String(${value}));`);
       }
@@ -403,26 +414,29 @@ function generateAllOfSchemaType(
 }
 
 function jsonSchemaToTs(schema?: JsonSchema): string {
-  if (!schema) return "unknown";
-  if (schema.$ref) return refToTypeName(schema.$ref);
+  return typeToTs(schemaType(schema));
+}
 
-  if (schema.oneOf) {
-    return schema.oneOf.map(jsonSchemaToTs).join(" | ");
-  }
-  if (schema.anyOf) {
-    return schema.anyOf.map(jsonSchemaToTs).join(" | ");
-  }
-  if (schema.allOf) {
-    return schema.allOf.map(jsonSchemaToTs).join(" & ");
-  }
+/** A type TypeScript writes with `|` or `&`. */
+function isCompound(type: TypeExpr): boolean {
+  return (
+    ((type.kind === "union" || type.kind === "intersection") && type.members.length > 1) ||
+    (type.kind === "literals" && type.values.length > 1)
+  );
+}
 
-  if (schema.enum) {
-    return schema.enum
-      .map((v) => (typeof v === "string" ? JSON.stringify(v) : String(v)))
-      .join(" | ");
-  }
-
-  switch (schema.type) {
+function typeToTs(type: TypeExpr): string {
+  switch (type.kind) {
+    case "unknown":
+      return "unknown";
+    case "ref":
+      return identifier(type.name, type.name);
+    case "union":
+      return type.members.map(typeToTs).join(" | ");
+    case "intersection":
+      return type.members.map(typeToTs).join(" & ");
+    case "literals":
+      return type.values.map((v) => (typeof v === "string" ? JSON.stringify(v) : String(v))).join(" | ");
     case "string":
       return "string";
     case "integer":
@@ -431,27 +445,12 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
     case "boolean":
       return "boolean";
     case "array":
-      return `${jsonSchemaToTs(schema.items)}[]`;
+      // An element type of several members is parenthesized: `("a" | "b")[]`.
+      return isCompound(type.items) ? `(${typeToTs(type.items)})[]` : `${typeToTs(type.items)}[]`;
     case "object":
-      if (schema.properties) {
-        const required = new Set(schema.required ?? []);
-        const props = Object.entries(schema.properties)
-          .map(([k, v]) => {
-            const opt = required.has(k) ? "" : "?";
-            return `${propertyName(k)}${opt}: ${jsonSchemaToTs(v)}`;
-          })
-          .join("; ");
-        return `{ ${props} }`;
-      }
-      if (
-        schema.additionalProperties === true ||
-        typeof schema.additionalProperties === "object"
-      ) {
-        return "Record<string, unknown>";
-      }
+      return `{ ${type.fields.map((f) => `${propertyName(f.name)}${f.optional ? "?" : ""}: ${typeToTs(f.type)}`).join("; ")} }`;
+    case "map":
       return "Record<string, unknown>";
-    default:
-      return "unknown";
   }
 }
 
@@ -522,36 +521,29 @@ function commandTypeName(cmd: NormalizedCommand): string {
 
 // ─── program.ts generator ───────────────────────────────────────
 
-function generateProgram(ctx: NormalizedContext, contractYaml?: string): string {
+function generateProgram(ctx: NormalizedContext, model: ProgramModel): string {
   const lines: string[] = [];
-  const hasEffects = contextHasEffects(ctx);
-  const injectExtract = contractYaml !== undefined && hasBuiltinExtract(ctx);
-  // Assumes single command set for program name; use first
-  const primaryCs = ctx.command_sets[0];
-  const registered = [
-    ...programGlobalOptions(ctx, primaryCs),
-    ...ctx.command_sets.flatMap((cs) => cs.commands.flatMap(commandOptions)),
-    ...(injectExtract ? BUILTIN_EXTRACT_OPTIONS : []),
-  ];
-  const keepsDeclaredNoName = registered.some((opt) => optionFlags(opt).noPrefixed);
+  const { hasEffects, hasExtract } = model;
 
   lines.push("// Auto-generated by cli-contracts. Do not edit.");
-  lines.push(
-    keepsDeclaredNoName
-      ? 'import { Command, Option, type CommanderError } from "commander";'
-      : 'import { Command, type CommanderError } from "commander";',
-  );
+  const commanderImports = [
+    "Command",
+    ...(model.steps.some((step) => step.kind === "command" && step.form === "self") ? ["Help"] : []),
+    ...(model.keepsDeclaredNoName ? ["Option"] : []),
+    "type CommanderError",
+  ];
+  lines.push(`import { ${commanderImports.join(", ")} } from "commander";`);
   if (hasEffects) {
     // The program body only derives policy. commandDefinitions stays internal to
     // policy.ts and reaches consumers through the index.ts re-export.
     lines.push('import { deriveCommandPolicy } from "./policy.js";');
   }
-  if (injectExtract) {
+  if (hasExtract) {
     lines.push('import { CONTRACT_YAML, CONTRACT_JSON_STR } from "./contract.js";');
   }
   lines.push("");
 
-  if (keepsDeclaredNoName) {
+  if (model.keepsDeclaredNoName) {
     lines.push("// commander reads a `--no-<x>` flag as negating `--<x>`. An option the");
     lines.push("// contract declares under a `no-` name keeps that name: its flag sets it.");
     lines.push("class DeclaredNameOption extends Option {");
@@ -600,46 +592,29 @@ function generateProgram(ctx: NormalizedContext, contractYaml?: string): string 
   lines.push("  options: ProgramOptions = {},");
   lines.push("): Command {");
   lines.push("  const program = new Command();");
+  lines.push("  // Help wraps at 80 columns on a terminal too, as the programs generated for");
+  lines.push("  // the other languages write it. Subcommands inherit the setting.");
+  lines.push(`  program.configureOutput({ getOutHelpWidth: () => ${HELP_WIDTH}, getErrHelpWidth: () => ${HELP_WIDTH} });`);
 
   lines.push(`  program`);
-  lines.push(`    .name(${JSON.stringify(primaryCs.executable)})`);
+  lines.push(`    .name(${JSON.stringify(model.executable)})`);
   lines.push(`    .version(version, "-V, --version")`);
-  lines.push(
-    `    .description(${JSON.stringify(primaryCs.summary ?? ctx.info.description ?? "")});`,
-  );
+  lines.push(`    .description(${JSON.stringify(model.description)});`);
   lines.push("");
 
-  for (const opt of programGlobalOptions(ctx, primaryCs)) {
-    // commander provides --version and --help itself.
-    const skipBuiltins = ["version", "help"];
-    if (skipBuiltins.includes(opt.name)) continue;
-    for (const call of optionRegistrations(opt)) {
-      lines.push(`  program.${call};`);
-    }
+  for (const reg of model.globalOptions) {
+    lines.push(`  program.${renderOptionRegistration(reg)};`);
   }
   lines.push("");
 
-  // Commands (nested paths register parent subcommands once)
-  const cmdRegistrationState: CommandRegistrationState = {
-    createdPrefixes: new Set(),
-    ancestorPrefixes: new Set(
-      ctx.command_sets.flatMap((cs) =>
-        cs.commands.flatMap((cmd) =>
-          cmd.path.slice(0, -1).map((_, i) => prefixKey(cmd.path.slice(0, i + 1))),
-        ),
-      ),
-    ),
-    groups: {},
-  };
-  for (const cs of ctx.command_sets) {
-    cmdRegistrationState.groups = cs.groups;
-    for (const cmd of cs.commands) {
-      generateProgramCommand(cmd, lines, hasEffects, cmdRegistrationState);
+  for (const step of model.steps) {
+    if (step.kind === "group") {
+      renderGroupStep(step, lines);
+    } else if (step.kind === "command") {
+      renderCommandStep(step, lines, hasEffects);
+    } else {
+      generateBuiltinExtractCommand(ctx, step, lines);
     }
-  }
-
-  if (injectExtract) {
-    generateBuiltinExtractCommand(ctx, lines);
   }
 
   // One handler for every command's argument errors, given once the whole
@@ -697,15 +672,6 @@ function buildHandlerSignature(cmd: NormalizedCommand): string {
   return `(${params.join(", ")}) => ${returnType}`;
 }
 
-interface CommandRegistrationState {
-  /** Paths whose commander command is already held in a `__cmd_*` variable. */
-  createdPrefixes: Set<string>;
-  /** Paths some command is nested under; their commander command must be held in a variable. */
-  ancestorPrefixes: Set<string>;
-  /** Parent command-group metadata for the active command set, keyed by dotted-path prefix. */
-  groups: Record<string, import("../schema.js").Group>;
-}
-
 function commandParentVarName(prefixSegments: string[]): string {
   return commandPathVarName("__cmd_", prefixSegments);
 }
@@ -718,122 +684,62 @@ function commandPathVarName(prefix: string, segments: string[]): string {
   return identifier(`${prefix}${segments.map(camelCase).join("_")}`, segments.join("."));
 }
 
-function prefixKey(segments: string[]): string {
-  return segments.join("\0");
+/** The variable a command at `path` is registered on: its parent group, or the program. */
+function receiverVarName(path: string[]): string {
+  return path.length <= 1 ? "program" : commandParentVarName(path.slice(0, -1));
 }
 
-/** Ensures ancestor subcommands exist; returns the receiver for the leaf command. */
-function ensureCommandAncestors(
-  path: string[],
-  state: CommandRegistrationState,
-  lines: string[],
-): string {
-  if (path.length <= 1) {
-    return "program";
-  }
-
-  for (let depth = 1; depth < path.length; depth++) {
-    const prefix = path.slice(0, depth);
-    const key = prefixKey(prefix);
-    if (state.createdPrefixes.has(key)) continue;
-
-    const segment = path[depth - 1]!;
-    const parentVar =
-      depth === 1 ? "program" : commandParentVarName(path.slice(0, depth - 1));
-    const varName = commandParentVarName(prefix);
-
-    // A groups entry keyed by this prefix's dotted path supplies a group-level
-    // description. When absent, output is byte-identical to prior behavior.
-    const group = state.groups[prefix.join(".")];
-    const groupDesc = group?.description ?? group?.summary;
-
-    if (groupDesc !== undefined) {
-      lines.push(
-        `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)}).description(${JSON.stringify(groupDesc)});`,
-      );
-    } else {
-      lines.push(
-        `  const ${varName} = ${parentVar}.command(${JSON.stringify(segment)});`,
-      );
-    }
-    state.createdPrefixes.add(key);
-  }
-
-  return commandParentVarName(path.slice(0, -1));
+function renderGroupStep(step: GroupStep, lines: string[]): void {
+  const segment = step.path[step.path.length - 1]!;
+  const create = `const ${commandParentVarName(step.path)} = ${receiverVarName(step.path)}.command(${JSON.stringify(segment)})`;
+  lines.push(
+    step.description === undefined
+      ? `  ${create};`
+      : `  ${create}.description(${JSON.stringify(step.description)});`,
+  );
 }
 
-function generateProgramCommand(
-  cmd: NormalizedCommand,
-  lines: string[],
-  hasEffects: boolean = false,
-  registrationState?: CommandRegistrationState,
-): void {
+function renderCommandStep(step: CommandStep, lines: string[], hasEffects: boolean): void {
+  const { command: cmd, llm } = step.action;
   const handler = propertyAccess("handlers", toCamelCase(cmd.id));
-  const path = cmd.path;
-  const state = registrationState ?? { createdPrefixes: new Set(), ancestorPrefixes: new Set(), groups: {} };
-  const receiver =
-    path.length === 1 ? "program" : ensureCommandAncestors(path, state, lines);
-  // An empty path means the command is invoked without a subcommand name.
-  // commander still needs a name to register it under, so the command id
-  // supplies one and the registration carries isDefault so it runs when no
-  // subcommand is given, and hidden so help keeps advertising the bare form.
-  const isDefaultCommand = path.length === 0;
-  const nameSegments = isDefaultCommand ? cmd.id.split(".") : path;
-  const commandName = nameSegments[nameSegments.length - 1];
-  if (commandName === undefined || commandName === "") {
-    throw new Error(`Command ${cmd.id} has no name to register`);
-  }
-  const commandArgs = isDefaultCommand
-    ? `${JSON.stringify(commandName)}, { isDefault: true, hidden: true }`
-    : JSON.stringify(commandName);
+  const receiver = receiverVarName(step.path);
+  const name = JSON.stringify(step.name);
 
-  const key = prefixKey(path);
-  if (isDefaultCommand || !state.ancestorPrefixes.has(key)) {
-    lines.push(`  ${receiver}`);
-    lines.push(`    .command(${commandArgs})`);
-  } else {
-    // A command other commands are nested under is a group (the variable
-    // ensureCommandAncestors uses, created by whichever comes first) whose own
-    // action runs as its hidden default subcommand. The group itself declares
-    // no options, so an option a subcommand shares with it by name reaches the
-    // subcommand, and one only the parent declares is unknown to the
-    // subcommand. The group's help lists the default subcommand's options.
-    const groupVar = commandParentVarName(path);
-    const selfVar = commandPathVarName("__self_", path);
-    if (!state.createdPrefixes.has(key)) {
-      lines.push(`  const ${groupVar} = ${receiver}.command(${JSON.stringify(commandName)});`);
-      state.createdPrefixes.add(key);
+  if (step.form === "self") {
+    const groupVar = commandParentVarName(step.path);
+    const selfVar = commandPathVarName("__self_", step.path);
+    if (step.createsGroup) {
+      lines.push(`  const ${groupVar} = ${receiver}.command(${name});`);
     }
-    lines.push(`  ${groupVar}.description(${JSON.stringify(cmd.summary)});`);
+    lines.push(`  ${groupVar}.description(${JSON.stringify(step.description)});`);
+    lines.push(`  const ${selfVar} = ${groupVar}.command(${name}, { isDefault: true, hidden: true });`);
     lines.push(
-      `  const ${selfVar} = ${groupVar}.command(${JSON.stringify(commandName)}, { isDefault: true, hidden: true });`,
-    );
-    lines.push(
-      `  ${groupVar}.configureHelp({ visibleOptions: () => ${selfVar}.createHelp().visibleOptions(${selfVar}) });`,
+      // The group's help lists the options of the default subcommand. commander
+      // gives the help configuration to every subcommand created after it, which
+      // lists its own.
+      `  ${groupVar}.configureHelp({ visibleOptions: (cmd) => new Help().visibleOptions(cmd === ${groupVar} ? ${selfVar} : cmd) });`,
     );
     lines.push(`  ${selfVar}`);
+  } else {
+    lines.push(`  ${receiver}`);
+    lines.push(
+      step.form === "default"
+        ? `    .command(${name}, { isDefault: true, hidden: true })`
+        : `    .command(${name})`,
+    );
   }
-  lines.push(`    .description(${JSON.stringify(cmd.summary)})`);
+  lines.push(`    .description(${JSON.stringify(step.description)})`);
 
-  // Arguments
-  for (const arg of cmd.arguments) {
-    const token = arg.variadic
-      ? arg.required ? `<${arg.name}...>` : `[${arg.name}...]`
-      : arg.required ? `<${arg.name}>` : `[${arg.name}]`;
-    const desc = JSON.stringify(arg.description ?? "");
-    lines.push(`    .argument(${JSON.stringify(token)}, ${desc})`);
+  for (const arg of step.arguments) {
+    lines.push(`    .argument(${JSON.stringify(argumentToken(arg))}, ${JSON.stringify(arg.description)})`);
   }
 
-  const options = commandOptions(cmd);
-  for (const opt of options) {
-    for (const call of optionRegistrations(opt)) {
-      lines.push(`    .${call}`);
-    }
+  for (const reg of step.options) {
+    lines.push(`    .${renderOptionRegistration(reg)}`);
   }
 
   const argSafeNames = cmd.arguments.map((a) => safeIdentifier(a.name));
-  const isLlm = commandIsLlmPowered(cmd);
-  const hasOpts = options.length > 0;
+  const hasOpts = step.options.length > 0;
   // commander passes (...args, opts, cmd) positionally, so opts stays declared
   // even when the body reads nothing from it. Underscore keeps that declaration
   // out of the way of the consumer's noUnusedParameters.
@@ -859,7 +765,7 @@ function generateProgramCommand(
     hasEffects ? "globalOpts" : "cmd.optsWithGlobals()",
   ];
 
-  if (isLlm) {
+  if (llm) {
     lines.push(`      if (${propertyAccess("opts", optionFlags(SHOW_PROMPT_OPTION).key)}) {`);
     lines.push(
       `        const prompt = await ${handler}(${callArgs.join(", ")});`,
@@ -876,31 +782,23 @@ function generateProgramCommand(
   lines.push("");
 }
 
-/**
- * The commander calls that register an option. A boolean whose default is true
- * also registers its `--no-<name>` form, so the value false can be given;
- * commander keeps the default of the positive form. An option whose name
- * starts with `no-` is a DeclaredNameOption, which keeps its declared name.
- */
-function optionRegistrations(opt: Option): string[] {
-  const { flags, negated, key, noPrefixed } = optionFlags(opt);
-  const desc = JSON.stringify(opt.description ?? "");
-  const def = opt.schema?.default;
-  const defValue = def === undefined ? undefined : commanderDefaultValue(def, opt.schema?.type);
-  const registration = noPrefixed
-    ? `addOption(new DeclaredNameOption(${JSON.stringify(flags)}, ${desc}, ${JSON.stringify(key)})${defValue === undefined ? "" : `.default(${defValue})`})`
-    : `option(${JSON.stringify(flags)}, ${desc}${defValue === undefined ? "" : `, ${defValue}`})`;
-  return negated === undefined ? [registration] : [registration, `option(${JSON.stringify(negated)})`];
+/** An argument as commander declares it: `<name>`, `[name]`, `<name...>` or `[name...]`. */
+export function argumentToken(arg: ArgumentRegistration): string {
+  const name = arg.variadic ? `${arg.name}...` : arg.name;
+  return arg.required ? `<${name}>` : `[${name}]`;
 }
 
-function commanderDefaultValue(
-  def: unknown,
-  schemaType?: string | string[],
-): string {
-  if (typeof def === "boolean") return JSON.stringify(def);
-  if (typeof def === "string") return JSON.stringify(def);
-  // Commander expects string defaults for non-boolean options
-  return JSON.stringify(String(def));
+/**
+ * The commander call of an option registration. An option declared under a
+ * `no-` name is a DeclaredNameOption, which keeps its declared name.
+ */
+function renderOptionRegistration(reg: OptionRegistration): string {
+  const def = reg.defaultValue === undefined ? undefined : JSON.stringify(reg.defaultValue);
+  if (reg.kind === "declared") {
+    return `addOption(new DeclaredNameOption(${JSON.stringify(reg.flags)}, ${JSON.stringify(reg.description)}, ${JSON.stringify(reg.key)})${def === undefined ? "" : `.default(${def})`})`;
+  }
+  if (reg.description === undefined) return `option(${JSON.stringify(reg.flags)})`;
+  return `option(${JSON.stringify(reg.flags)}, ${JSON.stringify(reg.description)}${def === undefined ? "" : `, ${def}`})`;
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -922,45 +820,8 @@ function generatePolicyModule(ctx: NormalizedContext): string {
   lines.push("");
 
   lines.push("export const commandDefinitions = {");
-  for (const cs of ctx.command_sets) {
-    for (const cmd of cs.commands) {
-      const cmdDef: Record<string, unknown> = {};
-
-      if (cmd.effects) {
-        cmdDef.effects = cmd.effects;
-      }
-
-      // An invocation's options are its command set's global options and the
-      // command's own; the policy derives from every one given.
-      const optionDefs: Record<string, unknown>[] = [];
-      for (const opt of cmd.all_options) {
-        const optDef: Record<string, unknown> = {
-          name: opt.name,
-        };
-        if (opt.schema) optDef.schema = opt.schema;
-        if (opt.file) optDef.file = opt.file;
-        if (opt.effects) optDef.effects = opt.effects;
-        if (opt.repeatable) optDef.repeatable = opt.repeatable;
-        optionDefs.push(optDef);
-      }
-      if (optionDefs.length > 0) {
-        cmdDef.options = optionDefs;
-      }
-
-      const envDef: Record<string, unknown> = {};
-      if (cs.env) {
-        for (const [envName, envVar] of Object.entries(cs.env)) {
-          if (envVar.sensitive) {
-            envDef[envName] = { sensitive: true };
-          }
-        }
-      }
-      if (Object.keys(envDef).length > 0) {
-        cmdDef.env = envDef;
-      }
-
-      lines.push(`  ${JSON.stringify(cmd.id)}: ${JSON.stringify(cmdDef, null, 2).replace(/\n/g, "\n  ")},`);
-    }
+  for (const [id, cmdDef] of buildPolicyDefinitions(ctx)) {
+    lines.push(`  ${JSON.stringify(id)}: ${JSON.stringify(cmdDef, null, 2).replace(/\n/g, "\n  ")},`);
   }
   lines.push("} as const;");
   lines.push("");
@@ -1011,6 +872,7 @@ function buildContractJson(
 
 function generateBuiltinExtractCommand(
   ctx: NormalizedContext,
+  step: ExtractStep,
   lines: string[],
 ): void {
   const executable = ctx.command_sets[0].executable;
@@ -1021,13 +883,13 @@ function generateBuiltinExtractCommand(
   lines.push("");
   lines.push("  // Built-in extract command (auto-injected by cli-contracts)");
   lines.push("  program");
-  lines.push('    .command("extract")');
-  lines.push('    .description("Extract contract specification for this CLI tool.")');
-  lines.push('    .argument("[commands...]", "Command IDs to extract. Use dot notation.")');
-  for (const opt of BUILTIN_EXTRACT_OPTIONS) {
-    for (const call of optionRegistrations(opt)) {
-      lines.push(`    .${call}`);
-    }
+  lines.push(`    .command(${JSON.stringify(step.name)})`);
+  lines.push(`    .description(${JSON.stringify(step.description)})`);
+  for (const arg of step.arguments) {
+    lines.push(`    .argument(${JSON.stringify(argumentToken(arg))}, ${JSON.stringify(arg.description)})`);
+  }
+  for (const reg of step.options) {
+    lines.push(`    .${renderOptionRegistration(reg)}`);
   }
   lines.push("    .action(async (commands: string[], opts: { all?: boolean; includeMeta?: boolean; format?: string }) => {");
   lines.push("      if (commands.length === 0 && !opts.all) {");
