@@ -546,6 +546,18 @@
     "variant": "plain",
     "argv": [
       "users",
+      "remove",
+      "-5\n"
+    ],
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "error: unknown option '-5\n'\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "variant": "plain",
+    "argv": [
+      "users",
       "import",
       "--",
       "-weird.csv"
@@ -1782,6 +1794,18 @@
     "exitCode": 2,
     "stdout": "",
     "stderr": "USAGE {\"code\":\"commander.excessArguments\",\"exitCode\":1,\"message\":\"error: too many arguments for 'import'. Expected 1 argument but got 2.\",\"command\":\"import\"}\n"
+  },
+  {
+    "contract": "acme.yaml",
+    "variant": "usage",
+    "argv": [
+      "users",
+      "remove",
+      "-5\n"
+    ],
+    "exitCode": 2,
+    "stdout": "",
+    "stderr": "USAGE {\"code\":\"commander.unknownOption\",\"exitCode\":1,\"message\":\"error: unknown option '-5\\n'\",\"command\":\"remove\"}\n"
   },
   {
     "contract": "acme.yaml",

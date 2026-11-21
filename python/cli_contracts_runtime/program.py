@@ -139,7 +139,7 @@ class _Exit(Exception):
         self.code = code
 
 
-_NEGATIVE_NUMBER = re.compile(r"^-(\d+|\d*\.\d+)(e[+-]?\d+)?$", re.ASCII)
+_NEGATIVE_NUMBER = re.compile(r"-(\d+|\d*\.\d+)(e[+-]?\d+)?\Z", re.ASCII)
 _LONG_WITH_VALUE = re.compile(r"^--[^=]+=")
 
 

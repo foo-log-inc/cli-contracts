@@ -60,6 +60,7 @@ export const CASES: ContractCases[] = [
       ["users", "import", "a.csv", "--no-cache"],
       ["users", "import", "a.csv", "--limit", "-5"],
       ["users", "import", "a.csv", "-5"],
+      ["users", "remove", "-5\n"],
       ["users", "import", "--", "-weird.csv"],
       ["users", "import", "a.csv", "--all"],
       ["users", "import", "a.csv", "--profile", "prod"],
