@@ -101,6 +101,15 @@ jobs:
           cargo fmt --all --check
           cargo clippy --all-targets -- -D warnings
           cargo package -p cli_contracts_runtime --allow-dirty
+      - name: Build the Rust runtime with the lowest version it declares (rust-version)
+        if: matrix.lang == 'rust'
+        working-directory: rust
+        # Cargo.lock is written in a format cargo 1.70 does not read; the runtime has no
+        # dependencies, so the check resolves without it.
+        run: |
+          rustup toolchain install 1.70.0 --profile minimal
+          rm Cargo.lock
+          cargo +1.70.0 build -p cli_contracts_runtime
       - name: Compile the Python runtime
         if: matrix.lang == 'python'
         run: python -m compileall -q python/cli_contracts_runtime

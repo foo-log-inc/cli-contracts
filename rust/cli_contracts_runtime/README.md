@@ -1,6 +1,6 @@
 # cli_contracts_runtime
 
-The runtime of the Rust programs and command wrappers [cli-contracts](https://github.com/foo-log-inc/cli-contracts) generates from a CLI contract (`templates: builtin:rust`). A generated program holds its command tree and handler trait; this crate parses an invocation over the tree by the same rules as the TypeScript program generated from the same contract (commander), and writes the same help, errors, `--introspect` policy and `extract` output.
+The runtime for the Rust programs and command wrappers that [cli-contracts](https://github.com/foo-log-inc/cli-contracts) generates from a CLI contract (`templates: builtin:rust`). A generated program holds its command tree and handler trait; this crate parses an invocation over the tree by the same rules as the TypeScript program generated from the same contract (which uses commander), and writes the same help, errors, `--introspect` policy and `extract` output.
 
 ```toml
 [dependencies]
@@ -42,7 +42,7 @@ impl cli::CommandHandlers for Handlers {
 
 fn main() {
     let options = rt::ProgramOptions {
-        // Optional: ends an invocation the program rejects with what the contract declares.
+        // Optional: for an invocation the program rejects, writes what the contract declares for invalid arguments and returns the exit code.
         on_usage_error: Some(Box::new(|err: &rt::UsageError, _command: &rt::Command| {
             eprintln!("{{\"code\":\"INVALID_ARGS\",\"message\":{}}}", rt::quote(&err.message));
             2
@@ -54,7 +54,7 @@ fn main() {
 
 An option a handler receives is `None` when it is not given and has no default. `parent_opts` holds the option values of the command and its ancestors, keyed as the program keys them (`dry-run` → `dryRun`). A command that takes `--adapter` returns `(exit_code, Option<prompt>)`; the program writes the prompt with `--show-prompt`.
 
-`Program::run(&argv, &mut stdout, &mut stderr)` runs an invocation without exiting and returns its exit code.
+`Program::run(&argv, &mut stdout, &mut stderr)` runs an invocation (`argv` without the program name) without exiting and returns its exit code.
 
 ## License
 

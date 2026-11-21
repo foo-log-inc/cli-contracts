@@ -1,6 +1,6 @@
 # cli-contracts-runtime
 
-The runtime of the Python programs and command wrappers [cli-contracts](https://github.com/foo-log-inc/cli-contracts) generates from a CLI contract (`templates: builtin:python`). A generated program holds its command tree and handler protocol; this package parses an invocation over the tree by the same rules as the TypeScript program generated from the same contract (commander), and writes the same help, errors, `--introspect` policy and `extract` output.
+The runtime for the Python programs and command wrappers that [cli-contracts](https://github.com/foo-log-inc/cli-contracts) generates from a CLI contract (`templates: builtin:python`). A generated program holds its command tree and handler protocol; this package parses an invocation over the tree by the same rules as the TypeScript program generated from the same contract (which uses commander), and writes the same help, errors, `--introspect` policy and `extract` output.
 
 ```bash
 pip install cli-contracts-runtime
@@ -39,7 +39,7 @@ class Handlers:
 
 
 def on_usage_error(err, command):
-    # Optional: ends an invocation the program rejects with what the contract declares.
+    # Optional: for an invocation the program rejects, writes what the contract declares for invalid arguments and returns the exit code.
     sys.stderr.write('{"code":"INVALID_ARGS","message":%s}\n' % cli_contracts_runtime.quote(err.message))
     return 2
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
 The options a handler receives are a dict of the options given or defaulted, keyed as the program keys them (`dry-run` → `dryRun`); `parent_opts` holds those of the command and its ancestors. A command that takes `--adapter` may return the prompt it built, or `(exit_code, prompt)`; the program writes the prompt with `--show-prompt`.
 
-`Program.run(argv, stdout, stderr)` runs an invocation without exiting and returns its exit code.
+`create_program` returns a `cli_contracts_runtime.Program`; its `run(argv, stdout, stderr)` runs an invocation (`argv` without the program name) without exiting and returns its exit code.
 
 ## License
 

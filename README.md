@@ -757,11 +757,11 @@ const program = createProgram(handlers, "1.0.0", {
 });
 ```
 
-The program wraps its help at 80 columns, on a terminal too, so its help is the same text as that of the programs generated for the other languages.
+The program wraps its help at 80 columns even when the output is a terminal, so that its help is identical to that of the programs generated for the other languages.
 
 ### Go, Rust, Python and PHP (`builtin:go`, `builtin:rust`, `builtin:python`, `builtin:php`)
 
-Generates, from the same contract, a program and the code around it in each language:
+Generates, from the same contract, a program, types, command wrappers and JSON Schema constants in each language:
 
 | File (Go / Rust / Python / PHP) | Contents |
 |---|---|
@@ -776,10 +776,10 @@ A program runs on the language's runtime, which parses an invocation by the same
 
 | Language | Runtime | Generator options |
 |---|---|---|
-| Go | module `github.com/foo-log-inc/cli-contracts/go` (package `cli_contracts_runtime`), Go 1.21 or later | `package` (required): the package name of the generated files |
+| Go | module `github.com/foo-log-inc/cli-contracts/go` (import path `github.com/foo-log-inc/cli-contracts/go/cli_contracts_runtime`), Go 1.21 or later | `package` (required): the package name of the generated files |
 | Rust | crate [`cli_contracts_runtime`](https://crates.io/crates/cli_contracts_runtime), Rust 1.70 or later | — (the generated files form a module: `mod.rs` and its submodules) |
 | Python | [`cli-contracts-runtime`](https://pypi.org/project/cli-contracts-runtime/) (import name `cli_contracts_runtime`), Python 3.9 or later | — (the generated files form a package: `__init__.py` and its modules) |
-| PHP | `cli-contracts/runtime` (namespace `CliContracts\Runtime`) in [`php/`](php/), PHP 8.1 or later; not published to Packagist | `namespace` (required): the namespace of the generated classes |
+| PHP | `cli-contracts/runtime` (namespace `CliContracts\Runtime`) in [`php/`](php/), PHP 8.1 or later with `ext-mbstring`; not published to Packagist | `namespace` (required): the namespace of the generated classes |
 
 ```yaml
 generators:
@@ -797,7 +797,7 @@ generators:
       namespace: App\Cli
 ```
 
-A handler receives the command's arguments, its own options as given (keyed as the TypeScript program keys them, `dry-run` → `dryRun`) and the option values of the command and its ancestors, and returns the exit code. The handler of a command that takes `--adapter` returns the prompt it built too, which the program writes with `--show-prompt`. See each runtime's README for an example: [Go](go/README.md), [Rust](rust/cli_contracts_runtime/README.md), [Python](python/README.md), [PHP](php/README.md).
+A handler receives the command's arguments, its own options, given or defaulted (keyed as the TypeScript program keys them, `dry-run` → `dryRun`) and the option values of the command and its ancestors, and returns the exit code. The handler of a command that takes `--adapter` returns the prompt it built too, which the program writes with `--show-prompt`. See each runtime's README for an example: [Go](go/README.md), [Rust](rust/cli_contracts_runtime/README.md), [Python](python/README.md), [PHP](php/README.md).
 
 ### Markdown (`builtin:markdown`)
 
