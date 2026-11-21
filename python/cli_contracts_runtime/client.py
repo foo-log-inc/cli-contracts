@@ -63,3 +63,24 @@ def format_number(f: float) -> str:
         m = digits[0] + ("." + digits[1:] if k > 1 else "")
         out = f"{m}e{'-' if n - 1 < 0 else '+'}{abs(n - 1)}"
     return sign + out
+
+
+def arg_string(value: object) -> str:
+    """Writes a value as an argument the way JavaScript's ``String(value)``
+    does: a number in JavaScript's notation, a list as its items joined by
+    commas (None as nothing), an object as ``[object Object]``."""
+    if value is None:
+        return "null"
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return format_number(value)
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, tuple)):
+        return ",".join("" if item is None else arg_string(item) for item in value)
+    return "[object Object]"

@@ -2,9 +2,12 @@
 // writes what it receives, and a main that runs every invocation in one process.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generatePython, pythonHandlerSignature, pythonSnake, pythonString } from "../../../src/generators/python.js";
+import { generatePython, pythonHandlerSignature, pythonJsonValue, pythonSnake, pythonString } from "../../../src/generators/python.js";
+import { buildTypeModel } from "../../../src/generators/type-model.js";
+import { CLIENT_CASES } from "../cases.js";
 import type { SpecCommand } from "../../../src/generators/runtime-spec.js";
 import {
+  ARGV_SCRIPT,
   FAILING_COMMAND,
   HANDLER_PREFIX,
   PROGRAM_VERSION,
@@ -104,9 +107,44 @@ export function preparePython(contracts: ConformanceContract[], workDir: string)
     }
     writeFileSync(join(workDir, `main_${c.name}.py`), mainSource(c, workDir));
   }
-  lines.push(`python3 -m py_compile ${files.join(" ")}`);
+  writeFileSync(join(workDir, "client_main.py"), clientSource(contracts, workDir));
+  lines.push(`python3 -m py_compile ${files.join(" ")} client_main.py`);
+  lines.push("python3 client_main.py");
   for (const c of contracts) {
     lines.push(`python3 main_${c.name}.py ${JSON.stringify(join(workDir, `${c.name}.json`))}`);
   }
   return lines.join("\n");
+}
+
+/** The command wrapper calls of CLIENT_CASES, writing their outcomes to client.json. */
+function clientSource(contracts: ConformanceContract[], workDir: string): string {
+  const calls: string[] = [];
+  for (const k of CLIENT_CASES) {
+    const c = contracts.find((x) => x.file === k.contract)!;
+    const cmd = buildTypeModel(c.ctx).commands.find((x) => x.id === k.command)!;
+    const params = [pythonString(ARGV_SCRIPT)];
+    if (cmd.arguments.length > 0) params.push(pythonJsonValue(k.args ?? {}));
+    if (cmd.options.length > 0 && k.options !== undefined) params.push(pythonJsonValue(k.options));
+    calls.push(`add(gen_${c.name}.${pythonSnake(cmd.fullId)}(${params.join(", ")}))`);
+  }
+  return `import sys
+
+sys.path.insert(0, ${pythonString(join(REPO, "python"))})
+sys.path.insert(0, ${pythonString(workDir)})
+
+import cli_contracts_runtime as rt  # noqa: E402
+${contracts.map((c) => `import gen_${c.name}  # noqa: E402`).join("\n")}
+
+results = []
+
+
+def add(r):
+    results.append({"exitCode": r.exit_code, "stdout": r.stdout, "stderr": r.stderr})
+
+
+${calls.join("\n")}
+
+with open(${pythonString(join(workDir, "client.json"))}, "w", encoding="utf-8") as f:
+    f.write(rt.stringify(results))
+`;
 }

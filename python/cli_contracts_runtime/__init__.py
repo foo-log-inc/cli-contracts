@@ -4,10 +4,11 @@ and dispatches to its handlers; this package parses an invocation over the
 tree by commander's rules, so the program behaves as the TypeScript program
 generated from the same contract."""
 
-from .client import ExecResult, exec_cli, format_number
+from .client import ExecResult, arg_string, exec_cli, format_number
 from .extract import ExtractSet, ExtractSpec
 from .jsonvalue import Number, quote, stringify
 from .policy import introspect
+from .typing_compat import NotRequired
 from .program import (
     FLAG,
     NEGATE,
@@ -36,11 +37,13 @@ __all__ = [
     "ExtractSet",
     "ExtractSpec",
     "Invocation",
+    "NotRequired",
     "Number",
     "Option",
     "Outcome",
     "Program",
     "UsageError",
+    "arg_string",
     "exec_cli",
     "format_number",
     "introspect",

@@ -2,6 +2,7 @@ import type { NormalizedContext } from "../types.js";
 import { buildRuntimeSpec, type RuntimeSpec, type SpecCommand } from "./runtime-spec.js";
 import type { TreeNode, TreeOption } from "./commander-tree.js";
 import { toCamelCase, toPascalCase } from "./typescript.js";
+import { buildTypeModel, type Field, type TypeExpr, type TypeModel } from "./type-model.js";
 
 // The Python program of a contract: the command tree, handler protocol and
 // dispatch for the runtime package cli_contracts_runtime, which parses an
@@ -253,8 +254,19 @@ function generateContract(spec: RuntimeSpec): string {
 
 export function generatePython(ctx: NormalizedContext, options: PythonGeneratorOptions = {}): Record<string, string> {
   const spec = buildRuntimeSpec(ctx, options.contractYaml);
-  const output: Record<string, string> = { "program.py": generateProgram(spec) };
-  const exports = ["from .program import CommandHandlers, create_program"];
+  const model = buildTypeModel(ctx);
+  const output: Record<string, string> = {
+    "program.py": generateProgram(spec),
+    "types.py": generatePythonTypes(model),
+    "commands.py": generatePythonCommands(model),
+    "schemas.py": generatePythonSchemas(model),
+  };
+  const exports = [
+    "from .program import CommandHandlers, create_program",
+    "from .types import *  # noqa: F401,F403",
+    "from .commands import *  # noqa: F401,F403",
+    "from .schemas import *  # noqa: F401,F403",
+  ];
   if (spec.policyDefinitions) {
     output["policy.py"] = generatePolicy(spec);
     exports.push("from .policy import COMMAND_DEFINITIONS, derive_command_policy");
@@ -265,4 +277,146 @@ export function generatePython(ctx: NormalizedContext, options: PythonGeneratorO
   }
   output["__init__.py"] = [HEADER, ...exports, ""].join("\n");
   return output;
+}
+
+// ─── types.py, commands.py, schemas.py ──────────────────────────────
+
+/** A Python literal for an enum value. */
+function pythonLiteralValue(v: unknown): string {
+  return v === null ? "None" : typeof v === "string" ? pythonString(v) : typeof v === "boolean" ? (v ? "True" : "False") : String(v);
+}
+
+/** The Python type of a type expression; a component is a forward reference. */
+function pythonTypeOf(type: TypeExpr): string {
+  switch (type.kind) {
+    case "string":
+      return "str";
+    case "integer":
+      return "int";
+    case "number":
+      return "float";
+    case "boolean":
+      return "bool";
+    case "ref":
+      return pythonString(pythonType(type.name));
+    case "literals":
+      return type.values.length === 0 ? "Any" : `Literal[${type.values.map(pythonLiteralValue).join(", ")}]`;
+    case "union":
+      return type.members.length === 0 ? "Any" : `Union[${type.members.map(pythonTypeOf).join(", ")}]`;
+    case "array":
+      return `List[${pythonTypeOf(type.items)}]`;
+    case "map":
+      return "Dict[str, Any]";
+    default:
+      return "Any";
+  }
+}
+
+function typedDict(name: string, fields: Field[]): string {
+  const entries = fields.map((f) => {
+    const t = pythonTypeOf(f.type);
+    return `${pythonString(f.name)}: ${f.optional ? `NotRequired[${t}]` : t}`;
+  });
+  return `${name} = TypedDict(${pythonString(name)}, {${entries.join(", ")}})`;
+}
+
+function generatePythonTypes(model: TypeModel): string {
+  const lines: string[] = [
+    HEADER,
+    "from typing import Any, Dict, List, Literal, TypedDict, Union  # noqa: F401",
+    "",
+    "from cli_contracts_runtime import NotRequired  # noqa: F401",
+    "",
+  ];
+  for (const decl of model.decls) {
+    const name = pythonType(decl.name);
+    if (decl.kind === "record") lines.push(typedDict(name, decl.fields));
+    else if (decl.kind === "enum") lines.push(`${name} = Literal[${decl.values.map(pythonString).join(", ")}]`);
+    else lines.push(`${name} = ${pythonTypeOf(decl.type)}`);
+  }
+  for (const cmd of model.commands) {
+    const prefix = pythonType(cmd.id);
+    lines.push("", `# ${cmd.id}`);
+    if (cmd.arguments.length > 0) lines.push(typedDict(`${prefix}Args`, cmd.arguments.map((a) => ({ ...a, optional: a.optional && !a.variadic }))));
+    if (cmd.options.length > 0) lines.push(typedDict(`${prefix}Options`, cmd.options.map((o) => ({ ...o, optional: true }))));
+    lines.push(`${prefix}ExitCode = Literal[${cmd.exitCodes.join(", ")}]`);
+    const variants: string[] = [];
+    for (const exit of cmd.exits) {
+      const variant = `${prefix}Exit${exit.code}`;
+      const fields: Field[] = [{ name: "exitCode", optional: false, type: { kind: "literals", values: [exit.code] } }];
+      if (exit.stdout) fields.push({ name: "stdout", optional: exit.stdout.optional, type: exit.stdout.type });
+      if (exit.stderr) fields.push({ name: "stderr", optional: exit.stderr.optional, type: exit.stderr.type });
+      lines.push(typedDict(variant, fields));
+      variants.push(pythonString(variant));
+    }
+    lines.push(`${prefix}ExitResult = Union[${variants.join(", ")}]`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+function generatePythonCommands(model: TypeModel): string {
+  const lines: string[] = [
+    HEADER,
+    "from __future__ import annotations",
+    "",
+    "from typing import List, Optional",
+    "",
+    "import cli_contracts_runtime as rt",
+    "",
+    "from .types import *  # noqa: F401,F403",
+    "",
+  ];
+  for (const cmd of model.commands) {
+    const prefix = pythonType(cmd.id);
+    const params = ["executable: str"];
+    if (cmd.arguments.length > 0) params.push(`args: ${prefix}Args`);
+    if (cmd.options.length > 0) params.push(`options: Optional[${prefix}Options] = None`);
+    lines.push("", `def ${pythonSnake(cmd.fullId)}(${params.join(", ")}) -> rt.ExecResult:`);
+    lines.push(`    """Runs ${cmd.id} with the arguments and options given."""`);
+    lines.push(`    cmd_args: List[str] = [${cmd.path.map(pythonString).join(", ")}]`);
+    for (const arg of cmd.arguments) {
+      const key = pythonString(arg.name);
+      if (arg.variadic) lines.push(`    if args.get(${key}) is not None:`, `        cmd_args.extend(args[${key}])`);
+      else lines.push(`    if ${key} in args:`, `        cmd_args.append(rt.arg_string(args[${key}]))`);
+    }
+    if (cmd.options.length > 0) {
+      lines.push("    if options:");
+      for (const opt of cmd.options) {
+        const key = pythonString(opt.name);
+        if (opt.negated !== undefined) {
+          lines.push(`        if ${key} in options:`, `            cmd_args.append(${pythonString(opt.long)} if options[${key}] else ${pythonString(opt.negated)})`);
+        } else if (opt.boolean) {
+          lines.push(`        if options.get(${key}):`, `            cmd_args.append(${pythonString(opt.long)})`);
+        } else if (opt.repeatable) {
+          lines.push(`        for v in options.get(${key}) or []:`, `            cmd_args.extend([${pythonString(opt.long)}, rt.arg_string(v)])`);
+        } else {
+          lines.push(`        if ${key} in options:`, `            cmd_args.extend([${pythonString(opt.long)}, rt.arg_string(options[${key}])])`);
+        }
+      }
+    }
+    lines.push("    return rt.exec_cli(executable, cmd_args)", "");
+  }
+  return lines.join("\n");
+}
+
+function generatePythonSchemas(model: TypeModel): string {
+  const lines: string[] = [HEADER, "from typing import Any, Dict", ""];
+  lines.push("# The components' JSON Schemas, by name.");
+  lines.push(`SCHEMAS: Dict[str, Any] = {${model.schemas.map(([n, s]) => `${pythonString(n)}: ${pythonJsonValue(s)}`).join(", ")}}`, "");
+  for (const cmd of model.commands) {
+    lines.push(`# The exit codes ${cmd.id} declares.`);
+    lines.push(`${pythonSnake(cmd.id).replace(/_$/, "").toUpperCase()}_EXIT_CODES = (${cmd.exitCodes.join(", ")}${cmd.exitCodes.length === 1 ? "," : ""})`, "");
+  }
+  return lines.join("\n");
+}
+
+/** A JSON value as a plain Python literal (numbers as numbers). */
+export function pythonJsonValue(v: unknown): string {
+  if (v === null || v === undefined) return "None";
+  if (typeof v === "boolean") return v ? "True" : "False";
+  if (typeof v === "number") return Number.isFinite(v) ? JSON.stringify(v) : "None";
+  if (typeof v === "string") return pythonString(v);
+  if (Array.isArray(v)) return `[${v.map(pythonJsonValue).join(", ")}]`;
+  return `{${Object.entries(v as Record<string, unknown>).map(([k, x]) => `${pythonString(k)}: ${pythonJsonValue(x)}`).join(", ")}}`;
 }
