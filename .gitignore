@@ -12,3 +12,4 @@ npm-debug.log*
 .aidev/
 .aidev.json
 .observ/
+test/conformance/out/

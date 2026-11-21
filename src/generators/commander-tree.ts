@@ -1,4 +1,4 @@
-import { Command, Option } from "commander";
+import { Command, Help, Option } from "commander";
 import {
   HELP_WIDTH,
   type ArgumentRegistration,
@@ -134,7 +134,8 @@ function replay(model: ProgramModel, version: string): { program: Command; actio
       }
       group.description(step.description);
       const self = group.command(step.name, { isDefault: true, hidden: true });
-      group.configureHelp({ visibleOptions: () => self.createHelp().visibleOptions(self) });
+      const owner = group;
+      group.configureHelp({ visibleOptions: (cmd) => new Help().visibleOptions(cmd === owner ? self : cmd) });
       return self;
     }
     return step.form === "default"
