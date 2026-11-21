@@ -39,7 +39,6 @@ import type {
 } from "./types.js";
 import {
   XAgentSchema,
-  EffectsSchema,
   CommandSchema,
   CommandSetSchema,
   ArgumentSchema,

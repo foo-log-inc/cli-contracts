@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
-import { parseConfigFile, parseConfigString } from "./parser.js";
+import { parseConfigFile } from "./parser.js";
 import type { CliContractsConfig } from "./types.js";
 
 const DEFAULT_CONFIG_FILENAME = "cli-contracts.config.yaml";

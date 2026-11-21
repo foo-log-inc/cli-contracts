@@ -10,7 +10,6 @@ import type {
   JsonSchema,
 } from "../types.js";
 import type { OutputFormat } from "../output.js";
-import { formatOutput } from "../output.js";
 
 export interface ExtractOptions {
   commandSet?: string;

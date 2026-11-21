@@ -7,8 +7,6 @@ import type {
   NormalizedCommandSet,
   NormalizedCommand,
   NormalizedExit,
-  Option,
-  Argument,
   JsonSchema,
   Components,
 } from "../types.js";
