@@ -21,6 +21,7 @@ import {
   commandOptions,
   contextHasEffects,
 } from "../program-options.js";
+import { schemaType, type TypeExpr } from "./type-model.js";
 import {
   buildPolicyDefinitions,
   buildProgramModel,
@@ -151,7 +152,9 @@ function generateCommandTypes(
     lines.push(`export interface ${prefix}Options {`);
     for (const opt of cmd.options) {
       const optional = opt.required ? "" : "?";
-      const tsType = jsonSchemaToTs(opt.schema);
+      // A repeatable option is given once for each of its values.
+      const item = schemaType(opt.schema);
+      const tsType = typeToTs(optionTakesManyValues(opt) ? { kind: "array", items: item } : item);
       lines.push(`  ${propertyName(optionFlags(opt).key)}${optional}: ${tsType};`);
     }
     lines.push("}");
@@ -273,6 +276,8 @@ function generateCommandFunction(
         lines.push(`    if (${value} !== undefined) cmdArgs.push(${value} ? ${longFlag} : ${JSON.stringify(negated)});`);
       } else if (opt.schema?.type === "boolean") {
         lines.push(`    if (${value}) cmdArgs.push(${longFlag});`);
+      } else if (optionTakesManyValues(opt)) {
+        lines.push(`    if (${value} !== undefined) for (const v of ${value}) cmdArgs.push(${longFlag}, String(v));`);
       } else {
         lines.push(`    if (${value} !== undefined) cmdArgs.push(${longFlag}, String(${value}));`);
       }
@@ -411,26 +416,29 @@ function generateAllOfSchemaType(
 }
 
 function jsonSchemaToTs(schema?: JsonSchema): string {
-  if (!schema) return "unknown";
-  if (schema.$ref) return refToTypeName(schema.$ref);
+  return typeToTs(schemaType(schema));
+}
 
-  if (schema.oneOf) {
-    return schema.oneOf.map(jsonSchemaToTs).join(" | ");
-  }
-  if (schema.anyOf) {
-    return schema.anyOf.map(jsonSchemaToTs).join(" | ");
-  }
-  if (schema.allOf) {
-    return schema.allOf.map(jsonSchemaToTs).join(" & ");
-  }
+/** A type TypeScript writes with `|` or `&`. */
+function isCompound(type: TypeExpr): boolean {
+  return (
+    ((type.kind === "union" || type.kind === "intersection") && type.members.length > 1) ||
+    (type.kind === "literals" && type.values.length > 1)
+  );
+}
 
-  if (schema.enum) {
-    return schema.enum
-      .map((v) => (typeof v === "string" ? JSON.stringify(v) : String(v)))
-      .join(" | ");
-  }
-
-  switch (schema.type) {
+function typeToTs(type: TypeExpr): string {
+  switch (type.kind) {
+    case "unknown":
+      return "unknown";
+    case "ref":
+      return identifier(type.name, type.name);
+    case "union":
+      return type.members.map(typeToTs).join(" | ");
+    case "intersection":
+      return type.members.map(typeToTs).join(" & ");
+    case "literals":
+      return type.values.map((v) => (typeof v === "string" ? JSON.stringify(v) : String(v))).join(" | ");
     case "string":
       return "string";
     case "integer":
@@ -439,27 +447,12 @@ function jsonSchemaToTs(schema?: JsonSchema): string {
     case "boolean":
       return "boolean";
     case "array":
-      return `${jsonSchemaToTs(schema.items)}[]`;
+      // An element type of several members is parenthesized: `("a" | "b")[]`.
+      return isCompound(type.items) ? `(${typeToTs(type.items)})[]` : `${typeToTs(type.items)}[]`;
     case "object":
-      if (schema.properties) {
-        const required = new Set(schema.required ?? []);
-        const props = Object.entries(schema.properties)
-          .map(([k, v]) => {
-            const opt = required.has(k) ? "" : "?";
-            return `${propertyName(k)}${opt}: ${jsonSchemaToTs(v)}`;
-          })
-          .join("; ");
-        return `{ ${props} }`;
-      }
-      if (
-        schema.additionalProperties === true ||
-        typeof schema.additionalProperties === "object"
-      ) {
-        return "Record<string, unknown>";
-      }
+      return `{ ${type.fields.map((f) => `${propertyName(f.name)}${f.optional ? "?" : ""}: ${typeToTs(f.type)}`).join("; ")} }`;
+    case "map":
       return "Record<string, unknown>";
-    default:
-      return "unknown";
   }
 }
 

@@ -16,7 +16,7 @@ export type InitExitResult =
   | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface VersionSyncOptions {
-  file?: string;
+  file?: string[];
   packageFile?: string;
   check?: boolean;
 }
@@ -30,7 +30,7 @@ export type VersionSyncExitResult =
   | { exitCode: 9; stdout: { packageVersion: string; checked: boolean; inSync: boolean; files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[] } };
 
 export interface ValidateOptions {
-  file?: string;
+  file?: string[];
   strict?: boolean;
   resolveRefs?: boolean;
 }
@@ -59,7 +59,7 @@ export interface GenerateArgs {
 }
 
 export interface GenerateOptions {
-  file?: string;
+  file?: string[];
   output?: string;
   dryRun?: boolean;
   clean?: boolean;
@@ -75,7 +75,7 @@ export type GenerateExitResult =
   | { exitCode: 5; stdout: { generators: { name: string; status: "success" | "skipped" | "failed"; files: string[]; error?: string }[] }; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
 export interface DocsOptions {
-  file?: string;
+  file?: string[];
   output?: string;
   dryRun?: boolean;
 }
@@ -90,7 +90,7 @@ export type DocsExitResult =
 
 export interface TestOptions {
   profile?: string;
-  case?: string;
+  case?: string[];
   casesDir?: string;
   timeout?: number;
   bail?: boolean;
@@ -158,7 +158,7 @@ export interface AuditArgs {
 
 export interface AuditOptions {
   file?: string;
-  checks?: "agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk";
+  checks?: ("agent-policy" | "responsibility" | "exit-code" | "output-schema" | "breaking-risk")[];
   adapter?: "mock" | "claude" | "openai" | "gemini";
   model?: string;
   showPrompt?: boolean;

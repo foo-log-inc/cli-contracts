@@ -8,6 +8,8 @@
 
 ### 修正
 
+- TypeScript の `types.ts` の `<Cmd>Options` は、repeatable な option を要素の型の配列（例: `rule?: ("strict" | "loose")[]`）とし、`commands.ts` の command wrapper は各値を flag と組にして渡す（`--rule strict --rule loose`）。これまでは単一の値の型とし、配列を渡すと `"strict,loose"` という 1 つの値になっていた。
+- TypeScript の型は、配列の要素の型が複数の member を持つ場合に括弧を付ける（`("a" | "b")[]`）。これまでは `"a" | "b"[]` という別の型になっていた。
 - 自身の action を持つ group（ほかの command が入れ子になる path の command）の後に登録した subcommand の help と、未知の option の候補が、その subcommand ではなく group の default subcommand の option を表示していた点を修正した。group の help だけが default subcommand の option を表示する。
 - repeatable な option の `schema.default` を、生成した program は文字列のまま handler に渡していた点を修正した。default は要素が 1 つの配列（例: `["go"]`）として渡り、help は `(default: ["go"])` と表示する。値を指定した場合は、従来どおり指定した値だけが渡る。
 - validator は、boolean の option の `schema.default` が true・false でない場合と、値を取る option の `schema.default` が true・false である場合を error（`option-default-type`）とする。これまでは、生成した program の handler が型と異なる値を受け取っていた。
