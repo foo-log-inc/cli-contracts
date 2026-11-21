@@ -2,9 +2,12 @@
 // what it receives, and a main that runs every invocation in one process.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateRust, rustHandlerSignature, rustSnake, rustString, rustType } from "../../../src/generators/rust.js";
+import { generateRust, rustHandlerSignature, rustLiteral, rustSnake, rustString, rustType } from "../../../src/generators/rust.js";
+import { buildTypeModel } from "../../../src/generators/type-model.js";
+import { CLIENT_CASES } from "../cases.js";
 import type { SpecCommand } from "../../../src/generators/runtime-spec.js";
 import {
+  ARGV_SCRIPT,
   FAILING_COMMAND,
   HANDLER_PREFIX,
   PROGRAM_VERSION,
@@ -156,7 +159,7 @@ ${cases}
 }
 
 export function prepareRust(contracts: ConformanceContract[], workDir: string): string {
-  const bins = contracts.map((c) => `[[bin]]\nname = "${c.name}"\npath = "src/bin/${c.name}.rs"\n`).join("\n");
+  const bins = [...contracts.map((c) => c.name), "client"].map((name) => `[[bin]]\nname = "${name}"\npath = "src/bin/${name}.rs"\n`).join("\n");
   writeFileSync(
     join(workDir, "Cargo.toml"),
     `[package]\nname = "conformance"\nversion = "0.0.0"\nedition = "2021"\npublish = false\n\n[workspace]\n\n[dependencies]\ncli_contracts_runtime = { path = ${JSON.stringify(join(REPO, "rust/cli_contracts_runtime"))} }\n\n${bins}`,
@@ -172,9 +175,61 @@ export function prepareRust(contracts: ConformanceContract[], workDir: string): 
     writeFileSync(join(workDir, "src/bin", `${c.name}.rs`), mainSource(c));
     lines.push(`rustfmt --edition 2021 --check ${c.name}/mod.rs`);
   }
+  writeFileSync(join(workDir, "src/bin/client.rs"), clientSource(contracts, workDir));
   lines.push("cargo clippy --offline --bins -- -D warnings");
+  lines.push("cargo run --offline --quiet --bin client");
   for (const c of contracts) {
     lines.push(`cargo run --offline --quiet --bin ${c.name} ${JSON.stringify(join(workDir, `${c.name}.json`))}`);
   }
   return lines.join("\n");
+}
+
+/** The command wrapper calls of CLIENT_CASES, writing their outcomes to client.json. */
+function clientSource(contracts: ConformanceContract[], workDir: string): string {
+  const mods = contracts.map((c) => `#[path = "../../${c.name}/mod.rs"]\n#[allow(dead_code)]\nmod ${c.name};`);
+  const calls: string[] = [];
+  for (const k of CLIENT_CASES) {
+    const c = contracts.find((x) => x.file === k.contract)!;
+    const model = buildTypeModel(c.ctx);
+    const cmd = model.commands.find((x) => x.id === k.command)!;
+    const types = `${c.name}::types`;
+    const params = [rustString(ARGV_SCRIPT)];
+    if (cmd.arguments.length > 0) {
+      const fields = cmd.arguments.map((a) => {
+        const v = k.args?.[a.name];
+        const expr = v === undefined ? (a.variadic ? "vec![]" : "None") : rustLiteral(v, a.type, a.optional && !a.variadic, model, types);
+        return `${rustSnake(a.name)}: ${expr}`;
+      });
+      params.push(`&${types}::${rustType(cmd.id)}Args { ${fields.join(", ")} }`);
+    }
+    if (cmd.options.length > 0) {
+      if (k.options === undefined) {
+        params.push("None");
+      } else {
+        const fields = cmd.options
+          .filter((o) => k.options![o.name] !== undefined)
+          .map((o) => `${rustSnake(o.name)}: ${rustLiteral(k.options![o.name], o.type, true, model, types)}`);
+        const rest = fields.length < cmd.options.length ? ["..Default::default()"] : [];
+        params.push(`Some(&${types}::${rustType(cmd.id)}Options { ${[...fields, ...rest].join(", ")} })`);
+      }
+    }
+    calls.push(`    add(${c.name}::commands::${rustSnake(cmd.fullId)}(${params.join(", ")}));`);
+  }
+  return `${mods.join("\n")}
+
+use cli_contracts_runtime as rt;
+
+fn main() {
+    let mut results: Vec<rt::Value> = Vec::new();
+    let mut add = |r: rt::ExecResult| {
+        results.push(rt::obj(vec![
+            ("exitCode", rt::Value::from(r.exit_code)),
+            ("stdout", rt::Value::from(r.stdout)),
+            ("stderr", rt::Value::from(r.stderr)),
+        ]));
+    };
+${calls.join("\n")}
+    std::fs::write(${rustString(join(workDir, "client.json"))}, rt::stringify(&rt::Value::Array(results), 0)).expect("write");
+}
+`;
 }

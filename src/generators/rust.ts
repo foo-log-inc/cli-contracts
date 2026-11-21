@@ -2,6 +2,7 @@ import type { NormalizedContext } from "../types.js";
 import { buildRuntimeSpec, type RuntimeSpec, type SpecCommand } from "./runtime-spec.js";
 import type { TreeNode, TreeOption } from "./commander-tree.js";
 import { toCamelCase, toPascalCase } from "./typescript.js";
+import { buildTypeModel, type Decl, type Field, type TypeExpr, type TypeModel } from "./type-model.js";
 
 // The Rust program of a contract: the command tree, handler trait and
 // dispatch for the runtime crate cli_contracts_runtime, which parses an
@@ -304,8 +305,14 @@ function generateContract(spec: RuntimeSpec): string {
 
 export function generateRust(ctx: NormalizedContext, options: RustGeneratorOptions = {}): Record<string, string> {
   const spec = buildRuntimeSpec(ctx, options.contractYaml);
-  const output: Record<string, string> = { "program.rs": generateProgram(spec) };
-  const modules = ["program"];
+  const model = buildTypeModel(ctx);
+  const output: Record<string, string> = {
+    "program.rs": generateProgram(spec),
+    "types.rs": generateRustTypes(model),
+    "commands.rs": generateRustCommands(model),
+    "schemas.rs": generateRustSchemas(model),
+  };
+  const modules = ["program", "types", "commands", "schemas"];
   if (spec.policyDefinitions) {
     output["policy.rs"] = generatePolicy(spec);
     modules.push("policy");
@@ -315,6 +322,204 @@ export function generateRust(ctx: NormalizedContext, options: RustGeneratorOptio
     modules.push("contract");
   }
   modules.sort();
-  output["mod.rs"] = [HEADER, ...modules.map((m) => `pub mod ${m};`), "", "pub use program::*;", ""].join("\n");
+  output["mod.rs"] = [HEADER, ...modules.map((m) => `pub mod ${m};`), "", "#[allow(unused_imports)]", "pub use program::*;", ""].join("\n");
   return output;
+}
+
+// ─── types.rs, commands.rs, schemas.rs ──────────────────────────────
+
+type Decls = Map<string, Decl>;
+
+/** The Rust type of a type expression. */
+function rustTypeOf(type: TypeExpr, decls: Decls): string {
+  switch (type.kind) {
+    case "string":
+      return "String";
+    case "integer":
+      return "i64";
+    case "number":
+      return "f64";
+    case "boolean":
+      return "bool";
+    case "ref":
+      return rustType(type.name);
+    case "literals":
+      return type.values.every((v) => typeof v === "string") ? "String" : "rt::Value";
+    case "array":
+      return `Vec<${rustTypeOf(type.items, decls)}>`;
+    default:
+      return "rt::Value";
+  }
+}
+
+/** A field's Rust type: an optional field is an Option, of a Box for a record (which may refer to itself). */
+function rustFieldType(type: TypeExpr, optional: boolean, decls: Decls): string {
+  const t = rustTypeOf(type, decls);
+  if (!optional) return t;
+  return type.kind === "ref" && decls.get(type.name)?.kind === "record" ? `Option<Box<${t}>>` : `Option<${t}>`;
+}
+
+/** An enum value's variant name. */
+function rustVariants(values: string[]): string[] {
+  const used = new Set<string>();
+  return values.map((v, i) => {
+    let name: string;
+    try {
+      name = rustType(v);
+      if (name.startsWith("r#")) throw new Error("keyword");
+    } catch {
+      name = `V${i + 1}`;
+    }
+    while (used.has(name)) name = `${name}_`;
+    used.add(name);
+    return name;
+  });
+}
+
+function rustStructFields(fields: Field[], decls: Decls, indent = "    "): string[] {
+  return fields.map((f) => `${indent}pub ${rustSnake(f.name)}: ${rustFieldType(f.type, f.optional, decls)},`);
+}
+
+function generateRustTypes(model: TypeModel): string {
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  const lines: string[] = [HEADER, "#![allow(clippy::enum_variant_names, clippy::large_enum_variant)]", "", "#[allow(unused_imports)]", "use cli_contracts_runtime as rt;", ""];
+  for (const decl of model.decls) {
+    const name = rustType(decl.name);
+    lines.push("#[rustfmt::skip]");
+    if (decl.kind === "record") {
+      lines.push("#[derive(Debug, Clone, PartialEq)]", `pub struct ${name} {`, ...rustStructFields(decl.fields, decls), "}", "");
+    } else if (decl.kind === "enum") {
+      const variants = rustVariants(decl.values);
+      lines.push("#[derive(Debug, Clone, Copy, PartialEq, Eq)]", `pub enum ${name} {`, ...variants.map((v) => `    ${v},`), "}", "");
+      lines.push("#[rustfmt::skip]", `impl ${name} {`, "    pub fn as_str(&self) -> &'static str {", "        match self {");
+      decl.values.forEach((v, i) => lines.push(`            ${name}::${variants[i]} => ${rustString(v)},`));
+      lines.push("        }", "    }", "}", "");
+    } else {
+      lines.push(`pub type ${name} = ${rustTypeOf(decl.type, decls)};`, "");
+    }
+  }
+  for (const cmd of model.commands) {
+    const prefix = rustType(cmd.id);
+    if (cmd.arguments.length > 0) {
+      lines.push(`/// The arguments of \`${cmd.id}\`.`, "#[rustfmt::skip]", "#[derive(Debug, Clone, PartialEq)]", `pub struct ${prefix}Args {`);
+      lines.push(...cmd.arguments.map((a) => `    pub ${rustSnake(a.name)}: ${rustFieldType(a.type, a.optional && !a.variadic, decls)},`));
+      lines.push("}", "");
+    }
+    if (cmd.options.length > 0) {
+      lines.push(`/// The options of \`${cmd.id}\`; \`None\` is not given.`, "#[rustfmt::skip]", "#[derive(Debug, Clone, Default, PartialEq)]", `pub struct ${prefix}Options {`);
+      lines.push(...cmd.options.map((o) => `    pub ${rustSnake(o.name)}: ${rustFieldType(o.type, true, decls)},`));
+      lines.push("}", "");
+    }
+    lines.push(`/// An exit code \`${cmd.id}\` declares.`, `pub type ${prefix}ExitCode = i32;`, "");
+    lines.push(`/// The outcome of \`${cmd.id}\` for one of its exit codes.`, "#[rustfmt::skip]", "#[derive(Debug, Clone, PartialEq)]", `pub enum ${prefix}ExitResult {`);
+    for (const exit of cmd.exits) {
+      const fields: Field[] = [];
+      if (exit.stdout) fields.push({ name: "stdout", optional: exit.stdout.optional, type: exit.stdout.type });
+      if (exit.stderr) fields.push({ name: "stderr", optional: exit.stderr.optional, type: exit.stderr.type });
+      lines.push(
+        fields.length === 0
+          ? `    Exit${exit.code},`
+          : `    Exit${exit.code} { ${fields.map((f) => `${f.name}: ${rustFieldType(f.type, f.optional, decls)}`).join(", ")} },`,
+      );
+    }
+    lines.push("}", "");
+  }
+  return lines.join("\n");
+}
+
+/** How a value of a type, given as a reference, is written as an argument. */
+function rustArgString(type: TypeExpr, expr: string, decls: Decls): string {
+  switch (type.kind) {
+    case "string":
+      return `${expr}.clone()`;
+    case "integer":
+    case "boolean":
+      return `${expr}.to_string()`;
+    case "number":
+      return `rt::format_number(*${expr})`;
+    case "literals":
+      return type.values.every((v) => typeof v === "string") ? `${expr}.clone()` : `rt::arg_string(${expr})`;
+    case "array":
+      return `${expr}.iter().map(|v| ${rustArgString(type.items, "v", decls)}).collect::<Vec<String>>().join(",")`;
+    case "ref": {
+      const decl = decls.get(type.name);
+      if (decl?.kind === "enum") return `${expr}.as_str().to_string()`;
+      if (decl?.kind === "alias") return rustArgString(decl.type, expr, decls);
+      return '"[object Object]".to_string()';
+    }
+    default:
+      return `rt::arg_string(${expr})`;
+  }
+}
+
+function generateRustCommands(model: TypeModel): string {
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  const lines: string[] = [HEADER, "use cli_contracts_runtime as rt;", "", "#[allow(unused_imports)]", "use super::types::*;", ""];
+  for (const cmd of model.commands) {
+    const prefix = rustType(cmd.id);
+    const params = ["executable: &str"];
+    if (cmd.arguments.length > 0) params.push(`args: &${prefix}Args`);
+    if (cmd.options.length > 0) params.push(`options: Option<&${prefix}Options>`);
+    lines.push(`/// Runs \`${cmd.id}\` with the arguments and options given.`, "#[rustfmt::skip]");
+    lines.push(`pub fn ${rustSnake(cmd.fullId)}(${params.join(", ")}) -> rt::ExecResult {`);
+    lines.push(`    #[allow(unused_mut)]`, `    let mut cmd_args: Vec<String> = vec![${cmd.path.map((p) => `${rustString(p)}.to_string()`).join(", ")}];`);
+    for (const arg of cmd.arguments) {
+      const field = `args.${rustSnake(arg.name)}`;
+      if (arg.variadic) lines.push(`    cmd_args.extend(${field}.iter().cloned());`);
+      else if (arg.optional) lines.push(`    if let Some(v) = &${field} {\n        cmd_args.push(${rustArgString(arg.type, "v", decls)});\n    }`);
+      else lines.push(`    {\n        let v = &${field};\n        cmd_args.push(${rustArgString(arg.type, "v", decls)});\n    }`);
+    }
+    if (cmd.options.length > 0) {
+      lines.push("    if let Some(options) = options {");
+      for (const opt of cmd.options) {
+        const field = `options.${rustSnake(opt.name)}`;
+        if (opt.negated !== undefined) {
+          lines.push(`        if let Some(v) = ${field} {\n            cmd_args.push(if v { ${rustString(opt.long)} } else { ${rustString(opt.negated)} }.to_string());\n        }`);
+        } else if (opt.boolean) {
+          lines.push(`        if ${field} == Some(true) {\n            cmd_args.push(${rustString(opt.long)}.to_string());\n        }`);
+        } else if (opt.repeatable && opt.type.kind === "array") {
+          lines.push(`        for v in ${field}.iter().flatten() {\n            cmd_args.push(${rustString(opt.long)}.to_string());\n            cmd_args.push(${rustArgString(opt.type.items, "v", decls)});\n        }`);
+        } else {
+          lines.push(`        if let Some(v) = &${field} {\n            cmd_args.push(${rustString(opt.long)}.to_string());\n            cmd_args.push(${rustArgString(opt.type, "v", decls)});\n        }`);
+        }
+      }
+      lines.push("    }");
+    }
+    lines.push("    rt::exec(executable, &cmd_args)", "}", "");
+  }
+  return lines.join("\n");
+}
+
+function generateRustSchemas(model: TypeModel): string {
+  const lines: string[] = [HEADER];
+  lines.push("/// The components' JSON Schemas as JSON, by name.", "#[rustfmt::skip]");
+  lines.push(`pub const SCHEMAS: &[(&str, &str)] = &[${model.schemas.map(([n, s]) => `(${rustString(n)}, ${rustString(JSON.stringify(s))})`).join(", ")}];`, "");
+  for (const cmd of model.commands) {
+    lines.push(`/// The exit codes \`${cmd.id}\` declares.`);
+    lines.push(`pub const ${rustSnake(cmd.id).replace(/^r#/, "").toUpperCase()}_EXIT_CODES: &[i32] = &[${cmd.exitCodes.join(", ")}];`, "");
+  }
+  return lines.join("\n");
+}
+
+/** A JSON value as a Rust expression of a field's type. */
+export function rustLiteral(value: unknown, type: TypeExpr, optional: boolean, model: TypeModel, modulePath: string): string {
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  const wrap = (expr: string): string => {
+    if (!optional) return expr;
+    return type.kind === "ref" && decls.get(type.name)?.kind === "record" ? `Some(Box::new(${expr}))` : `Some(${expr})`;
+  };
+  if (type.kind === "array" && Array.isArray(value)) {
+    return wrap(`vec![${value.map((v) => rustLiteral(v, type.items, false, model, modulePath)).join(", ")}]`);
+  }
+  const t = rustTypeOf(type, decls);
+  if (typeof value === "string" && t === "String") return wrap(`${rustString(value)}.to_string()`);
+  if (typeof value === "number" && t === "i64") return wrap(`${value}i64`);
+  if (typeof value === "number" && t === "f64") return wrap(Number.isInteger(value) ? `${value}.0` : `${value}f64`);
+  if (typeof value === "boolean" && t === "bool") return wrap(String(value));
+  if (type.kind === "ref" && decls.get(type.name)?.kind === "enum" && typeof value === "string") {
+    const decl = decls.get(type.name) as { values: string[] };
+    return wrap(`${modulePath}::${t}::${rustVariants(decl.values)[decl.values.indexOf(value)]}`);
+  }
+  if (typeof value === "string") return wrap(`rt::Value::from(${rustString(value)})`);
+  throw new Error(`No Rust literal for ${JSON.stringify(value)}`);
 }

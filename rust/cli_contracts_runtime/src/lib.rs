@@ -12,7 +12,7 @@ pub mod program;
 mod suggest;
 pub mod tree;
 
-pub use client::{exec, format_number, ExecResult};
+pub use client::{arg_string, exec, format_number, ExecResult};
 pub use extract::{ExtractSet, ExtractSpec};
 pub use json::{arr, num, obj, quote, stringify, Object, Value};
 pub use policy::introspect;

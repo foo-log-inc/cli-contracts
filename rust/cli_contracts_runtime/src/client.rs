@@ -66,3 +66,25 @@ pub fn format_number(f: f64) -> String {
     };
     format!("{sign}{out}")
 }
+
+/// Writes a value as an argument the way JavaScript's `String(value)` does:
+/// a list as its items joined by commas (null as nothing), an object as
+/// `[object Object]`.
+pub fn arg_string(value: &crate::json::Value) -> String {
+    use crate::json::Value;
+    match value {
+        Value::Null => "null".to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Number(text) => text.clone(),
+        Value::String(s) => s.clone(),
+        Value::Array(items) => items
+            .iter()
+            .map(|item| match item {
+                Value::Null => String::new(),
+                other => arg_string(other),
+            })
+            .collect::<Vec<_>>()
+            .join(","),
+        Value::Object(_) => "[object Object]".to_string(),
+    }
+}
