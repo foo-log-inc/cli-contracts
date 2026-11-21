@@ -118,3 +118,9 @@ jobs:
         run: for f in php/src/*.php; do php -l "$f"; done
       - name: Conformance vectors
         run: npm run conformance -- ${{ matrix.lang }}
+      - name: Build the generated Rust code with the lowest version the runtime declares
+        if: matrix.lang == 'rust'
+        working-directory: test/conformance/out/rust
+        run: |
+          rm -f Cargo.lock
+          cargo +1.70.0 build --bins
