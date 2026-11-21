@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cli-contracts-runtime"
-version = "0.35.4"
+version = "0.36.0"
 description = "Python runtime for the programs and command wrappers cli-contracts generates from a CLI contract: commander-compatible argument parsing, help, policy derivation and the built-in extract command."
 readme = "README.md"
 requires-python = ">=3.9"

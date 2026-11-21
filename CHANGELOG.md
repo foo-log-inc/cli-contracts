@@ -2,6 +2,17 @@
 
 ## 0.36.0
 
+### 機能
+
+- Go・Rust・Python・PHP の生成器を追加した（`builtin:go`・`builtin:rust`・`builtin:python`・`builtin:php`）。各言語の生成物は、TypeScript の生成物と同じく program（command の tree と handler の interface）・型・command wrapper・JSON Schema の定数・policy の導出・built-in `extract` を持つ。`builtin:go` は `options.package`、`builtin:php` は `options.namespace` を必須とする。
+- 各言語の生成物が使う runtime を追加した。生成した program の argument・option の parse、validation の error、help の出力、exit code、`--introspect`・`--show-prompt`・`extract` の出力は、同じ契約から生成した TypeScript の program（commander）と一致する。runtime は第三者の依存を持たない。
+  - Go: module `github.com/foo-log-inc/cli-contracts/go`（package `cli_contracts_runtime`、tag `go/v0.36.0`）
+  - Rust: crate `cli_contracts_runtime`（crates.io）
+  - Python: `cli-contracts-runtime`（PyPI、import 名 `cli_contracts_runtime`）
+  - PHP: `cli-contracts/runtime`（namespace `CliContracts\Runtime`。Packagist には登録しない）
+- 生成の仕様を、言語に依存しない model（`src/generators/cli-model.ts`・`commander-tree.ts`・`runtime-spec.ts`・`type-model.ts`）に集約した。TypeScript の生成器もこの model を描画する。
+- `commander` を dependencies に移した（生成時に help を描画するため）。
+
 ### 挙動の変更
 
 - TypeScript の生成器が出力する `program.ts` は、help を stdout・stderr が端末である場合も 80 桁で折り返す（`program.configureOutput({ getOutHelpWidth: () => 80, getErrHelpWidth: () => 80 })`。subcommand はこの設定を継承する）。これまでは、端末では端末の桁数で折り返していた。stdout・stderr が端末でない場合の出力は変わらない。help の出力を、ほかの言語の生成物と同一にするための変更である。

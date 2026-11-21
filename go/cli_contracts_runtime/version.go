@@ -3,4 +3,4 @@
 package cli_contracts_runtime
 
 // Version is the version of cli-contracts this runtime belongs to.
-const Version = "0.35.4"
+const Version = "0.36.0"
