@@ -155,3 +155,32 @@ export const CASES: ContractCases[] = [
     ],
   },
 ];
+
+/** A command wrapper's call: the command, its arguments and options (as JSON), run with argv.sh. */
+export interface ClientCase {
+  contract: string;
+  command: string;
+  args?: Record<string, unknown>;
+  options?: Record<string, unknown>;
+}
+
+export const CLIENT_CASES: ClientCase[] = [
+  {
+    contract: "acme.yaml",
+    command: "users.import",
+    args: { file: "a b.csv" },
+    options: { dryRun: true, format: "tsv", tag: ["x", "y z"], color: false, noCache: true, limit: 5, report: "r.txt", all: false },
+  },
+  { contract: "acme.yaml", command: "users.import", args: { file: "b.csv" } },
+  { contract: "acme.yaml", command: "users.import", args: { file: "c.csv" }, options: { color: true, tag: [] } },
+  { contract: "acme.yaml", command: "users.remove", args: { ids: ["1", "-2"] }, options: { force: true } },
+  { contract: "acme.yaml", command: "users", options: { all: true } },
+  { contract: "acme.yaml", command: "config.get", args: { key: "k" } },
+  { contract: "acme.yaml", command: "config.get", args: { key: "k", fallback: "f" } },
+  { contract: "acme.yaml", command: "db.migrate.up", options: { to: "5", step: 2 } },
+  { contract: "acme.yaml", command: "ask", args: { question: "why?" }, options: { adapter: "claude" } },
+  { contract: "fmt.yaml", command: "format", args: { files: ["a.go"] }, options: { check: true, width: 80, exclude: ["x"], indent: 2.5, lang: ["go", "rs"] } },
+  { contract: "fmt.yaml", command: "format", args: { files: [] }, options: { indent: 0.000001, width: -3 } },
+  { contract: "fmt.yaml", command: "version-info" },
+  { contract: "fmt.yaml", command: "extract", args: { source: "s" } },
+];

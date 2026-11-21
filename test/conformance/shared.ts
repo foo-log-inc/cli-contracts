@@ -55,3 +55,6 @@ export type LanguagePreparer = (contracts: ConformanceContract[], workDir: strin
 export function resultKey(contract: string, variant: Variant): string {
   return `${contract}:${variant}`;
 }
+
+/** The CLI the command wrappers run (test/conformance/argv.sh). */
+export const ARGV_SCRIPT = resolve(HERE, "argv.sh");

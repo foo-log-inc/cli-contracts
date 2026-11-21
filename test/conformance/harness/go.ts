@@ -2,9 +2,12 @@
 // what it receives, and a main that runs every invocation in one process.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateGo, goExported, goParam, goString } from "../../../src/generators/go.js";
+import { generateGo, goExported, goLiteral, goParam, goString } from "../../../src/generators/go.js";
+import { buildTypeModel } from "../../../src/generators/type-model.js";
+import { CLIENT_CASES } from "../cases.js";
 import type { SpecCommand } from "../../../src/generators/runtime-spec.js";
 import {
+  ARGV_SCRIPT,
   FAILING_COMMAND,
   HANDLER_PREFIX,
   PROGRAM_VERSION,
@@ -153,5 +156,60 @@ export function prepareGo(contracts: ConformanceContract[], workDir: string): st
     lines.push(`go vet ./${c.name}/...`);
     lines.push(`go run ./${c.name} ${JSON.stringify(join(workDir, `${c.name}.json`))}`);
   }
+  mkdirSync(join(workDir, "client"), { recursive: true });
+  writeFileSync(join(workDir, "client", "main.go"), clientSource(contracts, workDir));
+  lines.push("go vet ./client", "go run ./client");
   return lines.join("\n");
+}
+
+/** The command wrapper calls of CLIENT_CASES, writing their outcomes to client.json. */
+function clientSource(contracts: ConformanceContract[], workDir: string): string {
+  const imports = contracts.map((c) => `\t${c.name} "conformance/${c.name}/gen"`);
+  const calls: string[] = [];
+  for (const k of CLIENT_CASES) {
+    const c = contracts.find((x) => x.file === k.contract)!;
+    const model = buildTypeModel(c.ctx);
+    const cmd = model.commands.find((x) => x.id === k.command)!;
+    const params = [goString(ARGV_SCRIPT)];
+    if (cmd.arguments.length > 0) {
+      const fields = cmd.arguments
+        .filter((a) => k.args?.[a.name] !== undefined)
+        .map((a) => `${goExported(a.name)}: ${goLiteral(k.args![a.name], a.type, a.optional && !a.variadic, model, c.name)}`);
+      params.push(`${c.name}.${goExported(cmd.id)}Args{${fields.join(", ")}}`);
+    }
+    if (cmd.options.length > 0) {
+      if (k.options === undefined) {
+        params.push("nil");
+      } else {
+        const fields = cmd.options
+          .filter((o) => k.options![o.name] !== undefined)
+          .map((o) => `${goExported(o.name)}: ${goLiteral(k.options![o.name], o.type, true, model, c.name)}`);
+        params.push(`&${c.name}.${goExported(cmd.id)}Options{${fields.join(", ")}}`);
+      }
+    }
+    calls.push(`\tadd(${c.name}.${goExported(cmd.fullId)}(${params.join(", ")}))`);
+  }
+  return `package main
+
+import (
+	"os"
+
+${imports.join("\n")}
+
+	rt ${goString("github.com/foo-log-inc/cli-contracts/go/cli_contracts_runtime")}
+)
+
+func ptr[T any](v T) *T { return &v }
+
+func main() {
+	results := []rt.Value{}
+	add := func(r rt.ExecResult) {
+		results = append(results, rt.Obj("exitCode", r.ExitCode, "stdout", r.Stdout, "stderr", r.Stderr))
+	}
+${calls.join("\n")}
+	if err := os.WriteFile(${goString(join(workDir, "client.json"))}, []byte(rt.Stringify(results, 0)), 0o644); err != nil {
+		panic(err)
+	}
+}
+`;
 }

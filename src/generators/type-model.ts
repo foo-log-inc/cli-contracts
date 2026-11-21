@@ -101,6 +101,7 @@ export type Decl = RecordDecl | EnumDecl | AliasDecl;
 
 export interface CommandTypes {
   id: string;
+  fullId: string;
   /** The PascalCase name the command's types start with. */
   name: string;
   path: string[];
@@ -275,6 +276,7 @@ function commandTypes(cmd: NormalizedCommand, name: (type: TypeExpr, owner: stri
   const prefix = toPascalCase(cmd.id);
   return {
     id: cmd.id,
+    fullId: cmd.full_id,
     name: prefix,
     path: cmd.path,
     arguments: cmd.arguments.map((arg) => ({

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"os/exec"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -90,4 +91,52 @@ func FormatNumber(f float64) string {
 		out = m + "e" + expSign + strconv.Itoa(abs(n-1))
 	}
 	return sign + out
+}
+
+// ArgString writes a value as an argument the way JavaScript's String(value)
+// does: a number in JavaScript's notation, a list as its items joined by
+// commas, an object as "[object Object]".
+func ArgString(v any) string {
+	switch x := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		return x
+	case bool:
+		if x {
+			return "true"
+		}
+		return "false"
+	case int:
+		return strconv.Itoa(x)
+	case int64:
+		return FormatInt(x)
+	case float64:
+		return FormatNumber(x)
+	case Number:
+		return string(x)
+	case *Object, map[string]any:
+		return "[object Object]"
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Pointer, reflect.Interface:
+		if rv.IsNil() {
+			return "null"
+		}
+		return ArgString(rv.Elem().Interface())
+	case reflect.Slice, reflect.Array:
+		items := make([]string, rv.Len())
+		for i := range items {
+			item := rv.Index(i)
+			if (item.Kind() == reflect.Pointer || item.Kind() == reflect.Interface) && item.IsNil() {
+				continue
+			}
+			items[i] = ArgString(item.Interface())
+		}
+		return strings.Join(items, ",")
+	case reflect.String:
+		return rv.String()
+	}
+	return "[object Object]"
 }

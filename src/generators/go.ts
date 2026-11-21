@@ -2,6 +2,7 @@ import type { NormalizedContext } from "../types.js";
 import { buildRuntimeSpec, type RuntimeSpec, type SpecCommand } from "./runtime-spec.js";
 import type { TreeNode, TreeOption } from "./commander-tree.js";
 import { toPascalCase, toCamelCase } from "./typescript.js";
+import { buildTypeModel, type Decl, type Field, type TypeExpr, type TypeModel } from "./type-model.js";
 
 // The Go program of a contract: the command tree and handler interface for the
 // runtime github.com/foo-log-inc/cli-contracts/go/cli_contracts_runtime, which
@@ -167,10 +168,13 @@ function renderNode(node: TreeNode, commands: Map<string, SpecCommand>, indent: 
   return `${head},\n${parts.map((p) => `${i1}${p},`).join("\n")}\n${indent})`;
 }
 
-/** Struct fields, their types aligned as gofmt aligns them. */
-function goFields(fields: Array<[string, string]>): string[] {
-  const width = Math.max(0, ...fields.map(([name]) => name.length));
-  return fields.map(([name, type]) => `\t${name.padEnd(width)} ${type}`);
+/** Struct fields (name, type and an optional tag), their columns aligned as gofmt aligns them. */
+function goFields(fields: Array<[string, string] | [string, string, string]>): string[] {
+  const nameWidth = Math.max(0, ...fields.map((f) => f[0].length));
+  const typeWidth = Math.max(0, ...fields.map((f) => (f.length === 3 ? f[1].length : 0)));
+  return fields.map((f) =>
+    f.length === 3 ? `\t${f[0].padEnd(nameWidth)} ${f[1].padEnd(typeWidth)} ${f[2]}` : `\t${f[0].padEnd(nameWidth)} ${f[1]}`,
+  );
 }
 
 function generateProgram(spec: RuntimeSpec, pkg: string): string {
@@ -262,8 +266,200 @@ function generateContract(spec: RuntimeSpec, pkg: string): string {
 export function generateGo(ctx: NormalizedContext, options: GoGeneratorOptions): Record<string, string> {
   const pkg = goIdentifier(options.package, options.package);
   const spec = buildRuntimeSpec(ctx, options.contractYaml);
-  const output: Record<string, string> = { "program.go": generateProgram(spec, pkg) };
+  const model = buildTypeModel(ctx);
+  const output: Record<string, string> = {
+    "program.go": generateProgram(spec, pkg),
+    "types.go": generateGoTypes(model, pkg),
+    "commands.go": generateGoCommands(model, pkg),
+    "schemas.go": generateGoSchemas(model, pkg),
+  };
   if (spec.policyDefinitions) output["policy.go"] = generatePolicy(spec, pkg);
   if (spec.contract) output["contract.go"] = generateContract(spec, pkg);
   return output;
+}
+
+// ─── types.go, commands.go, schemas.go ──────────────────────────────
+
+/** The Go type of a type expression. */
+function goType(type: TypeExpr, decls: Map<string, Decl>): string {
+  switch (type.kind) {
+    case "string":
+      return "string";
+    case "integer":
+      return "int64";
+    case "number":
+      return "float64";
+    case "boolean":
+      return "bool";
+    case "ref":
+      return goExported(type.name);
+    case "literals":
+      return type.values.every((v) => typeof v === "string") ? "string" : "any";
+    case "array":
+      return `[]${goType(type.items, decls)}`;
+    case "map":
+      return "map[string]any";
+    default:
+      return "any";
+  }
+}
+
+/** A field's Go type: an optional field that has no nil value is a pointer. */
+function goFieldType(type: TypeExpr, optional: boolean, decls: Map<string, Decl>): string {
+  const t = goType(type, decls);
+  const nilable = t === "any" || t.startsWith("[]") || t.startsWith("map[");
+  return optional && !nilable ? `*${t}` : t;
+}
+
+function goStructFields(fields: Field[], decls: Map<string, Decl>): string[] {
+  return goFields(
+    fields.map((f) => [
+      goExported(f.name),
+      goFieldType(f.type, f.optional, decls),
+      `\`json:"${f.name}${f.optional ? ",omitempty" : ""}"\``,
+    ]),
+  );
+}
+
+function generateGoTypes(model: TypeModel, pkg: string): string {
+  const decls = new Map(model.decls.map((d) => [d.name, d]));
+  const lines: string[] = [HEADER, `package ${pkg}`, ""];
+  for (const decl of model.decls) {
+    const name = goExported(decl.name);
+    if (decl.kind === "record") {
+      lines.push(`type ${name} struct {`, ...goStructFields(decl.fields, decls), "}", "");
+    } else if (decl.kind === "enum") {
+      lines.push(`type ${name} string`, "", "const (");
+      const consts: Array<[string, string]> = decl.values.map((v, i) => {
+        let constName: string;
+        try {
+          constName = goExported(`${decl.name}-${v}`);
+        } catch {
+          constName = `${name}${i + 1}`;
+        }
+        return [constName, `${name} = ${goString(v)}`];
+      });
+      lines.push(...goFields(consts), ")", "");
+    } else {
+      lines.push(`type ${name} ${goType(decl.type, decls)}`, "");
+    }
+  }
+  for (const cmd of model.commands) {
+    const prefix = goExported(cmd.id);
+    if (cmd.arguments.length > 0) {
+      lines.push(`// ${prefix}Args are the arguments of ${cmd.id}.`);
+      lines.push(`type ${prefix}Args struct {`);
+      lines.push(...goFields(cmd.arguments.map((a) => [goExported(a.name), goFieldType(a.type, a.optional && !a.variadic, decls)])));
+      lines.push("}", "");
+    }
+    if (cmd.options.length > 0) {
+      lines.push(`// ${prefix}Options are the options of ${cmd.id}; a nil field is not given.`);
+      lines.push(`type ${prefix}Options struct {`);
+      lines.push(...goFields(cmd.options.map((o) => [goExported(o.name), goFieldType(o.type, true, decls)])));
+      lines.push("}", "");
+    }
+    lines.push(`// ${prefix}ExitCode is an exit code ${cmd.id} declares.`);
+    lines.push(`type ${prefix}ExitCode int`, "");
+    lines.push("const (");
+    lines.push(...goFields(cmd.exitCodes.map((c) => [`${prefix}ExitCode${c}`, `${prefix}ExitCode = ${c}`])));
+    lines.push(")", "");
+    lines.push(`// ${prefix}ExitResult is the outcome of ${cmd.id} for one of its exit codes.`);
+    lines.push(`type ${prefix}ExitResult interface {`, `\tExitCode() ${prefix}ExitCode`, "}", "");
+    for (const exit of cmd.exits) {
+      const variant = `${prefix}Exit${exit.code}`;
+      const fields: Field[] = [];
+      if (exit.stdout) fields.push({ name: "stdout", optional: exit.stdout.optional, type: exit.stdout.type });
+      if (exit.stderr) fields.push({ name: "stderr", optional: exit.stderr.optional, type: exit.stderr.type });
+      lines.push(`type ${variant} struct {`, ...goStructFields(fields, decls), "}", "");
+      lines.push(`func (${variant}) ExitCode() ${prefix}ExitCode { return ${exit.code} }`, "");
+    }
+  }
+  return lines.join("\n");
+}
+
+/** How a value of a type is written as an argument. */
+function goArgString(type: TypeExpr, expr: string, decls: Map<string, Decl>): string {
+  const t = goType(type, decls);
+  if (t === "string") return expr;
+  if (t === "int64") return `rt.FormatInt(${expr})`;
+  if (t === "float64") return `rt.FormatNumber(${expr})`;
+  return `rt.ArgString(${expr})`;
+}
+
+function generateGoCommands(model: TypeModel, pkg: string): string {
+  const decls = new Map(model.decls.map((d) => [d.name, d]));
+  const lines: string[] = [HEADER, `package ${pkg}`, "", `import rt ${goString(GO_RUNTIME_IMPORT)}`, ""];
+  for (const cmd of model.commands) {
+    const prefix = goExported(cmd.id);
+    const funcName = goExported(cmd.fullId);
+    const params = ["executable string"];
+    if (cmd.arguments.length > 0) params.push(`args ${prefix}Args`);
+    if (cmd.options.length > 0) params.push(`options *${prefix}Options`);
+    lines.push(`// ${funcName} runs ${cmd.id} with the arguments and options given.`);
+    lines.push(`func ${funcName}(${params.join(", ")}) rt.ExecResult {`);
+    lines.push(`\tcmdArgs := ${goStrings(cmd.path)}`);
+    for (const arg of cmd.arguments) {
+      const field = `args.${goExported(arg.name)}`;
+      if (arg.variadic) lines.push(`\tcmdArgs = append(cmdArgs, ${field}...)`);
+      else if (arg.optional) {
+        const value = goFieldType(arg.type, true, decls) === goType(arg.type, decls) ? field : `*${field}`;
+        lines.push(`\tif ${field} != nil {\n\t\tcmdArgs = append(cmdArgs, ${goArgString(arg.type, value, decls)})\n\t}`);
+      }
+      else lines.push(`\tcmdArgs = append(cmdArgs, ${goArgString(arg.type, field, decls)})`);
+    }
+    if (cmd.options.length > 0) {
+      lines.push("\tif options != nil {");
+      for (const opt of cmd.options) {
+        const field = `options.${goExported(opt.name)}`;
+        const long = goString(opt.long);
+        if (opt.negated !== undefined) {
+          lines.push(`\t\tif ${field} != nil {\n\t\t\tif *${field} {\n\t\t\t\tcmdArgs = append(cmdArgs, ${long})\n\t\t\t} else {\n\t\t\t\tcmdArgs = append(cmdArgs, ${goString(opt.negated)})\n\t\t\t}\n\t\t}`);
+        } else if (opt.boolean) {
+          lines.push(`\t\tif ${field} != nil && *${field} {\n\t\t\tcmdArgs = append(cmdArgs, ${long})\n\t\t}`);
+        } else if (opt.repeatable && opt.type.kind === "array") {
+          lines.push(`\t\tfor _, v := range ${field} {\n\t\t\tcmdArgs = append(cmdArgs, ${long}, ${goArgString(opt.type.items, "v", decls)})\n\t\t}`);
+        } else {
+          const nilable = goFieldType(opt.type, true, decls) === goType(opt.type, decls);
+          const value = nilable ? field : `*${field}`;
+          lines.push(`\t\tif ${field} != nil {\n\t\t\tcmdArgs = append(cmdArgs, ${long}, ${goArgString(opt.type, value, decls)})\n\t\t}`);
+        }
+      }
+      lines.push("\t}");
+    }
+    lines.push("\treturn rt.Exec(executable, cmdArgs)", "}", "");
+  }
+  return lines.join("\n");
+}
+
+function generateGoSchemas(model: TypeModel, pkg: string): string {
+  const lines: string[] = [HEADER, `package ${pkg}`, ""];
+  if (model.schemas.length > 0) {
+    lines.push("// Schemas holds the components' JSON Schemas as JSON, by name.");
+    lines.push("var Schemas = schemas()", "");
+    lines.push("func schemas() map[string]string {", "\tm := map[string]string{}");
+    for (const [name, schema] of model.schemas) lines.push(`\tm[${goString(name)}] = ${goString(JSON.stringify(schema))}`);
+    lines.push("\treturn m", "}", "");
+  }
+  for (const cmd of model.commands) {
+    lines.push(`// ${goExported(cmd.id)}ExitCodes are the exit codes ${cmd.id} declares.`);
+    lines.push(`var ${goExported(cmd.id)}ExitCodes = []int{${cmd.exitCodes.join(", ")}}`, "");
+  }
+  return lines.join("\n");
+}
+
+/** A JSON value as a Go literal of a field's type (a pointer field's through `ptr`). */
+export function goLiteral(value: unknown, type: TypeExpr, optional: boolean, model: TypeModel, pkg: string): string {
+  const decls = new Map(model.decls.map((d) => [d.name, d]));
+  const pointer = goFieldType(type, optional, decls).startsWith("*");
+  const t = goType(type, decls);
+  const qualified = type.kind === "ref" ? `${pkg}.${t}` : t;
+  const scalar = (text: string): string => (pointer ? `ptr[${qualified}](${text})` : text);
+  if (type.kind === "array" && Array.isArray(value)) {
+    const items = value.map((v) => goLiteral(v, type.items, false, model, pkg));
+    const itemType = type.items.kind === "ref" ? `${pkg}.${goType(type.items, decls)}` : goType(type.items, decls);
+    return `[]${itemType}{${items.join(", ")}}`;
+  }
+  if (typeof value === "string") return scalar(goString(value));
+  if (typeof value === "number" || typeof value === "boolean") return scalar(String(value));
+  throw new Error(`No Go literal for ${JSON.stringify(value)}`);
 }
