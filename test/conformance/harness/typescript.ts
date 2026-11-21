@@ -13,7 +13,7 @@ import {
   type ConformanceContract,
   type Outcome,
   type Variant,
-} from "../run.js";
+} from "../shared.js";
 
 function harnessSource(c: ConformanceContract, variant: Variant): string {
   const ids = Object.fromEntries(c.spec.commands.map((cmd) => [toCamelCase(cmd.id), cmd.id]));

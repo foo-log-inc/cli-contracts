@@ -1,8 +1,10 @@
 // Language conformance of the generated programs (TEST-DESIGN T1).
 //
-//   tsx test/conformance/run.ts record <file>   run the TypeScript programs and write the vectors to <file>
-//   tsx test/conformance/run.ts check <lang>    run the <lang> programs and compare them with vectors.json
-//                                              (<lang>: typescript, go, rust, python, php)
+//   tsx test/conformance/run.ts record <file>     run the TypeScript programs and write the vectors to <file>
+//   tsx test/conformance/run.ts check <lang>      prepare, run and compare (needs the language's toolchain)
+//   tsx test/conformance/run.ts prepare <lang>    write the <lang> programs and out/<lang>/run.sh
+//   tsx test/conformance/run.ts compare <lang>    compare what out/<lang>/run.sh wrote with vectors.json
+//                                                (<lang>: typescript, go, rust, python, php)
 //
 // Each contract under contracts/ generates a program in every language. Its
 // handlers write what they receive as one `HANDLER <json>` line; created with
@@ -10,58 +12,32 @@
 // exits 2. Every invocation in cases.ts runs on both programs, and its exit
 // code, stdout and stderr are compared byte for byte with the vector the
 // TypeScript program (commander) recorded.
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
+//
+// The programs of the other languages run every invocation in one process and
+// write their outcomes to out/<lang>/<contract>.json as
+// `{"plain": [Outcome...], "usage": [Outcome...]}`.
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { parseContractFile } from "../../src/parser.js";
 import { resolveRefs } from "../../src/ref-resolver.js";
 import { normalizeContract } from "../../src/normalizer.js";
-import { buildRuntimeSpec, type RuntimeSpec } from "../../src/generators/runtime-spec.js";
-import type { NormalizedContext } from "../../src/types.js";
+import { buildRuntimeSpec } from "../../src/generators/runtime-spec.js";
 import { CASES } from "./cases.js";
 import { runTypeScript } from "./harness/typescript.js";
+import {
+  HERE,
+  VARIANTS,
+  resultKey,
+  type ConformanceContract,
+  type LanguagePreparer,
+  type Outcome,
+  type Variant,
+  type Vector,
+} from "./shared.js";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-export const OUT = join(HERE, "out");
+const OUT = join(HERE, "out");
 const VECTORS = join(HERE, "vectors.json");
-
-export type Variant = "plain" | "usage";
-export const VARIANTS: Variant[] = ["plain", "usage"];
-
-export interface Outcome {
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-}
-
-export interface Vector extends Outcome {
-  contract: string;
-  variant: Variant;
-  argv: string[];
-}
-
-export interface ConformanceContract {
-  /** File name under contracts/, e.g. `acme.yaml`. */
-  file: string;
-  /** A name usable in paths and identifiers, e.g. `acme`. */
-  name: string;
-  ctx: NormalizedContext;
-  yaml: string;
-  spec: RuntimeSpec;
-  argv: string[][];
-}
-
-/** The version every conformance program is created with. */
-export const PROGRAM_VERSION = "9.8.7";
-/** The exit code a handler returns for this command (the others return 0). */
-export const FAILING_COMMAND = { id: "users.remove", exitCode: 3 };
-
-/** Runs every invocation of a contract on both programs, in `cases` order. */
-export type LanguageRunner = (contracts: ConformanceContract[], workDir: string) => Promise<Map<string, Outcome[]>>;
-
-export function resultKey(contract: string, variant: Variant): string {
-  return `${contract}:${variant}`;
-}
 
 const ISO_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g;
 
@@ -89,36 +65,53 @@ async function loadContracts(): Promise<ConformanceContract[]> {
   return contracts;
 }
 
-async function runnerFor(lang: string): Promise<LanguageRunner> {
+async function preparerFor(lang: string): Promise<LanguagePreparer> {
   switch (lang) {
-    case "typescript":
-      return runTypeScript;
     case "go":
-      return (await import("./harness/go.js")).runGo;
+      return (await import("./harness/go.js")).prepareGo;
     case "rust":
-      return (await import("./harness/rust.js")).runRust;
+      return (await import("./harness/rust.js")).prepareRust;
     case "python":
-      return (await import("./harness/python.js")).runPython;
+      return (await import("./harness/python.js")).preparePython;
     case "php":
-      return (await import("./harness/php.js")).runPhp;
+      return (await import("./harness/php.js")).preparePhp;
     default:
       throw new Error(`Unknown language: ${lang}`);
   }
 }
 
-async function run(lang: string, contracts: ConformanceContract[]): Promise<Vector[]> {
-  const workDir = join(OUT, lang);
+function workDirOf(lang: string): string {
+  return join(OUT, lang);
+}
+
+async function prepare(lang: string, contracts: ConformanceContract[]): Promise<string> {
+  const workDir = workDirOf(lang);
   rmSync(workDir, { recursive: true, force: true });
   mkdirSync(workDir, { recursive: true });
-  const results = await (await runnerFor(lang))(contracts, workDir);
+  const script = (await preparerFor(lang))(contracts, workDir);
+  const scriptPath = join(workDir, "run.sh");
+  writeFileSync(scriptPath, `set -eu\n${script}\n`);
+  return scriptPath;
+}
+
+function readResults(lang: string, contracts: ConformanceContract[]): Map<string, Outcome[]> {
+  const results = new Map<string, Outcome[]>();
+  for (const c of contracts) {
+    const file = join(workDirOf(lang), `${c.name}.json`);
+    if (!existsSync(file)) throw new Error(`${lang}: ${file} was not written`);
+    const byVariant = JSON.parse(readFileSync(file, "utf-8")) as Record<Variant, Outcome[]>;
+    for (const variant of VARIANTS) results.set(resultKey(c.file, variant), byVariant[variant] ?? []);
+  }
+  return results;
+}
+
+function toVectors(lang: string, contracts: ConformanceContract[], results: Map<string, Outcome[]>): Vector[] {
   const vectors: Vector[] = [];
   for (const c of contracts) {
     for (const variant of VARIANTS) {
       const outcomes = results.get(resultKey(c.file, variant));
       if (!outcomes || outcomes.length !== c.argv.length) {
-        throw new Error(
-          `${lang}: ${c.file} (${variant}) ran ${outcomes?.length ?? 0} of ${c.argv.length} invocations`,
-        );
+        throw new Error(`${lang}: ${c.file} (${variant}) ran ${outcomes?.length ?? 0} of ${c.argv.length} invocations`);
       }
       c.argv.forEach((argv, i) => {
         const o = outcomes[i]!;
@@ -136,48 +129,68 @@ async function run(lang: string, contracts: ConformanceContract[]): Promise<Vect
   return vectors;
 }
 
-function show(text: string): string {
-  return JSON.stringify(text);
+function compare(lang: string, actual: Vector[]): boolean {
+  const expected = JSON.parse(readFileSync(VECTORS, "utf-8")) as Vector[];
+  if (actual.length !== expected.length) {
+    console.log(`${lang}: ${actual.length} invocations, vectors.json has ${expected.length}`);
+    return false;
+  }
+  let failures = 0;
+  actual.forEach((a, i) => {
+    const e = expected[i]!;
+    const same =
+      a.contract === e.contract &&
+      a.variant === e.variant &&
+      JSON.stringify(a.argv) === JSON.stringify(e.argv) &&
+      a.exitCode === e.exitCode &&
+      a.stdout === e.stdout &&
+      a.stderr === e.stderr;
+    if (same) return;
+    failures++;
+    if (failures > 20) return;
+    console.log(`FAIL ${e.contract} ${e.variant} ${JSON.stringify(e.argv)}`);
+    if (a.exitCode !== e.exitCode) console.log(`  exit: expected ${e.exitCode}, got ${a.exitCode}`);
+    if (a.stdout !== e.stdout) console.log(`  stdout: expected ${JSON.stringify(e.stdout)}\n          got      ${JSON.stringify(a.stdout)}`);
+    if (a.stderr !== e.stderr) console.log(`  stderr: expected ${JSON.stringify(e.stderr)}\n          got      ${JSON.stringify(a.stderr)}`);
+  });
+  console.log(`${lang}: ${actual.length - failures} of ${actual.length} invocations match`);
+  return failures === 0;
 }
 
 async function main(): Promise<void> {
-  const [command, arg] = process.argv.slice(2);
+  const [command, lang] = process.argv.slice(2);
   const contracts = await loadContracts();
-  if (command === "record" && arg) {
-    const vectors = await run("typescript", contracts);
-    writeFileSync(resolve(arg), JSON.stringify(vectors, null, 2) + "\n");
+  if (command === "record" && lang) {
+    const vectors = toVectors("typescript", contracts, await runTypeScript(contracts, workDirOf("typescript")));
+    writeFileSync(resolve(lang), JSON.stringify(vectors, null, 2) + "\n");
     console.log(`recorded ${vectors.length} vectors`);
     return;
   }
-  if (command === "check" && arg) {
-    const expected = JSON.parse(readFileSync(VECTORS, "utf-8")) as Vector[];
-    const actual = await run(arg, contracts);
-    if (actual.length !== expected.length) {
-      throw new Error(`${arg}: ${actual.length} invocations, vectors.json has ${expected.length}`);
-    }
-    let failures = 0;
-    actual.forEach((a, i) => {
-      const e = expected[i]!;
-      const same =
-        a.contract === e.contract &&
-        a.variant === e.variant &&
-        JSON.stringify(a.argv) === JSON.stringify(e.argv) &&
-        a.exitCode === e.exitCode &&
-        a.stdout === e.stdout &&
-        a.stderr === e.stderr;
-      if (same) return;
-      failures++;
-      if (failures > 20) return;
-      console.log(`FAIL ${e.contract} ${e.variant} ${JSON.stringify(e.argv)}`);
-      if (a.exitCode !== e.exitCode) console.log(`  exit: expected ${e.exitCode}, got ${a.exitCode}`);
-      if (a.stdout !== e.stdout) console.log(`  stdout: expected ${show(e.stdout)}\n          got      ${show(a.stdout)}`);
-      if (a.stderr !== e.stderr) console.log(`  stderr: expected ${show(e.stderr)}\n          got      ${show(a.stderr)}`);
-    });
-    console.log(`${arg}: ${actual.length - failures} of ${actual.length} invocations match`);
-    if (failures > 0) process.exitCode = 1;
+  if (lang === "typescript" && (command === "check" || command === "compare")) {
+    const ok = compare(lang, toVectors(lang, contracts, await runTypeScript(contracts, workDirOf(lang))));
+    if (!ok) process.exitCode = 1;
     return;
   }
-  console.error("usage: run.ts record <file> | check <typescript|go|rust|python|php>");
+  if (command === "prepare" && lang) {
+    console.log(await prepare(lang, contracts));
+    return;
+  }
+  if (command === "compare" && lang) {
+    if (!compare(lang, toVectors(lang, contracts, readResults(lang, contracts)))) process.exitCode = 1;
+    return;
+  }
+  if (command === "check" && lang) {
+    const script = await prepare(lang, contracts);
+    const ran = spawnSync("sh", [script], { stdio: "inherit" });
+    if (ran.status !== 0) {
+      console.log(`${lang}: ${script} exited ${ran.status}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (!compare(lang, toVectors(lang, contracts, readResults(lang, contracts)))) process.exitCode = 1;
+    return;
+  }
+  console.error("usage: run.ts record <file> | check|prepare|compare <typescript|go|rust|python|php>");
   process.exitCode = 2;
 }
 
