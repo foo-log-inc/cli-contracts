@@ -128,7 +128,9 @@ function renderNode(node: TreeNode, commands: Map<string, SpecCommand>, indent: 
     parts.push(`rt.Options(\n${node.options.map((o) => `${i1}\t&rt.Option${renderOption(o)},`).join("\n")}\n${i1})`);
   }
   if (node.initialValues.length > 0) {
-    parts.push(`rt.Initial(${node.initialValues.map(([k, v]) => `${goString(k)}, ${goValue(v, i1)}`).join(", ")})`);
+    parts.push(
+      `rt.Initial(${node.initialValues.map(([k, v]) => `${goString(k)}, ${Array.isArray(v) ? goStrings(v) : goValue(v, i1)}`).join(", ")})`,
+    );
   }
   if (node.arguments.length > 0) {
     parts.push(

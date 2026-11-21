@@ -682,6 +682,23 @@ function validateOptions(
       }
     }
 
+    // The program passes a boolean option's value as true or false and any
+    // other option's as the string given, so a default is one of them too.
+    const def = opt.schema?.default;
+    if (def !== undefined) {
+      const isBoolean = opt.schema?.type === "boolean";
+      if (isBoolean !== (typeof def === "boolean")) {
+        diagnostics.push({
+          path: `${optPath}/schema/default`,
+          message: isBoolean
+            ? `The default of boolean option "${opt.name}" must be true or false`
+            : `Option "${opt.name}" takes a value; its default must not be true or false`,
+          rule: "option-default-type",
+          severity: "error",
+        });
+      }
+    }
+
     if (opt.aliases) {
       for (const alias of opt.aliases) {
         if (aliasMap.has(alias)) {

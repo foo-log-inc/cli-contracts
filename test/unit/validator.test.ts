@@ -145,6 +145,52 @@ command_sets:
     ]);
   });
 
+  it("rejects a boolean option's default that is not a boolean, and a value option's default that is", () => {
+    const doc = parseContractString(`
+cli_contracts: 0.1.0
+info:
+  title: T
+  version: 0.1.0
+command_sets:
+  tool:
+    commands:
+      build:
+        summary: Build.
+        options:
+          - name: watch
+            schema:
+              type: boolean
+              default: "yes"
+          - name: target
+            schema:
+              type: string
+              default: true
+          - name: jobs
+            schema:
+              type: integer
+              default: 4
+          - name: color
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: OK.
+`);
+    const result = validateContract(doc);
+
+    expect(result.errors.filter((e) => e.rule === "option-default-type")).toEqual([
+      expect.objectContaining({
+        path: "/command_sets/tool/commands/build/options/0/schema/default",
+        message: 'The default of boolean option "watch" must be true or false',
+      }),
+      expect.objectContaining({
+        path: "/command_sets/tool/commands/build/options/1/schema/default",
+        message: 'Option "target" takes a value; its default must not be true or false',
+      }),
+    ]);
+  });
+
   it("detects duplicate option aliases", async () => {
     const doc = await parseContractFile(
       resolve(FIXTURES, "invalid-contract.yaml"),

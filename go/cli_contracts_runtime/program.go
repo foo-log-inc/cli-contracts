@@ -64,13 +64,14 @@ type run struct {
 	stdout io.Writer
 	stderr io.Writer
 	values map[*Command]*Object
-	// args is commander's this.args of each command parsed.
-	args map[*Command][]string
+	// given holds the keys of each command the invocation set (an option's
+	// default is replaced, not added to, by the first value given).
+	given map[*Command]map[string]bool
 }
 
 // Run parses an invocation, runs what it names and returns the exit code.
 func (p *Program) Run(argv []string, stdout, stderr io.Writer) (code int) {
-	r := &run{p: p, stdout: stdout, stderr: stderr, values: map[*Command]*Object{}, args: map[*Command][]string{}}
+	r := &run{p: p, stdout: stdout, stderr: stderr, values: map[*Command]*Object{}, given: map[*Command]map[string]bool{}}
 	defer func() {
 		if v := recover(); v != nil {
 			e, ok := v.(exit)
@@ -159,14 +160,21 @@ func (r *run) emitOption(cmd *Command, opt *Option, value *string) {
 		r.exit(0)
 	}
 	values := r.values[cmd]
+	given := r.given[cmd]
+	if given == nil {
+		given = map[string]bool{}
+		r.given[cmd] = given
+	}
+	defer func() { given[opt.Key] = true }()
 	if value == nil {
 		values.Set(opt.Key, opt.Kind != Negate)
 		return
 	}
 	if opt.Variadic {
-		if previous, ok := values.Get(opt.Key); ok {
+		// A value given replaces the default and is added to the values given before it.
+		if previous, ok := values.Get(opt.Key); ok && given[opt.Key] {
 			if list, ok := previous.([]string); ok {
-				values.Set(opt.Key, append(list, *value))
+				values.Set(opt.Key, append(append([]string{}, list...), *value))
 				return
 			}
 		}
@@ -278,7 +286,6 @@ func (r *run) parseCommand(cmd *Command, operands, unknown []string) int {
 	operands = append(append([]string{}, operands...), parsedOperands...)
 	unknown = parsedUnknown
 	args := append(append([]string{}, operands...), unknown...)
-	r.args[cmd] = args
 
 	if len(operands) > 0 && cmd.findCommand(operands[0]) != nil {
 		return r.dispatchSubcommand(cmd, operands[0], operands[1:], unknown)

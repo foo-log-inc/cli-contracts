@@ -38,7 +38,7 @@ export interface TreeNode {
   name: string;
   options: TreeOption[];
   /** Option values before parsing (the defaults), in the order commander holds them. */
-  initialValues: Array<[string, string | boolean]>;
+  initialValues: Array<[string, string | boolean | string[]]>;
   arguments: Array<{ name: string; required: boolean; variadic: boolean }>;
   commands: TreeNode[];
   hidden: boolean;
@@ -224,10 +224,13 @@ function readNode(cmd: Command, actions: Map<Command, TreeAction>): TreeNode {
   }
 
   const initialValues = Object.entries(cmd.opts()).filter(
-    (entry): entry is [string, string | boolean] => typeof entry[1] === "string" || typeof entry[1] === "boolean",
+    (entry): entry is [string, string | boolean | string[]] =>
+      typeof entry[1] === "string" ||
+      typeof entry[1] === "boolean" ||
+      (Array.isArray(entry[1]) && entry[1].every((v) => typeof v === "string")),
   );
   if (initialValues.length !== Object.keys(cmd.opts()).length) {
-    throw new Error(`Command ${cmd.name()} has a default that is neither a string nor a boolean`);
+    throw new Error(`Command ${cmd.name()} has a default that is not a string, a boolean or a list of strings`);
   }
 
   const action = actions.get(cmd);

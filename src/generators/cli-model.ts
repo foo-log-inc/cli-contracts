@@ -4,7 +4,7 @@ import type {
   Option,
 } from "../types.js";
 import type { Group } from "../schema.js";
-import { optionFlags } from "../option-flags.js";
+import { optionFlags, optionTakesManyValues } from "../option-flags.js";
 import {
   BUILTIN_EXTRACT_COMMAND,
   BUILTIN_EXTRACT_OPTIONS,
@@ -31,7 +31,7 @@ export type OptionRegistration =
       kind: "option";
       flags: string;
       description?: string;
-      defaultValue?: string | boolean;
+      defaultValue?: string | boolean | string[];
     }
   | {
       /** An option declared under a `no-` name, which keeps that name as its key. */
@@ -39,7 +39,7 @@ export type OptionRegistration =
       flags: string;
       description: string;
       key: string;
-      defaultValue?: string | boolean;
+      defaultValue?: string | boolean | string[];
     };
 
 export interface ArgumentRegistration {
@@ -171,8 +171,17 @@ export function optionRegistrations(opt: Option): OptionRegistration[] {
   const { flags, negated, key, noPrefixed } = optionFlags(opt);
   const description = opt.description ?? "";
   const def = opt.schema?.default;
-  // commander keeps a boolean default as given and expects a string for any other option.
-  const defaultValue = def === undefined ? undefined : typeof def === "boolean" ? def : String(def);
+  // commander keeps a boolean default as given and expects a string for any
+  // other option; an option that takes many values collects them into an
+  // array, which a given value replaces (commander's _collectValue).
+  const defaultValue =
+    def === undefined
+      ? undefined
+      : typeof def === "boolean"
+        ? def
+        : optionTakesManyValues(opt)
+          ? (Array.isArray(def) ? def : [def]).map(String)
+          : String(def);
   const registration: OptionRegistration = noPrefixed
     ? { kind: "declared", flags, description, key, defaultValue }
     : { kind: "option", flags, description, defaultValue };

@@ -5,7 +5,7 @@
 //! a generated program uses. The TypeScript program generated from the same
 //! contract is commander itself; test/conformance compares the two.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Write;
 
 use crate::extract::ExtractSpec;
@@ -63,6 +63,8 @@ struct Run<'a> {
     stderr: &'a mut dyn Write,
     dispatch: &'a mut Dispatch<'a>,
     values: HashMap<Vec<usize>, Object>,
+    /// The keys of each command the invocation set.
+    given: HashSet<(Vec<usize>, &'static str)>,
 }
 
 impl Program {
@@ -84,6 +86,7 @@ impl Program {
             stderr,
             dispatch,
             values: HashMap::new(),
+            given: HashSet::new(),
         };
         run.prepare(&mut Vec::new());
         let code = match run.parse_command(&[], Vec::new(), argv.to_vec()) {
@@ -213,12 +216,14 @@ impl<'a> Run<'a> {
             self.write_out(&text);
             return Err(0);
         }
+        // A value given replaces the default and is added to the values given before it.
+        let given_before = !self.given.insert((path.to_vec(), opt.key));
         let values = self.values.get_mut(path).expect("prepared");
         match value {
             None => values.set(opt.key, Value::Bool(opt.kind != OptionKind::Negate)),
             Some(v) if opt.variadic => {
                 let next = match values.get(opt.key) {
-                    Some(Value::Array(items)) => {
+                    Some(Value::Array(items)) if given_before => {
                         let mut items = items.clone();
                         items.push(Value::String(v));
                         items

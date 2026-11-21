@@ -204,6 +204,8 @@ class _Run:
         self.stdout = stdout
         self.stderr = stderr
         self.values: Dict[int, Dict[str, Any]] = {}
+        # The keys of each command the invocation set.
+        self.given: set = set()
         self._prepare(program.root)
 
     def _prepare(self, cmd: Command) -> None:
@@ -233,12 +235,15 @@ class _Run:
             self.stdout.write(self.p.version + "\n")
             raise _Exit(0)
         values = self.values[id(cmd)]
+        given_before = (id(cmd), opt.key) in self.given
+        self.given.add((id(cmd), opt.key))
         if value is None:
             values[opt.key] = opt.kind != NEGATE
         elif opt.variadic:
+            # A value given replaces the default and is added to the values given before it.
             previous = values.get(opt.key)
-            if isinstance(previous, list):
-                previous.append(value)
+            if given_before and isinstance(previous, list):
+                values[opt.key] = [*previous, value]
             else:
                 values[opt.key] = [value]
         else:

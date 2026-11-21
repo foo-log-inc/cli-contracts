@@ -19,6 +19,8 @@ final class Program
 {
     /** @var array<int, array<string, mixed>> option values by command (spl_object_id) */
     private array $values = [];
+    /** @var array<int, array<string, true>> the keys of each command the invocation set */
+    private array $given = [];
     /** @var resource */
     private $stdout;
     /** @var resource */
@@ -53,6 +55,7 @@ final class Program
         $this->stdout = $stdout ?? STDOUT;
         $this->stderr = $stderr ?? STDERR;
         $this->values = [];
+        $this->given = [];
         $this->prepare($this->root);
         try {
             return $this->parseCommand($this->root, [], array_values($argv));
@@ -129,11 +132,14 @@ final class Program
             throw new ExitNow(0);
         }
         $id = spl_object_id($cmd);
+        $givenBefore = isset($this->given[$id][$opt->key]);
+        $this->given[$id][$opt->key] = true;
         if ($value === null) {
             $this->values[$id][$opt->key] = $opt->kind !== Option::NEGATE;
         } elseif ($opt->variadic) {
+            // A value given replaces the default and is added to the values given before it.
             $previous = $this->values[$id][$opt->key] ?? null;
-            $this->values[$id][$opt->key] = is_array($previous) ? [...$previous, $value] : [$value];
+            $this->values[$id][$opt->key] = $givenBefore && is_array($previous) ? [...$previous, $value] : [$value];
         } else {
             $this->values[$id][$opt->key] = $value;
         }

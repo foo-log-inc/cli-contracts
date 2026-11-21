@@ -37,6 +37,14 @@ command_sets:
             value_name: n
             schema:
               type: number
+          - name: lang
+            aliases: [l]
+            value_name: lang
+            description: Languages to format.
+            repeatable: true
+            schema:
+              type: string
+              default: go
         exits:
           '0':
             description: Formatted.

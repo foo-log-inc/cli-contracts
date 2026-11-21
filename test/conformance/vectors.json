@@ -2512,7 +2512,7 @@
     "variant": "plain",
     "argv": [],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2523,7 +2523,7 @@
       "b.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\",\"b.go\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\",\"b.go\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2534,7 +2534,7 @@
       "a.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"check\":true,\"width\":\"100\"},\"globals\":{\"check\":true,\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"check\":true,\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"check\":true,\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2545,7 +2545,7 @@
       "80"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"width\":\"80\"},\"globals\":{\"width\":\"80\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"go\"],\"width\":\"80\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"80\"}}\n",
     "stderr": ""
   },
   {
@@ -2556,7 +2556,7 @@
       "x"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"x\"]],\"opts\":{\"width\":\"80\"},\"globals\":{\"width\":\"80\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"x\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"80\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"80\"}}\n",
     "stderr": ""
   },
   {
@@ -2568,7 +2568,7 @@
       "y"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"exclude\":[\"x\",\"y\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\",\"y\"],\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"exclude\":[\"x\",\"y\"],\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\",\"y\"],\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2581,7 +2581,7 @@
       "y"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"y\"]],\"opts\":{\"exclude\":[\"x\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\"],\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"y\"]],\"opts\":{\"exclude\":[\"x\"],\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\"],\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2593,7 +2593,45 @@
       "f"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"indent\":\"2.5\",\"width\":\"100\"},\"globals\":{\"indent\":\"2.5\",\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"indent\":\"2.5\",\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"indent\":\"2.5\",\"lang\":[\"go\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "plain",
+    "argv": [
+      "--lang",
+      "rust",
+      "--lang",
+      "py"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "plain",
+    "argv": [
+      "-l",
+      "rust",
+      "py",
+      "--",
+      "f"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "plain",
+    "argv": [
+      "-lrust",
+      "a.go"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"lang\":[\"rust\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2634,7 +2672,7 @@
       "format"
     ],
     "exitCode": 0,
-    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                Files to format.\n\nOptions:\n  -c, --check          Exit 1 when a file is not formatted.\n  -w, --width <cols>   Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -h, --help           display help for command\n",
+    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                 Files to format.\n\nOptions:\n  -c, --check           Exit 1 when a file is not formatted.\n  -w, --width <cols>    Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -l, --lang <lang...>  Languages to format. (default: [\"go\"])\n  -h, --help            display help for command\n",
     "stderr": ""
   },
   {
@@ -2740,7 +2778,7 @@
       "-x"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-x\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-x\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2750,7 +2788,7 @@
       "-1"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-1\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-1\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2761,7 +2799,7 @@
       "a.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2772,7 +2810,7 @@
       "--help"
     ],
     "exitCode": 0,
-    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                Files to format.\n\nOptions:\n  -c, --check          Exit 1 when a file is not formatted.\n  -w, --width <cols>   Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -h, --help           display help for command\n",
+    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                 Files to format.\n\nOptions:\n  -c, --check           Exit 1 when a file is not formatted.\n  -w, --width <cols>    Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -l, --lang <lang...>  Languages to format. (default: [\"go\"])\n  -h, --help            display help for command\n",
     "stderr": ""
   },
   {
@@ -2780,7 +2818,7 @@
     "variant": "usage",
     "argv": [],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2791,7 +2829,7 @@
       "b.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\",\"b.go\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\",\"b.go\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2802,7 +2840,7 @@
       "a.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"check\":true,\"width\":\"100\"},\"globals\":{\"check\":true,\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"check\":true,\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"check\":true,\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2813,7 +2851,7 @@
       "80"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"width\":\"80\"},\"globals\":{\"width\":\"80\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"go\"],\"width\":\"80\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"80\"}}\n",
     "stderr": ""
   },
   {
@@ -2824,7 +2862,7 @@
       "x"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"x\"]],\"opts\":{\"width\":\"80\"},\"globals\":{\"width\":\"80\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"x\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"80\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"80\"}}\n",
     "stderr": ""
   },
   {
@@ -2836,7 +2874,7 @@
       "y"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"exclude\":[\"x\",\"y\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\",\"y\"],\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"exclude\":[\"x\",\"y\"],\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\",\"y\"],\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2849,7 +2887,7 @@
       "y"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"y\"]],\"opts\":{\"exclude\":[\"x\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\"],\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"y\"]],\"opts\":{\"exclude\":[\"x\"],\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"exclude\":[\"x\"],\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2861,7 +2899,45 @@
       "f"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"indent\":\"2.5\",\"width\":\"100\"},\"globals\":{\"indent\":\"2.5\",\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"indent\":\"2.5\",\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"indent\":\"2.5\",\"lang\":[\"go\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "usage",
+    "argv": [
+      "--lang",
+      "rust",
+      "--lang",
+      "py"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[]],\"opts\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "usage",
+    "argv": [
+      "-l",
+      "rust",
+      "py",
+      "--",
+      "f"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"f\"]],\"opts\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\",\"py\"],\"width\":\"100\"}}\n",
+    "stderr": ""
+  },
+  {
+    "contract": "fmt.yaml",
+    "variant": "usage",
+    "argv": [
+      "-lrust",
+      "a.go"
+    ],
+    "exitCode": 0,
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"lang\":[\"rust\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"rust\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -2902,7 +2978,7 @@
       "format"
     ],
     "exitCode": 0,
-    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                Files to format.\n\nOptions:\n  -c, --check          Exit 1 when a file is not formatted.\n  -w, --width <cols>   Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -h, --help           display help for command\n",
+    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                 Files to format.\n\nOptions:\n  -c, --check           Exit 1 when a file is not formatted.\n  -w, --width <cols>    Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -l, --lang <lang...>  Languages to format. (default: [\"go\"])\n  -h, --help            display help for command\n",
     "stderr": ""
   },
   {
@@ -3008,7 +3084,7 @@
       "-x"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-x\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-x\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -3018,7 +3094,7 @@
       "-1"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-1\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"-1\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -3029,7 +3105,7 @@
       "a.go"
     ],
     "exitCode": 0,
-    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"width\":\"100\"},\"globals\":{\"width\":\"100\"}}\n",
+    "stdout": "HANDLER {\"command\":\"format\",\"args\":[[\"a.go\"]],\"opts\":{\"lang\":[\"go\"],\"width\":\"100\"},\"globals\":{\"lang\":[\"go\"],\"width\":\"100\"}}\n",
     "stderr": ""
   },
   {
@@ -3040,7 +3116,7 @@
       "--help"
     ],
     "exitCode": 0,
-    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                Files to format.\n\nOptions:\n  -c, --check          Exit 1 when a file is not formatted.\n  -w, --width <cols>   Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -h, --help           display help for command\n",
+    "stdout": "Usage: fmt format [options] [files...]\n\nFormat the given files.\n\nArguments:\n  files                 Files to format.\n\nOptions:\n  -c, --check           Exit 1 when a file is not formatted.\n  -w, --width <cols>    Maximum line width. (default: \"100\")\n  --exclude <glob...>\n  --indent <n>\n  -l, --lang <lang...>  Languages to format. (default: [\"go\"])\n  -h, --help            display help for command\n",
     "stderr": ""
   }
 ]
