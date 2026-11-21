@@ -80,7 +80,7 @@ jobs:
         if: matrix.lang == 'python'
         with:
           # The lowest version the runtime declares (python/pyproject.toml).
-          python-version: '3.9'
+          python-version: '3.10'
       - uses: shivammathur/setup-php@v2
         if: matrix.lang == 'php'
         with:

@@ -778,7 +778,7 @@ A program runs on the language's runtime, which parses an invocation by the same
 |---|---|---|
 | Go | module `github.com/foo-log-inc/cli-contracts/go` (import path `github.com/foo-log-inc/cli-contracts/go/cli_contracts_runtime`), Go 1.21 or later | `package` (required): the package name of the generated files |
 | Rust | crate [`cli_contracts_runtime`](https://crates.io/crates/cli_contracts_runtime), Rust 1.70 or later | — (the generated files form a module: `mod.rs` and its submodules) |
-| Python | [`cli-contracts-runtime`](https://pypi.org/project/cli-contracts-runtime/) (import name `cli_contracts_runtime`), Python 3.9 or later | — (the generated files form a package: `__init__.py` and its modules) |
+| Python | [`cli-contracts-runtime`](https://pypi.org/project/cli-contracts-runtime/) (import name `cli_contracts_runtime`), Python 3.10 or later | — (the generated files form a package: `__init__.py` and its modules) |
 | PHP | `cli-contracts/runtime` (namespace `CliContracts\Runtime`) in [`php/`](php/), PHP 8.1 or later with `ext-mbstring`; not published to Packagist | `namespace` (required): the namespace of the generated classes |
 
 ```yaml

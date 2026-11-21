@@ -6,7 +6,7 @@ The runtime for the Python programs and command wrappers that [cli-contracts](ht
 pip install cli-contracts-runtime
 ```
 
-Python 3.9 or later. The package uses the standard library only.
+Python 3.10 or later. The package uses the standard library only.
 
 ## Usage
 
