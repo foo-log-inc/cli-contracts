@@ -73,6 +73,7 @@
     "url": "https://github.com/foo-log-inc/cli-contracts/issues"
   },
   "dependencies": {
+    "commander": "^14.0.3",
     "yaml": "^2.9.1",
     "zod": "^4.6.7"
   },
@@ -81,7 +82,6 @@
     "agent-contracts": "^0.35.13",
     "agent-contracts-runtime": "^0.36.17",
     "ajv": "^8.17.1",
-    "commander": "^14.0.3",
     "esbuild": "^0.28.2",
     "handlebars": "^4.7.10",
     "tsx": "^4.23.15",

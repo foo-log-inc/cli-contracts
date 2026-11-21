@@ -1,0 +1,59 @@
+cli_contracts: 0.1.0
+
+info:
+  title: fmt
+  version: 0.4.0
+
+command_sets:
+  fmt:
+    executable: fmt
+    commands:
+      format:
+        path: []
+        summary: Format the given files.
+        arguments:
+          - name: files
+            description: Files to format.
+            variadic: true
+        options:
+          - name: check
+            aliases: [c]
+            description: Exit 1 when a file is not formatted.
+            schema:
+              type: boolean
+          - name: width
+            aliases: [w]
+            value_name: cols
+            description: Maximum line width.
+            schema:
+              type: integer
+              default: 100
+          - name: exclude
+            value_name: glob
+            repeatable: true
+            schema:
+              type: string
+          - name: indent
+            value_name: n
+            schema:
+              type: number
+        exits:
+          '0':
+            description: Formatted.
+          '1':
+            description: Some files are not formatted.
+
+      version-info:
+        summary: Print build information.
+        exits:
+          '0':
+            description: Printed.
+
+      extract:
+        summary: Extract formatting rules from a file.
+        arguments:
+          - name: source
+            required: true
+        exits:
+          '0':
+            description: Rules printed.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.36.0
+
+### 挙動の変更
+
+- TypeScript の生成器が出力する `program.ts` は、help を stdout・stderr が端末である場合も 80 桁で折り返す（`program.configureOutput({ getOutHelpWidth: () => 80, getErrHelpWidth: () => 80 })`。subcommand はこの設定を継承する）。これまでは、端末では端末の桁数で折り返していた。stdout・stderr が端末でない場合の出力は変わらない。help の出力を、ほかの言語の生成物と同一にするための変更である。
+
 ## 0.35.4
 
 ### 挙動の変更（確認を要求する側への変更）

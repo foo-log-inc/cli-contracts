@@ -1,0 +1,320 @@
+cli_contracts: 0.1.0
+
+info:
+  title: Acme CLI
+  version: 2.3.1
+  description: Conformance contract with nested groups, effects and an LLM command.
+
+artifact_slots:
+  users-db:
+    description: The user directory.
+    direction: readwrite
+
+command_sets:
+  acme:
+    executable: acme
+    summary: Manage users, configuration and deployments of the Acme service.
+    env:
+      ACME_TOKEN:
+        description: API token.
+        sensitive: true
+      ACME_LOG:
+        description: Log level.
+    groups:
+      config:
+        description: Read and write configuration values.
+      db.migrate:
+        summary: Schema migrations.
+    global_options:
+      - name: verbose
+        aliases: [v]
+        description: Print diagnostic output.
+        schema:
+          type: boolean
+          default: false
+      - name: profile
+        value_name: name
+        description: Configuration profile to use.
+        schema:
+          type: string
+          default: default
+      - name: log-file
+        value_name: path
+        description: Write a log to this file.
+        schema:
+          type: string
+        file:
+          mode: append
+
+    commands:
+      users:
+        summary: Show a summary of all users.
+        options:
+          - name: all
+            aliases: [a]
+            description: Include deactivated users.
+            schema:
+              type: boolean
+        exits:
+          '0':
+            description: Summary written.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+
+      users.import:
+        summary: Import users from a file. The file is read once and every row is validated before any user is written, so a failed import leaves the directory unchanged.
+        arguments:
+          - name: file
+            description: CSV file to import.
+            required: true
+            schema:
+              type: string
+            file:
+              mode: read
+        options:
+          - name: dry-run
+            aliases: [n]
+            description: Validate without writing.
+            schema:
+              type: boolean
+          - name: format
+            aliases: [f]
+            value_name: fmt
+            description: Input format.
+            schema:
+              type: string
+              enum: [csv, tsv]
+              default: csv
+          - name: tag
+            aliases: [t]
+            value_name: tag
+            description: Tag to attach to every imported user.
+            repeatable: true
+            schema:
+              type: string
+          - name: color
+            description: Colorize the report.
+            schema:
+              type: boolean
+              default: true
+          - name: no-cache
+            description: Bypass the import cache.
+            schema:
+              type: boolean
+          - name: limit
+            value_name: n
+            description: Stop after this many rows.
+            schema:
+              type: integer
+          - name: report
+            value_name: path
+            description: Write a report to this file.
+            schema:
+              type: string
+            file:
+              mode: write
+          - name: all
+            description: Import deactivated users too.
+            schema:
+              type: boolean
+        effects:
+          risk_level: medium
+          writes:
+            - target: user directory
+              description: imported users
+              idempotent: true
+              idempotency_key: email
+        exits:
+          '0':
+            description: Import succeeded.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          '2':
+            description: Invalid arguments.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+          '10':
+            description: Partial import.
+            stdout:
+              required: false
+              format: json
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+      users.remove:
+        summary: Remove users.
+        arguments:
+          - name: ids
+            description: User IDs.
+            required: true
+            variadic: true
+        options:
+          - name: force
+            description: Remove without archiving.
+            schema:
+              type: boolean
+            effects:
+              risk_level: high
+              writes:
+                - target: archive
+                  destructive: true
+        effects:
+          risk_level: medium
+          requires_confirmation: false
+          writes:
+            - users-db
+        exits:
+          '0':
+            description: Removed.
+          '3':
+            description: Some users were not found.
+
+      config.get:
+        summary: Print a configuration value.
+        arguments:
+          - name: key
+            description: Configuration key.
+            required: true
+          - name: fallback
+            description: Value printed when the key is not set.
+        exits:
+          '0':
+            description: Value printed.
+
+      config.set:
+        summary: Set a configuration value.
+        arguments:
+          - name: key
+            required: true
+          - name: value
+            required: true
+        effects:
+          reads:
+            - target: configuration file
+              description: current values
+          writes:
+            - target: configuration file
+              overwrite: true
+              idempotent: true
+        exits:
+          '0':
+            description: Value set.
+
+      db.migrate.up:
+        summary: Apply pending migrations.
+        options:
+          - name: to
+            value_name: version
+            description: Stop at this version.
+            schema:
+              type: string
+          - name: step
+            value_name: n
+            description: Number of migrations to apply.
+            schema:
+              type: integer
+              default: 1
+        effects:
+          risk_level: high
+          network:
+            description: database connection
+            domains: [db.acme.test]
+            idempotent: false
+          execution_mode: long-running
+        exits:
+          '0':
+            description: Migrations applied.
+
+      ask:
+        summary: Ask the assistant a question about the configuration.
+        arguments:
+          - name: question
+            required: true
+        options:
+          - name: adapter
+            value_name: name
+            description: LLM adapter to use.
+            schema:
+              type: string
+              enum: [claude, openai]
+            effects:
+              network:
+                description: LLM API call
+                idempotent: true
+        exits:
+          '0':
+            description: Answer written.
+          '12':
+            description: LLM provider error.
+
+components:
+  schemas:
+    UserSummary:
+      type: object
+      required: [total, active]
+      properties:
+        total:
+          type: integer
+        active:
+          type: integer
+        ratio:
+          type: number
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: string
+      enum: [admin, member, guest]
+    ImportResult:
+      type: object
+      required: [imported]
+      properties:
+        imported:
+          type: integer
+        skipped:
+          type: array
+          items:
+            type: object
+            required: [row]
+            properties:
+              row:
+                type: integer
+              reason:
+                type: string
+        dry-run:
+          type: boolean
+        meta:
+          type: object
+          additionalProperties: true
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+    AuditedImport:
+      allOf:
+        - $ref: '#/components/schemas/ImportResult'
+        - type: object
+          required: [auditor]
+          properties:
+            auditor:
+              type: string
