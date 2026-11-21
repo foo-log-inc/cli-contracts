@@ -27,7 +27,7 @@ Use the same contract to:
 
 - **Define** commands, arguments, options, exit codes, stdout/stderr schemas, files, and streams in a single YAML contract
 - **Validate** contracts for structural correctness, duplicate IDs, invalid refs, and exit code consistency
-- **Generate** TypeScript types, CLI wrappers, Markdown documentation, and custom output via Handlebars templates
+- **Generate** programs, types, CLI wrappers and JSON Schema constants in TypeScript, Go, Rust, Python and PHP, Markdown documentation, and custom output via Handlebars templates
 - **Test** real CLI implementations against the contract
 - **Diff** contract versions to detect breaking changes before release
 - **Declare execution effects** — option-level and command-level effect declarations (writes, network, risk level, idempotency) with runtime introspection via `--introspect`
@@ -757,6 +757,48 @@ const program = createProgram(handlers, "1.0.0", {
 });
 ```
 
+The program wraps its help at 80 columns, on a terminal too, so its help is the same text as that of the programs generated for the other languages.
+
+### Go, Rust, Python and PHP (`builtin:go`, `builtin:rust`, `builtin:python`, `builtin:php`)
+
+Generates, from the same contract, a program and the code around it in each language:
+
+| File (Go / Rust / Python / PHP) | Contents |
+|---|---|
+| `program.go` / `program.rs` / `program.py` / `Program.php` + `CommandHandlers.php` | The command tree, the handler interface, and the function that creates the program |
+| `types.go` / `types.rs` / `types.py` / `Types.php` + `<Cmd>Args.php`, `<Cmd>Options.php` | The component schemas' types, each command's arguments, options, exit codes and exit results |
+| `commands.go` / `commands.rs` / `commands.py` / `Commands.php` | A wrapper per command that runs the CLI with typed arguments and options |
+| `schemas.go` / `schemas.rs` / `schemas.py` / `Schemas.php` | The component schemas as JSON Schema, and each command's exit codes |
+| `policy.go` / `policy.rs` / `policy.py` / `Policy.php` | The policy definitions and their derivation (when the contract declares effects) |
+| `contract.go` / `contract.rs` / `contract.py` / `Contract.php` | The contract as YAML and JSON (when generated with `cli-contracts generate`) |
+
+A program runs on the language's runtime, which parses an invocation by the same rules as the TypeScript program: its argument and option parsing, the errors it writes for invalid arguments, its help, its exit codes, and the output of `--introspect`, `--show-prompt` and the built-in `extract` command are those of the TypeScript program generated from the same contract (the repository's conformance tests run every language's program with the same invocations and compare the outputs byte for byte). The runtimes have no third-party dependencies.
+
+| Language | Runtime | Generator options |
+|---|---|---|
+| Go | module `github.com/foo-log-inc/cli-contracts/go` (package `cli_contracts_runtime`), Go 1.21 or later | `package` (required): the package name of the generated files |
+| Rust | crate [`cli_contracts_runtime`](https://crates.io/crates/cli_contracts_runtime), Rust 1.70 or later | — (the generated files form a module: `mod.rs` and its submodules) |
+| Python | [`cli-contracts-runtime`](https://pypi.org/project/cli-contracts-runtime/) (import name `cli_contracts_runtime`), Python 3.9 or later | — (the generated files form a package: `__init__.py` and its modules) |
+| PHP | `cli-contracts/runtime` (namespace `CliContracts\Runtime`) in [`php/`](php/), PHP 8.1 or later; not published to Packagist | `namespace` (required): the namespace of the generated classes |
+
+```yaml
+generators:
+  go:
+    enabled: true
+    output: ./internal/cli
+    templates: builtin:go
+    options:
+      package: cli
+  php:
+    enabled: true
+    output: ./src/Cli
+    templates: builtin:php
+    options:
+      namespace: App\Cli
+```
+
+A handler receives the command's arguments, its own options as given (keyed as the TypeScript program keys them, `dry-run` → `dryRun`) and the option values of the command and its ancestors, and returns the exit code. The handler of a command that takes `--adapter` returns the prompt it built too, which the program writes with `--show-prompt`. See each runtime's README for an example: [Go](go/README.md), [Rust](rust/cli_contracts_runtime/README.md), [Python](python/README.md), [PHP](php/README.md).
+
 ### Markdown (`builtin:markdown`)
 
 Generates human-readable CLI reference documentation with command tables, option tables, exit code contracts, schema property tables, and collapsible JSON Schema details.
@@ -1162,7 +1204,7 @@ CLI Contracts started with a similar problem space, and OpenCLI was considered a
 - streaming input/output contracts
 - contract tests against real CLI implementations
 - breaking-change detection
-- TypeScript type and wrapper generation
+- TypeScript, Go, Rust, Python and PHP program, type and wrapper generation
 - AI-agent execution policies such as side effects, risk level, idempotency, and confirmation requirements
 - LLM-backed semantic audit, test case generation, and contract drafting
 
@@ -1187,7 +1229,7 @@ OpenCLI focuses on describing CLI shape. CLI Contracts focuses on defining, gene
 | File I/O | Limited or implementation-dependent | First-class file contracts |
 | Streams | Not the main focus | First-class stdin/stdout/stderr stream contracts |
 | Validation | Specification validation | Contract validation and `$ref` resolution |
-| Code generation | Possible ecosystem use case | Built-in TypeScript generation |
+| Code generation | Possible ecosystem use case | Built-in TypeScript, Go, Rust, Python and PHP generation |
 | Contract testing | Not the core focus | Built-in contract tests against real CLIs |
 | Breaking changes | Possible use case | Built-in diff command |
 | AI agents | Possible use case | Explicit `x-agent` policy extension |

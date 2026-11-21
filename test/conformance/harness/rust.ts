@@ -55,7 +55,6 @@ function mainSource(c: ConformanceContract): string {
   const commands = [...new Map(c.spec.commands.map((cmd) => [cmd.id, cmd])).values()];
   const cases = c.argv.map((argv) => `        vec![${argv.map(rustString).join(", ")}],`).join("\n");
   return `#[path = "../../${c.name}/mod.rs"]
-#[allow(dead_code)]
 mod gen;
 
 use std::cell::RefCell;
@@ -186,7 +185,7 @@ export function prepareRust(contracts: ConformanceContract[], workDir: string): 
 
 /** The command wrapper calls of CLIENT_CASES, writing their outcomes to client.json. */
 function clientSource(contracts: ConformanceContract[], workDir: string): string {
-  const mods = contracts.map((c) => `#[path = "../../${c.name}/mod.rs"]\n#[allow(dead_code)]\nmod ${c.name};`);
+  const mods = contracts.map((c) => `#[path = "../../${c.name}/mod.rs"]\nmod ${c.name};`);
   const calls: string[] = [];
   for (const k of CLIENT_CASES) {
     const c = contracts.find((x) => x.file === k.contract)!;

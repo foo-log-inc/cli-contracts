@@ -1,0 +1,82 @@
+name: Publish Runtime to PyPI
+
+# Publishes the Python runtime (`cli-contracts-runtime`) when the GitHub Release
+# of the version is created. A Release created with the default GITHUB_TOKEN does
+# not trigger other workflows, so this chains off the "GitHub Release" workflow.
+# The job publishes only a version PyPI does not have, so a re-run is safe.
+#
+# Requires the repository secret PYPI_API_TOKEN.
+
+on:
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["GitHub Release"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      # A workflow_run event otherwise checks out the default branch's head at run time,
+      # which is not the Release's commit once main moved on during the release run.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify the runtime version matches the package version
+        id: pkg
+        run: |
+          node scripts/sync-versions.mjs --check
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether publish is needed
+        id: need
+        run: |
+          VERSION="${{ steps.pkg.outputs.version }}"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/cli-contracts-runtime/${VERSION}/json")
+          if [ "$CODE" = "200" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "cli-contracts-runtime ${VERSION} is already on PyPI"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install build tooling
+        if: steps.need.outputs.publish == 'true'
+        run: python -m pip install --upgrade build twine
+
+      - name: Build sdist and wheel
+        if: steps.need.outputs.publish == 'true'
+        working-directory: python
+        run: python -m build
+
+      - name: Check distribution metadata
+        if: steps.need.outputs.publish == 'true'
+        working-directory: python
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        if: steps.need.outputs.publish == 'true'
+        working-directory: python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*

@@ -40,7 +40,72 @@ jobs:
         run: npm run build
       - name: Verify contract version matches the package version
         run: node dist/cli.js version-sync --check
+      - name: Verify the language runtimes' versions match the package version
+        run: npm run sync:versions:check
       - name: Test
         run: npm run test:ci
+      - name: Conformance vectors (TypeScript, the programs commander runs)
+        # The vectors every language's generated program is compared with are what the
+        # TypeScript program does; this checks they still are.
+        run: npm run conformance -- typescript
       - name: Verify package contents
         run: npm pack --dry-run
+
+  # The programs generated in each language, run with every conformance vector and
+  # compared with what the TypeScript program does, and each language's runtime linted.
+  languages:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, rust, python, php]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci --legacy-peer-deps --ignore-scripts
+      - uses: actions/setup-go@v5
+        if: matrix.lang == 'go'
+        with:
+          go-version-file: go/go.mod
+          cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.lang == 'rust'
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        if: matrix.lang == 'python'
+        with:
+          # The lowest version the runtime declares (python/pyproject.toml).
+          python-version: '3.9'
+      - uses: shivammathur/setup-php@v2
+        if: matrix.lang == 'php'
+        with:
+          # The lowest version the runtime declares (php/composer.json).
+          php-version: '8.1'
+          extensions: mbstring
+          tools: none
+      - name: Lint the Go runtime
+        if: matrix.lang == 'go'
+        working-directory: go
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet ./...
+      - name: Lint the Rust runtime
+        if: matrix.lang == 'rust'
+        working-directory: rust
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all-targets -- -D warnings
+          cargo package -p cli_contracts_runtime --allow-dirty
+      - name: Compile the Python runtime
+        if: matrix.lang == 'python'
+        run: python -m compileall -q python/cli_contracts_runtime
+      - name: Lint the PHP runtime
+        if: matrix.lang == 'php'
+        run: for f in php/src/*.php; do php -l "$f"; done
+      - name: Conformance vectors
+        run: npm run conformance -- ${{ matrix.lang }}
