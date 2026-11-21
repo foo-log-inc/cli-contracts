@@ -16,3 +16,4 @@ test/conformance/out/
 target/
 __pycache__/
 *.egg-info/
+vendor/

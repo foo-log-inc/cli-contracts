@@ -1,0 +1,22 @@
+{
+    "name": "cli-contracts/runtime",
+    "description": "PHP runtime for the programs and command wrappers cli-contracts generates from a CLI contract: commander-compatible argument parsing, help, policy derivation and the built-in extract command.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["cli", "contract", "codegen", "argument-parsing"],
+    "homepage": "https://github.com/foo-log-inc/cli-contracts",
+    "require": {
+        "php": ">=8.1",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "CliContracts\\Runtime\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.0"
+        }
+    }
+}
