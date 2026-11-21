@@ -2,9 +2,13 @@
 // what it receives, and a main that runs every invocation in one process.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generatePhp, phpHandlerSignature, phpString, phpVariable } from "../../../src/generators/php.js";
+import { generatePhp, phpHandlerSignature, phpLiteral, phpMethod, phpString, phpVariable } from "../../../src/generators/php.js";
+import { buildTypeModel } from "../../../src/generators/type-model.js";
+import { toPascalCase } from "../../../src/generators/typescript.js";
+import { CLIENT_CASES } from "../cases.js";
 import type { SpecCommand } from "../../../src/generators/runtime-spec.js";
 import {
+  ARGV_SCRIPT,
   FAILING_COMMAND,
   HANDLER_PREFIX,
   PROGRAM_VERSION,
@@ -124,9 +128,64 @@ export function preparePhp(contracts: ConformanceContract[], workDir: string): s
     writeFileSync(join(workDir, `main_${c.name}.php`), mainSource(c, workDir));
     files.push(`main_${c.name}.php`);
   }
+  writeFileSync(join(workDir, "client_main.php"), clientSource(contracts, workDir));
+  files.push("client_main.php");
   lines.push(`for f in ${files.join(" ")}; do php -l "$f" >/dev/null || exit 1; done`);
+  lines.push("php client_main.php");
   for (const c of contracts) {
     lines.push(`php main_${c.name}.php ${JSON.stringify(join(workDir, `${c.name}.json`))}`);
   }
   return lines.join("\n");
+}
+
+/** The command wrapper calls of CLIENT_CASES, writing their outcomes to client.json. */
+function clientSource(contracts: ConformanceContract[], workDir: string): string {
+  const roots = contracts.map((c) => `        ${phpString(`${namespaceOf(c)}\\`)} => ${phpString(join(workDir, c.name))},`);
+  const calls: string[] = [];
+  for (const k of CLIENT_CASES) {
+    const c = contracts.find((x) => x.file === k.contract)!;
+    const model = buildTypeModel(c.ctx);
+    const cmd = model.commands.find((x) => x.id === k.command)!;
+    const ns = `\\${namespaceOf(c)}`;
+    const prefix = toPascalCase(cmd.id);
+    const params = [phpString(ARGV_SCRIPT)];
+    if (cmd.arguments.length > 0) {
+      const named = cmd.arguments
+        .filter((a) => k.args?.[a.name] !== undefined)
+        .map((a) => `${phpVariable(a.name)}: ${phpLiteral(k.args![a.name], a.type, model)}`);
+      params.push(`new ${ns}\\${prefix}Args(${named.join(", ")})`);
+    }
+    if (cmd.options.length > 0 && k.options !== undefined) {
+      const named = cmd.options
+        .filter((o) => k.options![o.name] !== undefined)
+        .map((o) => `${phpVariable(o.name)}: ${phpLiteral(k.options![o.name], o.type, model)}`);
+      params.push(`new ${ns}\\${prefix}Options(${named.join(", ")})`);
+    }
+    calls.push(`$add(${ns}\\Commands::${phpMethod(cmd.fullId)}(${params.join(", ")}));`);
+  }
+  return `<?php
+
+declare(strict_types=1);
+
+use CliContracts\\Runtime as Rt;
+
+spl_autoload_register(static function (string $class): void {
+    $roots = [
+        'CliContracts\\\\Runtime\\\\' => ${phpString(join(REPO, "php/src"))},
+${roots.join("\n")}
+    ];
+    foreach ($roots as $prefix => $dir) {
+        if (str_starts_with($class, $prefix)) {
+            require $dir . '/' . str_replace('\\\\', '/', substr($class, strlen($prefix))) . '.php';
+        }
+    }
+});
+
+$results = [];
+$add = static function (Rt\\ExecResult $r) use (&$results): void {
+    $results[] = new Rt\\JsonObject(['exitCode' => $r->exitCode, 'stdout' => $r->stdout, 'stderr' => $r->stderr]);
+};
+${calls.join("\n")}
+file_put_contents(${phpString(join(workDir, "client.json"))}, Rt\\Json::stringify($results));
+`;
 }

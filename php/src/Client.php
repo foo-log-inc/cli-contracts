@@ -50,6 +50,29 @@ final class Client
     }
 
     /**
+     * Writes a value as an argument the way JavaScript's String(value) does: a
+     * number in JavaScript's notation, a list as its items joined by commas
+     * (null as nothing), an object as "[object Object]".
+     */
+    public static function argString(mixed $value): string
+    {
+        return match (true) {
+            $value === null => 'null',
+            $value === true => 'true',
+            $value === false => 'false',
+            is_int($value) => (string) $value,
+            is_float($value) => self::formatNumber($value),
+            is_string($value) => $value,
+            $value instanceof JsonNumber => $value->text,
+            is_array($value) && array_is_list($value) => implode(',', array_map(
+                static fn (mixed $item): string => $item === null ? '' : self::argString($item),
+                $value,
+            )),
+            default => '[object Object]',
+        };
+    }
+
+    /**
      * Writes a number as JavaScript's String(n) does (Number::toString: the
      * shortest digits that read back as the number, in fixed notation from
      * 1e-7 up to 1e21 and exponential notation outside).

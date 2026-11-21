@@ -1,7 +1,8 @@
 import type { NormalizedContext } from "../types.js";
 import { buildRuntimeSpec, type RuntimeSpec, type SpecCommand } from "./runtime-spec.js";
 import type { TreeNode, TreeOption } from "./commander-tree.js";
-import { toCamelCase } from "./typescript.js";
+import { toCamelCase, toPascalCase } from "./typescript.js";
+import { buildTypeModel, type Decl, type Field, type TypeExpr, type TypeModel } from "./type-model.js";
 
 // The PHP program of a contract: the command tree, handler interface and
 // dispatch for the runtime package cli-contracts/runtime (namespace
@@ -289,7 +290,213 @@ export function generatePhp(ctx: NormalizedContext, options: PhpGeneratorOptions
     "CommandHandlers.php": generateHandlers(spec, options.namespace),
     "Program.php": generateProgram(spec, options.namespace),
   };
+  const model = buildTypeModel(ctx);
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  output["Types.php"] = generatePhpTypes(model, options.namespace);
+  output["Commands.php"] = generatePhpCommands(model, options.namespace);
+  output["Schemas.php"] = generatePhpSchemas(model, options.namespace);
+  for (const cmd of model.commands) {
+    const prefix = phpIdentifier(toPascalCase(cmd.id), cmd.id);
+    if (cmd.arguments.length > 0) {
+      output[`${prefix}Args.php`] = phpValueClass(`${prefix}Args`, `The arguments of ${cmd.id}.`, cmd.arguments.map((a) => ({ ...a, optional: a.optional })), options.namespace, decls);
+    }
+    if (cmd.options.length > 0) {
+      output[`${prefix}Options.php`] = phpValueClass(`${prefix}Options`, `The options of ${cmd.id}; null is not given.`, cmd.options.map((o) => ({ ...o, optional: true })), options.namespace, decls);
+    }
+  }
   if (spec.policyDefinitions) output["Policy.php"] = generatePolicy(spec, options.namespace);
   if (spec.contract) output["Contract.php"] = generateContract(spec, options.namespace);
   return output;
+}
+
+// ─── Types.php, <Cmd>Args.php, <Cmd>Options.php, Commands.php, Schemas.php ──
+
+type Decls = Map<string, Decl>;
+
+/** The PHPStan type of a type expression. */
+function phpDocType(type: TypeExpr): string {
+  switch (type.kind) {
+    case "string":
+      return "string";
+    case "integer":
+      return "int";
+    case "number":
+      return "float";
+    case "boolean":
+      return "bool";
+    case "ref":
+      return phpIdentifier(type.name, type.name);
+    case "literals":
+      return type.values.length === 0 ? "mixed" : type.values.map(phpDocLiteral).join("|");
+    case "union":
+      return type.members.length === 0 ? "mixed" : type.members.map(phpDocType).join("|");
+    case "array":
+      return `list<${phpDocType(type.items)}>`;
+    case "map":
+      return "array<string, mixed>";
+    default:
+      return "mixed";
+  }
+}
+
+function phpDocLiteral(v: unknown): string {
+  if (v === null) return "null";
+  if (typeof v === "string") return `'${v.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+  return String(v);
+}
+
+function phpDocKey(name: string): string {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : phpDocLiteral(name);
+}
+
+function phpDocShape(fields: Field[]): string {
+  return `array{${fields.map((f) => `${phpDocKey(f.name)}${f.optional ? "?" : ""}: ${phpDocType(f.type)}`).join(", ")}}`;
+}
+
+/** The PHP property type of a type expression. */
+function phpPropertyType(type: TypeExpr, decls: Decls): string {
+  switch (type.kind) {
+    case "string":
+      return "string";
+    case "integer":
+      return "int";
+    case "number":
+      return "float";
+    case "boolean":
+      return "bool";
+    case "literals":
+      return type.values.every((v) => typeof v === "string") ? "string" : "mixed";
+    case "array":
+    case "map":
+      return "array";
+    case "ref": {
+      const decl = decls.get(type.name);
+      if (decl?.kind === "enum") return "string";
+      if (decl?.kind === "record") return "array";
+      return decl?.kind === "alias" ? phpPropertyType(decl.type, decls) : "mixed";
+    }
+    default:
+      return "mixed";
+  }
+}
+
+function generatePhpTypes(model: TypeModel, namespace: string): string {
+  const lines = fileHeader(namespace);
+  lines.push("/**", " * The contract's types, as PHPStan type aliases (import them with @phpstan-import-type).", " *");
+  for (const decl of model.decls) {
+    const name = phpIdentifier(decl.name, decl.name);
+    const type =
+      decl.kind === "record"
+        ? phpDocShape(decl.fields)
+        : decl.kind === "enum"
+          ? decl.values.map(phpDocLiteral).join("|")
+          : phpDocType(decl.type);
+    lines.push(` * @phpstan-type ${name} ${type}`);
+  }
+  for (const cmd of model.commands) {
+    const prefix = phpIdentifier(toPascalCase(cmd.id), cmd.id);
+    lines.push(` * @phpstan-type ${prefix}ExitCode ${cmd.exitCodes.join("|")}`);
+    const variants = cmd.exits.map((exit) => {
+      const fields: Field[] = [{ name: "exitCode", optional: false, type: { kind: "literals", values: [exit.code] } }];
+      if (exit.stdout) fields.push({ name: "stdout", optional: exit.stdout.optional, type: exit.stdout.type });
+      if (exit.stderr) fields.push({ name: "stderr", optional: exit.stderr.optional, type: exit.stderr.type });
+      return phpDocShape(fields);
+    });
+    lines.push(` * @phpstan-type ${prefix}ExitResult ${variants.join("|")}`);
+  }
+  lines.push(" */", "final class Types", "{", "}", "");
+  return lines.join("\n");
+}
+
+/** A class of named, typed, read-only values: a command's arguments or options. */
+function phpValueClass(name: string, description: string, fields: Array<{ name: string; type: TypeExpr; optional: boolean; variadic?: boolean }>, namespace: string, decls: Decls): string {
+  const lines = fileHeader(namespace);
+  // A parameter with a default follows those without one.
+  const ordered = [...fields.filter((f) => !f.optional), ...fields.filter((f) => f.optional)];
+  lines.push("/**", ` * ${description}`, " *");
+  for (const f of ordered) lines.push(` * @param ${phpDocType(f.type)}${f.optional ? "|null" : ""} $${phpVariable(f.name)}`);
+  lines.push(" */", `final class ${name}`, "{", "    public function __construct(");
+  for (const f of ordered) {
+    const t = phpPropertyType(f.type, decls);
+    const declared = f.optional ? (t === "mixed" ? "mixed" : `?${t}`) : t;
+    lines.push(`        public readonly ${declared} $${phpVariable(f.name)}${f.optional ? " = null" : ""},`);
+  }
+  lines.push("    ) {", "    }", "}", "");
+  return lines.join("\n");
+}
+
+/** How a value of a type is written as an argument. */
+function phpArgString(type: TypeExpr, expr: string, decls: Decls): string {
+  const t = phpPropertyType(type, decls);
+  if (t === "string") return expr;
+  if (t === "int") return `(string) ${expr}`;
+  if (t === "float") return `Rt\\Client::formatNumber(${expr})`;
+  if (t === "bool") return `(${expr} ? 'true' : 'false')`;
+  return `Rt\\Client::argString(${expr})`;
+}
+
+function generatePhpCommands(model: TypeModel, namespace: string): string {
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  const lines = fileHeader(namespace);
+  lines.push("use CliContracts\\Runtime as Rt;", "", "final class Commands", "{");
+  model.commands.forEach((cmd, i) => {
+    const prefix = phpIdentifier(toPascalCase(cmd.id), cmd.id);
+    const params = ["string $executable"];
+    if (cmd.arguments.length > 0) params.push(`${prefix}Args $args`);
+    if (cmd.options.length > 0) params.push(`?${prefix}Options $options = null`);
+    if (i > 0) lines.push("");
+    lines.push(`    /** Runs ${cmd.id} with the arguments and options given. */`);
+    lines.push(`    public static function ${phpMethod(cmd.fullId)}(${params.join(", ")}): Rt\\ExecResult`, "    {");
+    lines.push(`        $cmdArgs = ${phpStrings(cmd.path)};`);
+    for (const arg of cmd.arguments) {
+      const field = `$args->${phpVariable(arg.name)}`;
+      if (arg.variadic) lines.push(`        array_push($cmdArgs, ...(${field} ?? []));`);
+      else if (arg.optional) lines.push(`        if (${field} !== null) {`, `            $cmdArgs[] = ${phpArgString(arg.type, field, decls)};`, "        }");
+      else lines.push(`        $cmdArgs[] = ${phpArgString(arg.type, field, decls)};`);
+    }
+    if (cmd.options.length > 0) {
+      lines.push("        if ($options !== null) {");
+      for (const opt of cmd.options) {
+        const field = `$options->${phpVariable(opt.name)}`;
+        if (opt.negated !== undefined) {
+          lines.push(`            if (${field} !== null) {`, `                $cmdArgs[] = ${field} ? ${phpString(opt.long)} : ${phpString(opt.negated)};`, "            }");
+        } else if (opt.boolean) {
+          lines.push(`            if (${field} === true) {`, `                $cmdArgs[] = ${phpString(opt.long)};`, "            }");
+        } else if (opt.repeatable && opt.type.kind === "array") {
+          lines.push(`            foreach (${field} ?? [] as $v) {`, `                $cmdArgs[] = ${phpString(opt.long)};`, `                $cmdArgs[] = ${phpArgString(opt.type.items, "$v", decls)};`, "            }");
+        } else {
+          lines.push(`            if (${field} !== null) {`, `                $cmdArgs[] = ${phpString(opt.long)};`, `                $cmdArgs[] = ${phpArgString(opt.type, field, decls)};`, "            }");
+        }
+      }
+      lines.push("        }");
+    }
+    lines.push("        return Rt\\Client::exec($executable, $cmdArgs);", "    }");
+  });
+  lines.push("}", "");
+  return lines.join("\n");
+}
+
+function generatePhpSchemas(model: TypeModel, namespace: string): string {
+  const lines = fileHeader(namespace);
+  lines.push("final class Schemas", "{");
+  lines.push("    /** The components' JSON Schemas as JSON, by name. */");
+  lines.push(`    public const SCHEMAS = [${model.schemas.map(([n, s]) => `${phpString(n)} => ${phpString(JSON.stringify(s))}`).join(", ")}];`);
+  for (const cmd of model.commands) {
+    lines.push("", `    /** The exit codes ${cmd.id} declares. */`);
+    lines.push(`    public const ${toCamelCase(cmd.id).replace(/\p{Lu}/gu, (c) => `_${c}`).toUpperCase()}_EXIT_CODES = [${cmd.exitCodes.join(", ")}];`);
+  }
+  lines.push("}", "");
+  return lines.join("\n");
+}
+
+/** A JSON value as a PHP literal of a type. */
+export function phpLiteral(value: unknown, type: TypeExpr, model: TypeModel): string {
+  const decls: Decls = new Map(model.decls.map((d) => [d.name, d]));
+  if (Array.isArray(value)) return `[${value.map((v) => phpLiteral(v, type.kind === "array" ? type.items : { kind: "unknown" }, model)).join(", ")}]`;
+  if (typeof value === "string") return phpString(value);
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") {
+    return phpPropertyType(type, decls) === "float" && Number.isInteger(value) ? `${value}.0` : String(value);
+  }
+  throw new Error(`No PHP literal for ${JSON.stringify(value)}`);
 }
