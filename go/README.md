@@ -3,7 +3,7 @@
 The runtime for the Go programs and command wrappers that [cli-contracts](https://github.com/foo-log-inc/cli-contracts) generates from a CLI contract (`templates: builtin:go`). A generated program holds its command tree and handler interface; this module parses an invocation over the tree by the same rules as the TypeScript program generated from the same contract (which uses commander), and writes the same help, errors, `--introspect` policy and `extract` output.
 
 ```bash
-go get github.com/foo-log-inc/cli-contracts/go@v0.36.0
+go get github.com/foo-log-inc/cli-contracts/go@v0.36.1
 ```
 
 Go 1.21 or later. The module uses the standard library only.

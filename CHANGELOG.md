@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.36.1
+
+### 公開
+
+- npm への公開を Trusted Publishing（GitHub Actions の OIDC）に切り替えた。機能の変更は無い。Go・Rust・Python・PHP の runtime の版も 0.36.1 に揃えた（内容の変更は無い）。
+
 ## 0.36.0
 
 ### 機能
