@@ -20,4 +20,4 @@ pub use program::{Dispatch, Program, ProgramOptions, UsageError, UsageErrorHandl
 pub use tree::{Action, Arg, Argument, CliOption, Command, Invocation, OptionKind, Outcome};
 
 /// The version of cli-contracts this runtime belongs to.
-pub const VERSION: &str = "0.36.0";
+pub const VERSION: &str = "0.36.1";
